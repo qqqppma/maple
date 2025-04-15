@@ -44,10 +44,11 @@ if "user" not in st.session_state:
     if st.button("로그인"):
         # GitHub CSV에서 불러오기
         try:
-            csv_url = "https://raw.githubusercontent.com/qqqppma/maple/main/guild_user.csv"  # 사용자 csv URL
-            df_users = pd.read_csv(csv_url)
+            csv_url = "https://raw.githubusercontent.com/qqqppma/maple/main/guild_user.csv"
+            df_users = pd.read_csv(csv_url, encoding="utf-8-sig")  # <-- ✅ 인코딩 문제 해결 핵심
             matched = df_users[
-                (df_users["닉네임"] == login_name) & (df_users["비밀번호"] == login_pw)
+                (df_users["닉네임"].str.strip() == login_name.strip()) &
+                (df_users["비밀번호"].astype(str).str.strip() == login_pw.strip())
             ]
             if not matched.empty:
                 st.session_state["user"] = login_name
