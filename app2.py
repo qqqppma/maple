@@ -2,6 +2,7 @@ import streamlit as st
 import requests
 import pandas as pd
 from datetime import date
+import re
 
 # 🔐 Supabase 연결 정보
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
@@ -84,13 +85,26 @@ is_admin = st.session_state["is_admin"]
 # 메뉴 구성
 menu = st.sidebar.radio("메뉴", ["길드원 등록"])
 
+# 정렬 우선순위 지정
+def get_position_priority(pos):
+    priority = {"길드마스터": 1, "부마스터": 2, "길드원": 3}
+    return priority.get(pos, 99)
+
+def korean_first_sort(value):
+    # 한글 시작 문자가 아닌 경우 우선순위를 뒤로
+    return (not bool(re.match(r"[가-힣]", str(value)[0])), value)
+
 if menu == "길드원 등록":
     st.subheader("👥 길드원 정보 등록")
 
     members = get_members()
     df = pd.DataFrame(members)
     if not df.empty:
-        st.dataframe(df)
+        df["position"] = df["position"].fillna("")
+        df = df.sort_values(by=["position", "nickname"],
+                            key=lambda x: x.map(get_position_priority) if x.name == "position" else x.map(korean_first_sort))
+        st.dataframe(df.reset_index(drop=True))
+
         if is_admin:
             selected_name = st.selectbox("수정 또는 삭제할 닉네임 선택", df["nickname"])
             selected_row = df[df["nickname"] == selected_name].iloc[0]
