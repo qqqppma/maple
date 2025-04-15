@@ -16,7 +16,7 @@ HEADERS = {
 
 def insert_member(data):
     res = requests.post(
-        f"{SUPABASE_URL}/rest/v1/members",
+        f"{SUPABASE_URL}/rest/v1/Members",
         headers=HEADERS,
         json=data
     )
@@ -28,7 +28,7 @@ def insert_member(data):
 
 def get_members():
     res = requests.get(
-        f"{SUPABASE_URL}/rest/v1/members?select=*&order=id.desc",
+        f"{SUPABASE_URL}/rest/v1/Members?select=*&order=id.desc",
         headers=HEADERS
     )
     if res.status_code == 200:
@@ -69,14 +69,10 @@ with st.form("add_member_form"):
             "join_date": join_date.isoformat(),
             "note": note,
             "guild_name": guild_name,
-            "withdrawn": withdrawn
+            "withdrawn": withdrawn,
+            "resume_date": resume_date.isoformat() if resume_date else "",
+            "withdraw_date": withdraw_date.isoformat() if withdraw_date else ""
         }
-
-        if resume_date:
-            data["resume_date"] = resume_date.isoformat()
-
-        if withdraw_date:
-            data["withdraw_date"] = withdraw_date.isoformat()
 
         success = insert_member(data)
         if success:
