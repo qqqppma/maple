@@ -240,22 +240,22 @@ elif menu == "부캐릭터 관리":
                             selected_suro = st.selectbox("수로 참여", ["참여", "미참여"], index=0 if sub_row["suro"] else 1, key=f"suro_select_{sub}")
                             new_suro = selected_suro == "참여"
 
-            new_suro_score = st.number_input("수로 점수", min_value=0, step=1, value=sub_row["suro_score"] or 0, key=f"suro_score_{sub}")
+                            new_suro_score = st.number_input("수로 점수", min_value=0, step=1, value=sub_row["suro_score"] or 0, key=f"suro_score_{sub}")
 
-            selected_flag = st.selectbox("플래그 참여", ["참여", "미참여"], index=0 if sub_row["flag"] else 1, key=f"flag_select_{sub}")
-            new_flag = selected_flag == "참여"
-            new_flag_score = st.number_input("플래그 점수", min_value=0, step=1, value=sub_row["flag_score"] or 0, key=f"flag_score_{sub}")
-            new_mission = st.number_input("주간미션포인트", min_value=0, step=1, value=sub_row["mission_point"] or 0, key=f"mission_{sub}")
-            if st.button("저장", key=f"save_{sub}"):
-                update_data = {
-                    "suro": new_suro,
-                    "suro_score": new_suro_score,
-                    "flag": new_flag,
-                    "flag_score": new_flag_score,
-                    "mission_point": new_mission
-                    }
-                if update_submember(sub, update_data):
-                    st.success("✅ 수정 완료")
-                    st.rerun()
-                else:
-                    st.error("🚫 수정 실패")
+                            selected_flag = st.selectbox("플래그 참여", ["참여", "미참여"], index=0 if sub_row["flag"] else 1, key=f"flag_select_{sub}")
+                            new_flag = selected_flag == "참여"
+                            new_flag_score = st.number_input("플래그 점수", min_value=0, step=1, value=sub_row["flag_score"] or 0, key=f"flag_score_{sub}")
+                            new_mission = st.number_input("주간미션포인트", min_value=0, step=1, value=sub_row["mission_point"] or 0, key=f"mission_{sub}")
+                            if st.button("저장", key=f"save_{sub}"):
+                                update_data = {
+                                    "suro": new_suro,
+                                    "suro_score": new_suro_score,
+                                    "flag": new_flag,
+                                    "flag_score": new_flag_score,
+                                    "mission_point": new_mission
+                                }
+                                if update_submember(sub, update_data):
+                                    st.success("✅ 수정 완료")
+                                    st.rerun()
+                                else:
+                                    st.error("🚫 수정 실패")
