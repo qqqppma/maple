@@ -20,6 +20,8 @@ def insert_member(data):
         headers=HEADERS,
         json=data
     )
+    st.write("🧪 응답 코드:", res.status_code)
+    st.write("🔍 응답 본문:", res.text)
     return res.status_code == 201
 
 # ✅ Supabase에서 길드원 목록 불러오기
@@ -64,13 +66,18 @@ with st.form("add_member_form"):
             "nickname": nickname,
             "position": position,
             "active": active,
-            "resume_date": resume_date.isoformat() if resume_date else None,
             "join_date": join_date.isoformat(),
             "note": note,
             "guild_name": guild_name,
-            "withdrawn": withdrawn,
-            "withdraw_date": withdraw_date.isoformat() if withdraw_date else None
+            "withdrawn": withdrawn
         }
+
+        if resume_date:
+            data["resume_date"] = resume_date.isoformat()
+
+        if withdraw_date:
+            data["withdraw_date"] = withdraw_date.isoformat()
+
         success = insert_member(data)
         if success:
             st.success("✅ 길드원이 등록되었습니다!")
