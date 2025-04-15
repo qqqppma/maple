@@ -48,7 +48,7 @@ else:
     st.info("아직 등록된 길드원이 없습니다.")
 
 # ✍️ 신규 등록 폼
-st.subheader("👤 길드원 정보 등록")
+st.subheader("📋 길드원 정보 등록")
 with st.form("add_member_form"):
     nickname = st.text_input("닉네임")
     position = st.text_input("직위")
@@ -69,10 +69,14 @@ with st.form("add_member_form"):
             "join_date": join_date.isoformat(),
             "note": note,
             "guild_name": guild_name,
-            "withdrawn": withdrawn,
-            "resume_date": resume_date.isoformat() if resume_date else "",
-            "withdraw_date": withdraw_date.isoformat() if withdraw_date else ""
+            "withdrawn": withdrawn
         }
+
+        if resume_date:
+            data["resume_date"] = resume_date.isoformat()
+
+        if withdraw_date:
+            data["withdraw_date"] = withdraw_date.isoformat()
 
         success = insert_member(data)
         if success:
