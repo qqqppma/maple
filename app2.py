@@ -216,53 +216,57 @@ elif menu == "부캐릭터 관리":
     st.markdown("---")
     st.subheader("📊 부캐릭터 요약")
 
-    for main in main_names:
-        df_main = df_sub[df_sub["main_name"] == main]
-        if not df_main.empty:
-            display_df = df_main.rename(columns={
-                "suro": "수로",
-                "suro_score": "수로 점수",
-                "flag": "플래그",
-                "flag_score": "플래그 점수",
-                "mission_point": "주간미션포인트"
-            })
-            st.markdown(f"### 🔹 {main} - 부캐 {len(display_df)}개")
-            st.dataframe(display_df[["sub_id", "sub_name", "수로", "수로 점수", "플래그", "플래그 점수", "주간미션포인트"]])
+    if df_sub.empty or "main_name" not in df_sub.columns:
+        st.info("등록된 부캐릭터가 없습니다.")
+    else:
+        for main in main_names:
+            df_main = df_sub[df_sub["main_name"] == main]
+            if not df_main.empty:
+                display_df = df_main.rename(columns={
+                    "suro": "수로",
+                    "suro_score": "수로 점수",
+                    "flag": "플래그",
+                    "flag_score": "플래그 점수",
+                    "mission_point": "주간미션포인트"
+                })
 
-            if is_admin:
-                with st.expander(f"✏️ {main} 부캐 수정"):
-                    selected_sub = display_df["sub_id"].tolist()
-                    for sub in selected_sub:
-                        sub_row = df_main[df_main["sub_id"] == sub].iloc[0]
+                st.markdown(f"### 🔹 {main} - 부캐 {len(display_df)}개")
+                st.dataframe(display_df[["sub_id", "sub_name", "수로", "수로 점수", "플래그", "플래그 점수", "주간미션포인트"]])
 
-                        selected_suro = st.selectbox("수로 참여", ["참여", "미참여"], index=0 if sub_row["suro"] else 1, key=f"suro_select_{sub}")
-                        new_suro = selected_suro == "참여"
+                if is_admin:
+                    with st.expander(f"✏️ {main} 부캐 수정"):
+                        selected_sub = display_df["sub_id"].tolist()
+                        for sub in selected_sub:
+                            sub_row = df_main[df_main["sub_id"] == sub].iloc[0]
 
-                        new_suro_score = st.number_input("수로 점수", min_value=0, step=1, value=sub_row.get("suro_score", 0), key=f"suro_score_{sub}")
+                            selected_suro = st.selectbox("수로 참여", ["참여", "미참여"], index=0 if sub_row["suro"] else 1, key=f"suro_select_{sub}")
+                            new_suro = selected_suro == "참여"
 
-                        selected_flag = st.selectbox("플래그 참여", ["참여", "미참여"], index=0 if sub_row["flag"] else 1, key=f"flag_select_{sub}")
-                        new_flag = selected_flag == "참여"
+                            new_suro_score = st.number_input("수로 점수", min_value=0, step=1, value=sub_row.get("suro_score", 0), key=f"suro_score_{sub}")
 
-                        new_flag_score = st.number_input("플래그 점수", min_value=0, step=1, value=sub_row.get("flag_score", 0), key=f"flag_score_{sub}")
-                        new_mission = st.number_input("주간미션포인트", min_value=0, step=1, value=sub_row.get("mission_point", 0), key=f"mission_{sub}")
+                            selected_flag = st.selectbox("플래그 참여", ["참여", "미참여"], index=0 if sub_row["flag"] else 1, key=f"flag_select_{sub}")
+                            new_flag = selected_flag == "참여"
 
-                        if st.button("저장", key=f"save_{sub}"):
-                            update_data = {
-                                "suro": new_suro,
-                                "suro_score": new_suro_score,
-                                "flag": new_flag,
-                                "flag_score": new_flag_score,
-                                "mission_point": new_mission
-                            }
-                            if update_submember(sub, update_data):
-                                st.success("✅ 수정 완료")
-                                st.rerun()
-                            else:
-                                st.error("🚫 수정 실패")
+                            new_flag_score = st.number_input("플래그 점수", min_value=0, step=1, value=sub_row.get("flag_score", 0), key=f"flag_score_{sub}")
+                            new_mission = st.number_input("주간미션포인트", min_value=0, step=1, value=sub_row.get("mission_point", 0), key=f"mission_{sub}")
 
-                        if st.button("삭제", key=f"delete_{sub}"):
-                            if delete_submember(sub):
-                                st.success("🗑 삭제 완료")
-                                st.rerun()
-                            else:
-                                st.error("삭제 실패")
+                            if st.button("저장", key=f"save_{sub}"):
+                                update_data = {
+                                    "suro": new_suro,
+                                    "suro_score": new_suro_score,
+                                    "flag": new_flag,
+                                    "flag_score": new_flag_score,
+                                    "mission_point": new_mission
+                                }
+                                if update_submember(sub, update_data):
+                                    st.success("✅ 수정 완료")
+                                    st.rerun()
+                                else:
+                                    st.error("🚫 수정 실패")
+
+                            if st.button("삭제", key=f"delete_{sub}"):
+                                if delete_submember(sub):
+                                    st.success("🗑 삭제 완료")
+                                    st.rerun()
+                                else:
+                                    st.error("삭제 실패")
