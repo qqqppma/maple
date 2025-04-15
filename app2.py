@@ -48,7 +48,7 @@ else:
     st.info("아직 등록된 길드원이 없습니다.")
 
 # ✍️ 신규 등록 폼
-st.subheader("👤 신규 길드원 등록")
+st.subheader("👤 길드원 정보 등록")
 with st.form("add_member_form"):
     nickname = st.text_input("닉네임")
     position = st.text_input("직위")
