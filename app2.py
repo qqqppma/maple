@@ -44,7 +44,7 @@ if "user" not in st.session_state:
     if st.button("로그인"):
         # GitHub CSV에서 불러오기
         try:
-            csv_url = "https://raw.githubusercontent.com/qqqppma/maple/main/users.csv"  # 사용자 csv URL
+            csv_url = "https://raw.githubusercontent.com/qqqppma/maple/main/길드원 목록.csv"  # 사용자 csv URL
             df_users = pd.read_csv(csv_url)
             matched = df_users[
                 (df_users["캐릭터명"] == login_name) & (df_users["비밀번호"] == login_pw)
