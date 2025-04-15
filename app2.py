@@ -57,26 +57,35 @@ def delete_submember(sub_id):
     return res.status_code == 204
 
 # ✅ 로그인 처리 (주소창 유지 + 로그아웃)
-st.title("\U0001F6E1️ 악마길드 관리 시스템")
+st.title("악마길드 관리 시스템")
 
 query_params = st.query_params
+
 if "user" not in st.session_state:
     if "nickname" in query_params and "key" in query_params:
         login_name = urllib.parse.unquote(query_params["nickname"][0])
         login_pw = urllib.parse.unquote(query_params["key"][0])
+
         try:
             csv_url = "https://raw.githubusercontent.com/qqqppma/maple/main/guild_user.csv"
             df_users = pd.read_csv(csv_url, encoding="utf-8-sig")
+
+            # 닉네임/비밀번호 공백 제거
+            df_users["닉네임"] = df_users["닉네임"].astype(str).str.strip()
+            df_users["비밀번호"] = df_users["비밀번호"].astype(str).str.strip()
+
             matched = df_users[
-                (df_users["닉네임"].str.strip() == login_name.strip()) &
-                (df_users["비밀번호"].astype(str).str.strip() == login_pw.strip())
+                (df_users["닉네임"] == login_name.strip()) &
+                (df_users["비밀번호"] == login_pw.strip())
             ]
+
             if not matched.empty:
                 st.session_state["user"] = login_name
                 st.session_state["is_admin"] = login_name in ADMIN_USERS
                 st.query_params.update(nickname=login_name, key=login_pw)
+                st.rerun()
             else:
-                st.error("일치하는 사용자 정보가 없습니다.")
+                st.error("❌ 일치하는 사용자 정보가 없습니다.")
                 st.stop()
         except Exception as e:
             st.error(f"CSV 로드 오류: {e}")
