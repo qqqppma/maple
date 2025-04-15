@@ -1,81 +1,96 @@
 import streamlit as st
-from db import init_db, register_user, login_user, get_user_nickname
-from secret_guild import get_character_info_from_nexon, get_guild_members_selenium
+import pandas as pd
+import uuid
+import os
 
-ALLOWED_GUILD_NAME = "악마"
+# ===== 설정 =====
+USER_FILE = "길드원 목록.csv"  # 사용자 정보 (닉네임 포함)
+DATA_FILE = "board.csv"
+ADMIN_USERS = ["o차월o", "죤냇", "자리스틸의왕"]  # 관리자 닉네임 리스트
 
-init_db()
+# ===== 사용자 인증 =====
+def is_valid_user(nickname):
+    if os.path.exists(USER_FILE):
+        df_users = pd.read_csv(USER_FILE)
+        return nickname in df_users["닉네임"].values
+    return False
 
-if 'logged_in' not in st.session_state:
-    st.session_state.logged_in = False
-    st.session_state.user_id = ""
-    st.session_state.char_name = ""
-    st.session_state.is_guild_member = False
+# 로그인 처리
+if "user" not in st.session_state:
+    nickname = st.text_input("닉네임을 입력하세요")
+    if st.button("로그인"):
+        if is_valid_user(nickname):
+            st.session_state["user"] = nickname
+            st.rerun()
+        else:
+            st.error("등록되지 않은 닉네임입니다.")
+    st.stop()
 
-st.title("🧙‍♂️ 악마길드 로그인 시스템")
+user = st.session_state["user"]
+is_admin = user in ADMIN_USERS
 
-def logout():
-    st.session_state.logged_in = False
-    st.session_state.user_id = ""
-    st.session_state.char_name = ""
-    st.session_state.is_guild_member = False
-    st.rerun()
-
-if st.session_state.logged_in:
-    st.success(f"{st.session_state.user_id}님 환영합니다!")
-
-    nickname = get_user_nickname(st.session_state.user_id)
-    st.write("내 캐릭터 이름:", nickname)
-
-    char_info = get_character_info_from_nexon(nickname)
-    st.write("🔍 검색된 캐릭터 정보:", char_info)
-
-    if not char_info:
-        st.error("❌ 캐릭터 정보를 불러올 수 없습니다.")
-        if st.button("로그아웃"):
-            logout()
-        st.stop()
-
-    guild_members = get_guild_members_selenium(ALLOWED_GUILD_NAME)
-    st.write("📋 길드원 수:", len(guild_members))
-
-    if char_info["character_name"] in guild_members:
-        st.session_state.char_name = char_info["character_name"]
-        st.session_state.is_guild_member = True
+# ===== 데이터 로딩 / 저장 =====
+def load_data():
+    if os.path.exists(DATA_FILE):
+        return pd.read_csv(DATA_FILE)
     else:
-        st.error("⚠️ 길드원이 아닙니다. 메뉴 접근 불가")
-        if st.button("로그아웃"):
-            logout()
-        st.stop()
+        return pd.DataFrame(columns=["id", "작성자", "제목", "내용"])
 
-    if st.session_state.is_guild_member:
-        st.subheader("📋 길드원 전용 메뉴")
-        menu = st.selectbox("메뉴를 선택하세요", ["메뉴1", "메뉴2", "메뉴3"])
-        st.info(f"선택한 메뉴: {menu}")
-        if st.button("로그아웃"):
-            logout()
+def save_data(df):
+    df.to_csv(DATA_FILE, index=False)
 
-else:
-    tab1, tab2 = st.tabs(["🔐 로그인", "📝 회원가입"])
-    with tab1:
-        user_id = st.text_input("아이디", key="login_id")
-        pw = st.text_input("비밀번호", type="password", key="login_pw")
-        if st.button("로그인", key="login_btn"):
-            if login_user(user_id, pw):
-                st.session_state.logged_in = True
-                st.session_state.user_id = user_id
-                st.rerun()
-            else:
-                st.error("❌ 로그인 실패: 아이디 또는 비밀번호가 틀렸습니다.")
-    with tab2:
-        new_id = st.text_input("새 아이디", key="register_id")
-        new_pw = st.text_input("비밀번호", type="password", key="register_pw")
-        nickname = st.text_input("캐릭터 이름(닉네임)", key="register_nick")
-        if st.button("회원가입", key="register_btn"):
-            try:
-                register_user(new_id, new_pw, nickname)
-                st.success("✅ 회원가입 성공! 로그인해 주세요.")
-            except ValueError as ve:
-                st.error(str(ve))
-            except Exception as e:
-                st.error(f"회원가입 중 오류 발생: {e}")
+# ===== 글 작성 =====
+st.title("📋 게시판")
+st.markdown(f"**👤 로그인 사용자:** `{user}`")
+st.subheader("✏️ 글 작성하기")
+
+title = st.text_input("제목을 입력하세요:")
+new_content = st.text_area("내용을 입력하세요:")
+if st.button("등록"):
+    if title.strip() and new_content.strip():
+        df = load_data()
+        new_row = {"id": str(uuid.uuid4()), "작성자": user, "제목": title, "내용": new_content}
+        df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+        save_data(df)
+        st.success("등록 완료!")
+        st.rerun()
+    else:
+        st.warning("제목과 내용을 모두 입력해주세요.")
+
+# ===== 게시글 목록 표시 =====
+st.subheader("📄 게시글 목록")
+df = load_data()
+st.dataframe(df[["작성자", "제목", "내용"]], use_container_width=True)
+
+# ===== 관리자 기능 =====
+if is_admin and not df.empty:
+    st.markdown("---")
+    st.markdown("### 🔧 관리자 전용 - 글 수정/삭제")
+
+    df = df[["id", "작성자", "제목", "내용"]]  # 열 순서 명시적으로 재정렬
+    df["제목"] = df["제목"].fillna("(제목 없음)")
+    df["글 식별"] = df.index.astype(str) + " - " + df["제목"]
+
+    selected_display = st.selectbox("수정할 글 선택", df["글 식별"].tolist())
+    selected_index = int(selected_display.split(" - ")[0])
+
+    selected_title = df.iloc[selected_index]["제목"]
+    selected_content = df.iloc[selected_index]["내용"]
+
+    updated_title = st.text_input("제목 수정", value=selected_title, key="edit_title")
+    updated_content = st.text_area("내용 수정", value=selected_content, key="edit_area")
+
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("수정 저장"):
+            df.at[selected_index, "제목"] = updated_title
+            df.at[selected_index, "내용"] = updated_content
+            save_data(df)
+            st.success("수정 완료!")
+            st.rerun()
+    with col2:
+        if st.button("삭제"):
+            df = df.drop(index=selected_index).reset_index(drop=True)
+            save_data(df)
+            st.success("삭제 완료!")
+            st.rerun()
