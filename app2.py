@@ -47,7 +47,7 @@ if "user" not in st.session_state:
             csv_url = "https://raw.githubusercontent.com/qqqppma/maple/main/guild_user.csv"  # 사용자 csv URL
             df_users = pd.read_csv(csv_url)
             matched = df_users[
-                (df_users["캐릭터명"] == login_name) & (df_users["비밀번호"] == login_pw)
+                (df_users["닉네임"] == login_name) & (df_users["비밀번호"] == login_pw)
             ]
             if not matched.empty:
                 st.session_state["user"] = login_name
