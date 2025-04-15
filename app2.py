@@ -73,6 +73,20 @@ if "user" not in st.session_state:
             # 닉네임/비밀번호 공백 제거
             df_users["닉네임"] = df_users["닉네임"].astype(str).str.strip()
             df_users["비밀번호"] = df_users["비밀번호"].astype(str).str.strip()
+            
+            # 🔍 디버깅 출력 ①: 원본 데이터 확인
+            st.write("📄 CSV 데이터 미리보기")
+            st.dataframe(df_users)
+
+            # 닉네임/비밀번호 공백 제거
+            df_users["닉네임"] = df_users["닉네임"].astype(str).str.strip()
+            df_users["비밀번호"] = df_users["비밀번호"].astype(str).str.strip()
+
+            # 🔍 디버깅 출력 ②: 입력값 확인
+            st.write("🔍 입력된 닉네임:", login_name)
+            st.write("🔍 입력된 비밀번호:", login_pw)
+            st.write("📋 CSV 닉네임 목록:", df_users["닉네임"].tolist())
+
 
             matched = df_users[
                 (df_users["닉네임"] == login_name.strip()) &
