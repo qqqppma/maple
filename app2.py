@@ -215,11 +215,17 @@ elif menu == "부캐릭터 관리":
 
     st.markdown("---")
     st.subheader("📊 부캐릭터 요약")
+    selected_main_filter = st.selectbox(
+        "🔍 본캐 닉네임으로 검색", ["전체 보기"] + main_names, index=0
+    )
+
 
     if df_sub.empty or "main_name" not in df_sub.columns:
         st.info("등록된 부캐릭터가 없습니다.")
     else:
         for main in main_names:
+            if selected_main_filter != "전체 보기" and main != selected_main_filter:
+                continue
             df_main = df_sub[df_sub["main_name"] == main]
             if not df_main.empty:
                 display_df = df_main.rename(columns={
