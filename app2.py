@@ -84,7 +84,7 @@ if "user" not in st.session_state:
 nickname = st.session_state["user"]
 is_admin = st.session_state["is_admin"]
 
-menu = st.sidebar.radio("메뉴", ["길드원 등록", "부캐릭터 관리", "메뉴3", "메뉴4"])
+menu = st.sidebar.radio("메뉴", ["길드원 등록", "부캐릭터 관리", "만들게", "한두개가","아니네요"])
 
 if menu == "길드원 등록":
     st.subheader("👥 길드원 정보 등록")
