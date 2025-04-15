@@ -68,7 +68,6 @@ if is_admin and not df.empty:
     st.markdown("### 🔧 관리자 전용 - 글 수정/삭제")
 
     df = df[["id", "작성자", "제목", "내용"]]  # 열 순서 명시적으로 재정렬
-
     df["제목"] = df["제목"].fillna("(제목 없음)")
     df["글 식별"] = df.index.astype(str) + " - " + df["제목"]
 
@@ -77,7 +76,6 @@ if is_admin and not df.empty:
 
     selected_title = df.iloc[selected_index]["제목"]
     selected_content = df.iloc[selected_index]["내용"]
-
 
     updated_title = st.text_input("제목 수정", value=selected_title, key="edit_title")
     updated_content = st.text_area("내용 수정", value=selected_content, key="edit_area")
