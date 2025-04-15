@@ -179,9 +179,11 @@ elif menu == "부캐릭터 관리":
     with st.form("add_sub_form"):
         selected_main = st.selectbox("본캐 닉네임 선택", main_names)
         sub_name = st.text_input("부캐 이름")
-        suro = st.checkbox("수로 참여")
+        suro_text = st.selectbox("수로 참여", ["참여", "미참여"])
+        suro = suro_text =="참여"
         suro_score = st.number_input("수로 점수", min_value=0, step=1)
-        flag = st.text_input("플래그 종류")
+        flag_text = st.selectbox("플래그 참여", ["참여", "미참여"])
+        flag = flag_text =="참여"
         flag_score = st.number_input("플래그 점수", min_value=0, step=1)
         mission_point = st.number_input("주간미션포인트", min_value=0, step=1)
         submit_sub = st.form_submit_button("부캐 등록")
