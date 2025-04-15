@@ -12,6 +12,9 @@ HEADERS = {
     "Content-Type": "application/json"
 }
 
+# 🔐 관리자 권한 유저 목록
+ADMIN_USERS = ["자리스틸의왕", "나영진", "죤냇", "o차월o"]
+
 # ✅ Supabase에 길드원 등록
 def insert_member(data):
     res = requests.post(
@@ -42,17 +45,16 @@ if "user" not in st.session_state:
     login_pw = st.text_input("비밀번호", type="password")
 
     if st.button("로그인"):
-        # GitHub CSV에서 불러오기
         try:
             csv_url = "https://raw.githubusercontent.com/qqqppma/maple/main/guild_user.csv"
-            df_users = pd.read_csv(csv_url, encoding="utf-8-sig")  # <-- ✅ 인코딩 문제 해결 핵심
+            df_users = pd.read_csv(csv_url, encoding="utf-8-sig")
             matched = df_users[
                 (df_users["닉네임"].str.strip() == login_name.strip()) &
                 (df_users["비밀번호"].astype(str).str.strip() == login_pw.strip())
             ]
             if not matched.empty:
                 st.session_state["user"] = login_name
-                st.session_state["position"] = matched.iloc[0]["직위"]
+                st.session_state["is_admin"] = login_name in ADMIN_USERS
                 st.rerun()
             else:
                 st.error("일치하는 사용자 정보가 없습니다.")
@@ -62,7 +64,7 @@ if "user" not in st.session_state:
 
 # 로그인 된 사용자 정보
 nickname = st.session_state["user"]
-position = st.session_state["position"]
+is_admin = st.session_state["is_admin"]
 
 # 메뉴 구성
 menu = st.sidebar.radio("메뉴", ["길드원 등록"])
