@@ -38,7 +38,7 @@ st.title("🛡️ 악마길드 관리 시스템")
 
 if "user" not in st.session_state:
     st.subheader("🔐 로그인")
-    login_name = st.text_input("캐릭터명")
+    login_name = st.text_input("닉네임")
     login_pw = st.text_input("비밀번호", type="password")
 
     if st.button("로그인"):
