@@ -227,6 +227,13 @@ elif menu == "부캐릭터 관리":
         for main in main_names:
             df_main = display_df[display_df["main_name"] == main]
             if not df_main.empty:
+                display_df = df_main.rename(columns={
+                    "suro": "수로",
+                    "suro_score": "수로 점수",
+                    "flag": "플래그",
+                    "flag_score": "플래그 점수",
+                    "mission_point": "주간미션포인트"
+                })
                 st.markdown(f"### 🔹 {main} - 부캐 {len(df_main)}개")
                 st.dataframe(df_main[["sub_id", "sub_name", "수로", "수로 점수", "플래그", "플래그 점수", "주간미션포인트"]])
 
