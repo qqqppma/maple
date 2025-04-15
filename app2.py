@@ -22,8 +22,6 @@ def insert_member(data):
         headers=HEADERS,
         json=data
     )
-    st.write("🧪 응답 코드:", res.status_code)
-    st.write("🔍 응답 본문:", res.text)
     return res.status_code == 201
 
 # ✅ Supabase에서 길드원 목록 불러오기
@@ -35,6 +33,23 @@ def get_members():
     if res.status_code == 200:
         return res.json()
     return []
+
+# ✅ 길드원 삭제
+def delete_member(member_id):
+    res = requests.delete(
+        f"{SUPABASE_URL}/rest/v1/Members?id=eq.{member_id}",
+        headers=HEADERS
+    )
+    return res.status_code == 204
+
+# ✅ 길드원 수정
+def update_member(member_id, data):
+    res = requests.patch(
+        f"{SUPABASE_URL}/rest/v1/Members?id=eq.{member_id}",
+        headers=HEADERS,
+        json=data
+    )
+    return res.status_code == 204
 
 # ✅ Streamlit 로그인 인터페이스
 st.title("🛡️ 악마길드 관리 시스템")
@@ -76,6 +91,47 @@ if menu == "길드원 등록":
     df = pd.DataFrame(members)
     if not df.empty:
         st.dataframe(df)
+        if is_admin:
+            selected_name = st.selectbox("수정 또는 삭제할 닉네임 선택", df["nickname"])
+            selected_row = df[df["nickname"] == selected_name].iloc[0]
+
+            with st.form("edit_form"):
+                nickname_edit = st.text_input("닉네임", selected_row["nickname"])
+                position_edit = st.text_input("직위", selected_row["position"])
+                active_edit = st.selectbox("활동 여부", [True, False], index=0 if selected_row["active"] else 1)
+                resume_date_edit = st.date_input("활동 재개일", value=pd.to_datetime(selected_row["resume_date"]).date() if selected_row["resume_date"] else date.today())
+                join_date_edit = st.date_input("가입일", value=pd.to_datetime(selected_row["join_date"]).date())
+                note_edit = st.text_input("비고", selected_row["note"])
+                guild_name_edit = st.text_input("길드명", selected_row["guild_name"])
+                withdrawn_edit = st.selectbox("탈퇴 여부", [False, True], index=1 if selected_row["withdrawn"] else 0)
+                withdraw_date_edit = st.date_input("탈퇴일", value=pd.to_datetime(selected_row["withdraw_date"]).date() if selected_row["withdraw_date"] else date.today())
+
+                update_btn = st.form_submit_button("✏️ 수정")
+                delete_btn = st.form_submit_button("🗑 삭제")
+
+                if update_btn:
+                    updated_data = {
+                        "nickname": nickname_edit,
+                        "position": position_edit,
+                        "active": active_edit,
+                        "resume_date": resume_date_edit.isoformat(),
+                        "join_date": join_date_edit.isoformat(),
+                        "note": note_edit,
+                        "guild_name": guild_name_edit,
+                        "withdrawn": withdrawn_edit,
+                        "withdraw_date": withdraw_date_edit.isoformat()
+                    }
+                    if update_member(selected_row["id"], updated_data):
+                        st.success("수정 완료!")
+                        st.rerun()
+                    else:
+                        st.error("수정 실패!")
+                elif delete_btn:
+                    if delete_member(selected_row["id"]):
+                        st.success("삭제 완료!")
+                        st.rerun()
+                    else:
+                        st.error("삭제 실패!")
     else:
         st.info("아직 등록된 길드원이 없습니다.")
 
