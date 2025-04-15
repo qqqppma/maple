@@ -131,6 +131,7 @@ st.sidebar.write(f"👤 로그인: {nickname}")
 if st.sidebar.button("로그아웃"):
     st.session_state.clear()
     st.query_params.clear()
+    st.success("👋 로그아웃 되었습니다. 다시 로그인 해주세요.")
     st.rerun()
 
 
