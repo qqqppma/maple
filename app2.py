@@ -91,7 +91,6 @@ def get_position_priority(pos):
     return priority.get(pos, 99)
 
 def korean_first_sort(value):
-    # 한글 시작 문자가 아닌 경우 우선순위를 뒤로
     return (not bool(re.match(r"[가-힣]", str(value)[0])), value)
 
 if menu == "길드원 등록":
@@ -113,12 +112,12 @@ if menu == "길드원 등록":
                 nickname_edit = st.text_input("닉네임", selected_row["nickname"])
                 position_edit = st.text_input("직위", selected_row["position"])
                 active_edit = st.selectbox("활동 여부", [True, False], index=0 if selected_row["active"] else 1)
-                resume_date_edit = st.date_input("활동 재개일", value=pd.to_datetime(selected_row["resume_date"]).date() if selected_row["resume_date"] else date.today())
+                resume_date_edit = st.date_input("활동 재개일", value=pd.to_datetime(selected_row["resume_date"]).date() if selected_row["resume_date"] else None)
                 join_date_edit = st.date_input("가입일", value=pd.to_datetime(selected_row["join_date"]).date())
                 note_edit = st.text_input("비고", selected_row["note"])
                 guild_name_edit = st.text_input("길드명", selected_row["guild_name"])
                 withdrawn_edit = st.selectbox("탈퇴 여부", [False, True], index=1 if selected_row["withdrawn"] else 0)
-                withdraw_date_edit = st.date_input("탈퇴일", value=pd.to_datetime(selected_row["withdraw_date"]).date() if selected_row["withdraw_date"] else date.today())
+                withdraw_date_edit = st.date_input("탈퇴일", value=pd.to_datetime(selected_row["withdraw_date"]).date() if selected_row["withdraw_date"] else None)
 
                 update_btn = st.form_submit_button("✏️ 수정")
                 delete_btn = st.form_submit_button("🗑 삭제")
@@ -128,13 +127,20 @@ if menu == "길드원 등록":
                         "nickname": nickname_edit,
                         "position": position_edit,
                         "active": active_edit,
-                        "resume_date": resume_date_edit.isoformat(),
                         "join_date": join_date_edit.isoformat(),
                         "note": note_edit,
                         "guild_name": guild_name_edit,
-                        "withdrawn": withdrawn_edit,
-                        "withdraw_date": withdraw_date_edit.isoformat()
+                        "withdrawn": withdrawn_edit
                     }
+                    if resume_date_edit:
+                        updated_data["resume_date"] = resume_date_edit.isoformat()
+                    else:
+                        updated_data["resume_date"] = None
+                    if withdraw_date_edit:
+                        updated_data["withdraw_date"] = withdraw_date_edit.isoformat()
+                    else:
+                        updated_data["withdraw_date"] = None
+
                     if update_member(selected_row["id"], updated_data):
                         st.success("수정 완료!")
                         st.rerun()
