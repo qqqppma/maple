@@ -51,6 +51,10 @@ def update_submember(sub_id, data):
     res = requests.patch(f"{SUPABASE_URL}/rest/v1/SubMembers?sub_id=eq.{sub_id}", headers=HEADERS, json=data)
     return res.status_code == 204
 
+def delete_submember(sub_id):
+    res = requests.delete(f"{SUPABASE_URL}/rest/v1/SubMembers?sub_id=eq.{sub_id}", headers=HEADERS)
+    return res.status_code == 204
+
 # ✅ 로그인 처리
 st.title("🛡️ 악마길드 관리 시스템")
 
@@ -255,3 +259,10 @@ elif menu == "부캐릭터 관리":
                                 st.rerun()
                             else:
                                 st.error("🚫 수정 실패")
+
+                        if st.button("삭제", key=f"delete_{sub}"):
+                            if delete_submember(sub):
+                                st.success("🗑 삭제 완료")
+                                st.rerun()
+                            else:
+                                st.error("삭제 실패")
