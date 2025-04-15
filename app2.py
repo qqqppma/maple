@@ -74,9 +74,9 @@ if "user" not in st.session_state:
         df_users["닉네임"] = df_users["닉네임"].astype(str).str.strip()
         df_users["비밀번호"] = df_users["비밀번호"].astype(str).str.strip()
 
-        st.write("🔍 디코딩된 닉네임:", login_name)
-        st.write("🔍 디코딩된 비밀번호:", login_pw)
-        st.write("📋 CSV 닉네임 목록:", df_users["닉네임"].tolist())
+        # st.write("🔍 디코딩된 닉네임:", login_name)
+        # st.write("🔍 디코딩된 비밀번호:", login_pw)
+        # st.write("📋 CSV 닉네임 목록:", df_users["닉네임"].tolist())
 
         matched = df_users[
             (df_users["닉네임"] == login_name.strip()) &
