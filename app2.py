@@ -84,9 +84,9 @@ if "user" not in st.session_state:
 nickname = st.session_state["user"]
 is_admin = st.session_state["is_admin"]
 
-menu = st.sidebar.radio("메뉴", ["악마 길드원 정보보 등록", "부캐릭터 관리", "만들게", "한두개가","아니네요"])
+menu = st.sidebar.radio("메뉴", ["악마 길드원 정보 등록", "부캐릭터 관리", "만들게", "한두개가","아니네요"])
 
-if menu == "악마 길드원 정보보 등록":
+if menu == "악마 길드원 정보 등록":
     st.subheader("👥 길드원 정보 등록")
     members = get_members()
     df = pd.DataFrame(members)
