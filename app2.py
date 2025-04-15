@@ -3,6 +3,7 @@ import requests
 import pandas as pd
 from datetime import date
 import re
+import urllib.parse
 
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
 SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
@@ -61,8 +62,8 @@ st.title("\U0001F6E1️ 악마길드 관리 시스템")
 query_params = st.query_params
 if "user" not in st.session_state:
     if "nickname" in query_params and "key" in query_params:
-        login_name = query_params["nickname"][0]
-        login_pw = query_params["key"][0]
+        login_name = urllib.parse.unquote(query_params["nickname"][0])
+        login_pw = urllib.parse.unquote(query_params["key"][0])
         try:
             csv_url = "https://raw.githubusercontent.com/qqqppma/maple/main/guild_user.csv"
             df_users = pd.read_csv(csv_url, encoding="utf-8-sig")
