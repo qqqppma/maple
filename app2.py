@@ -198,8 +198,8 @@ elif menu == "부캐릭터 관리":
                 "suro": suro,
                 "suro_score": suro_score,
                 "flag": flag,
-                "flag_socre": flag_score,
-                "mission_poin": mission_point,
+                "flag_score": flag_score,
+                "mission_point": mission_point,
                 "created_by": nickname
             }
             if insert_submember(data):
