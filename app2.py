@@ -15,7 +15,6 @@ HEADERS = {
 ADMIN_USERS = ["자리스틸의왕", "나영진", "죤냇", "o차월o"]
 
 # ✅ Supabase 함수
-
 def get_members():
     res = requests.get(f"{SUPABASE_URL}/rest/v1/Members?select=*&order=id.desc", headers=HEADERS)
     if res.status_code == 200:
@@ -39,9 +38,8 @@ def insert_submember(data):
     res = requests.post(f"{SUPABASE_URL}/rest/v1/SubMembers", headers=HEADERS, json=data)
     if res.status_code != 201:
         st.error(f"에러 코드: {res.status_code}")
-        st.code(res.text)  # ← 여기에 Supabase가 보내는 에러 메시지 출력
+        st.code(res.text)
     return res.status_code == 201
-
 
 def get_submembers():
     res = requests.get(f"{SUPABASE_URL}/rest/v1/SubMembers?select=*&order=sub_id.asc", headers=HEADERS)
@@ -52,7 +50,6 @@ def get_submembers():
 def update_submember(sub_id, data):
     res = requests.patch(f"{SUPABASE_URL}/rest/v1/SubMembers?sub_id=eq.{sub_id}", headers=HEADERS, json=data)
     return res.status_code == 204
-
 
 # ✅ 로그인 처리
 st.title("🛡️ 악마길드 관리 시스템")
@@ -83,8 +80,7 @@ if "user" not in st.session_state:
 nickname = st.session_state["user"]
 is_admin = st.session_state["is_admin"]
 
-menu = st.sidebar.radio("메뉴", ["길드원 등록", "부캐릭터 관리","메뉴3","메뉴4"])
-st.sidebar.write(f"👉 선택된 메뉴: {menu}")
+menu = st.sidebar.radio("메뉴", ["길드원 등록", "부캐릭터 관리", "메뉴3", "메뉴4"])
 
 if menu == "길드원 등록":
     st.subheader("👥 길드원 정보 등록")
@@ -185,10 +181,10 @@ elif menu == "부캐릭터 관리":
         selected_main = st.selectbox("본캐 닉네임 선택", main_names)
         sub_name = st.text_input("부캐 이름")
         suro_text = st.selectbox("수로 참여", ["참여", "미참여"])
-        suro = suro_text =="참여"
+        suro = suro_text == "참여"
         suro_score = st.number_input("수로 점수", min_value=0, step=1)
         flag_text = st.selectbox("플래그 참여", ["참여", "미참여"])
-        flag = flag_text =="참여"
+        flag = flag_text == "참여"
         flag_score = st.number_input("플래그 점수", min_value=0, step=1)
         mission_point = st.number_input("주간미션포인트", min_value=0, step=1)
         submit_sub = st.form_submit_button("부캐 등록")
@@ -216,53 +212,46 @@ elif menu == "부캐릭터 관리":
     st.markdown("---")
     st.subheader("📊 부캐릭터 요약")
 
-    if not df_sub.empty:
-        display_df = df_sub.rename(columns={
-            "suro": "수로",
-            "suro_score": "수로 점수",
-            "flag": "플래그",
-            "flag_socre": "플래그 점수",
-            "mission_poin": "주간미션포인트"
-        })
-        for main in main_names:
-            df_main = display_df[display_df["main_name"] == main]
-            if not df_main.empty:
-                display_df = df_main.rename(columns={
-                    "suro": "수로",
-                    "suro_score": "수로 점수",
-                    "flag": "플래그",
-                    "flag_score": "플래그 점수",
-                    "mission_point": "주간미션포인트"
-                })
-                st.markdown(f"### 🔹 {main} - 부캐 {len(df_main)}개")
-                st.dataframe(df_main[["sub_id", "sub_name", "수로", "수로 점수", "플래그", "플래그 점수", "주간미션포인트"]])
+    for main in main_names:
+        df_main = df_sub[df_sub["main_name"] == main]
+        if not df_main.empty:
+            display_df = df_main.rename(columns={
+                "suro": "수로",
+                "suro_score": "수로 점수",
+                "flag": "플래그",
+                "flag_score": "플래그 점수",
+                "mission_point": "주간미션포인트"
+            })
+            st.markdown(f"### 🔹 {main} - 부캐 {len(display_df)}개")
+            st.dataframe(display_df[["sub_id", "sub_name", "수로", "수로 점수", "플래그", "플래그 점수", "주간미션포인트"]])
 
-                if is_admin:
-                    with st.expander(f"✏️ {main} 부캐 수정"):
-                        selected_sub = df_main["sub_id"].tolist()
-                        for sub in selected_sub:
-                            sub_row = df_sub[df_sub["sub_id"] == sub].iloc[0]
+            if is_admin:
+                with st.expander(f"✏️ {main} 부캐 수정"):
+                    selected_sub = display_df["sub_id"].tolist()
+                    for sub in selected_sub:
+                        sub_row = df_main[df_main["sub_id"] == sub].iloc[0]
 
-                            # 참여/미참여 selectbox 처리
-                            selected_suro = st.selectbox("수로 참여", ["참여", "미참여"], index=0 if sub_row["suro"] else 1, key=f"suro_select_{sub}")
-                            new_suro = selected_suro == "참여"
+                        selected_suro = st.selectbox("수로 참여", ["참여", "미참여"], index=0 if sub_row["suro"] else 1, key=f"suro_select_{sub}")
+                        new_suro = selected_suro == "참여"
 
-                            new_suro_score = st.number_input("수로 점수", min_value=0, step=1, value=sub_row["suro_score"] or 0, key=f"suro_score_{sub}")
+                        new_suro_score = st.number_input("수로 점수", min_value=0, step=1, value=sub_row.get("suro_score", 0), key=f"suro_score_{sub}")
 
-                            selected_flag = st.selectbox("플래그 참여", ["참여", "미참여"], index=0 if sub_row["flag"] else 1, key=f"flag_select_{sub}")
-                            new_flag = selected_flag == "참여"
-                            new_flag_score = st.number_input("플래그 점수", min_value=0, step=1, value=sub_row["flag_score"] or 0, key=f"flag_score_{sub}")
-                            new_mission = st.number_input("주간미션포인트", min_value=0, step=1, value=sub_row["mission_point"] or 0, key=f"mission_{sub}")
-                            if st.button("저장", key=f"save_{sub}"):
-                                update_data = {
-                                    "suro": new_suro,
-                                    "suro_score": new_suro_score,
-                                    "flag": new_flag,
-                                    "flag_score": new_flag_score,
-                                    "mission_point": new_mission
-                                }
-                                if update_submember(sub, update_data):
-                                    st.success("✅ 수정 완료")
-                                    st.rerun()
-                                else:
-                                    st.error("🚫 수정 실패")
+                        selected_flag = st.selectbox("플래그 참여", ["참여", "미참여"], index=0 if sub_row["flag"] else 1, key=f"flag_select_{sub}")
+                        new_flag = selected_flag == "참여"
+
+                        new_flag_score = st.number_input("플래그 점수", min_value=0, step=1, value=sub_row.get("flag_score", 0), key=f"flag_score_{sub}")
+                        new_mission = st.number_input("주간미션포인트", min_value=0, step=1, value=sub_row.get("mission_point", 0), key=f"mission_{sub}")
+
+                        if st.button("저장", key=f"save_{sub}"):
+                            update_data = {
+                                "suro": new_suro,
+                                "suro_score": new_suro_score,
+                                "flag": new_flag,
+                                "flag_score": new_flag_score,
+                                "mission_point": new_mission
+                            }
+                            if update_submember(sub, update_data):
+                                st.success("✅ 수정 완료")
+                                st.rerun()
+                            else:
+                                st.error("🚫 수정 실패")
