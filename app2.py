@@ -61,39 +61,37 @@ st.title("\U0001F6E1️ 악마길드 관리 시스템")
 
 query_params = st.query_params
 if "user" not in st.session_state:
-    nickname_encoded = query_params.get("nickname", "")
-    key_encoded = query_params.get("key", "")
+    nickname_encoded = query_params.get("nickname", None)
+    key_encoded = query_params.get("key", None)
 
-    login_name = urllib.parse.unquote(nickname_encoded)
-    login_pw = urllib.parse.unquote(key_encoded)
+    # ✅ 자동 로그인 조건 강화
+    if nickname_encoded and key_encoded:
+        login_name = urllib.parse.unquote(nickname_encoded)
+        login_pw = urllib.parse.unquote(key_encoded)
 
-    try:
-        csv_url = "https://raw.githubusercontent.com/qqqppma/maple/main/guild_user.csv"
-        df_users = pd.read_csv(csv_url, encoding="utf-8-sig")
+        try:
+            csv_url = "https://raw.githubusercontent.com/qqqppma/maple/main/guild_user.csv"
+            df_users = pd.read_csv(csv_url, encoding="utf-8-sig")
 
-        df_users["닉네임"] = df_users["닉네임"].astype(str).str.strip()
-        df_users["비밀번호"] = df_users["비밀번호"].astype(str).str.strip()
+            df_users["닉네임"] = df_users["닉네임"].astype(str).str.strip()
+            df_users["비밀번호"] = df_users["비밀번호"].astype(str).str.strip()
 
-        # st.write("🔍 디코딩된 닉네임:", login_name)
-        # st.write("🔍 디코딩된 비밀번호:", login_pw)
-        # st.write("📋 CSV 닉네임 목록:", df_users["닉네임"].tolist())
+            matched = df_users[
+                (df_users["닉네임"] == login_name.strip()) &
+                (df_users["비밀번호"] == login_pw.strip())
+            ]
 
-        matched = df_users[
-            (df_users["닉네임"] == login_name.strip()) &
-            (df_users["비밀번호"] == login_pw.strip())
-        ]
-
-        if not matched.empty:
-            st.session_state["user"] = login_name
-            st.session_state["is_admin"] = login_name in ADMIN_USERS
-            st.query_params.update(nickname=login_name, key=login_pw)
-            st.rerun()
-        else:
-            st.error("❌ 일치하는 사용자 정보가 없습니다.")
+            if not matched.empty:
+                st.session_state["user"] = login_name
+                st.session_state["is_admin"] = login_name in ADMIN_USERS
+                st.query_params.update(nickname=login_name, key=login_pw)
+                st.rerun()
+            else:
+                # 자동 로그인 실패 시 조용히 실패
+                st.stop()
+        except Exception as e:
+            st.error(f"CSV 로드 오류: {e}")
             st.stop()
-    except Exception as e:
-        st.error(f"CSV 로드 오류: {e}")
-        st.stop()
 
 if "user" not in st.session_state:
     st.subheader("\U0001F512 로그인")
@@ -123,6 +121,16 @@ if "user" not in st.session_state:
         except Exception as e:
             st.error(f"CSV 로드 오류: {e}")
     st.stop()
+
+nickname = st.session_state["user"]
+is_admin = st.session_state["is_admin"]
+
+st.sidebar.write(f"👤 로그인: {nickname}")
+if st.sidebar.button("로그아웃"):
+    st.session_state.clear()
+    st.query_params.clear()
+    st.query_params
+    st.rerun()
 
 nickname = st.session_state["user"]
 is_admin = st.session_state["is_admin"]
