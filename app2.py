@@ -37,7 +37,11 @@ def delete_member(member_id):
 # ✅ Supabase 부캐 테이블 관련 함수
 def insert_submember(data):
     res = requests.post(f"{SUPABASE_URL}/rest/v1/SubMembers", headers=HEADERS, json=data)
+    if res.status_code != 201:
+        st.error(f"에러 코드: {res.status_code}")
+        st.code(res.text)  # ← 여기에 Supabase가 보내는 에러 메시지 출력
     return res.status_code == 201
+
 
 def get_submembers():
     res = requests.get(f"{SUPABASE_URL}/rest/v1/SubMembers?select=*&order=sub_id.asc", headers=HEADERS)
@@ -48,6 +52,7 @@ def get_submembers():
 def update_submember(sub_id, data):
     res = requests.patch(f"{SUPABASE_URL}/rest/v1/SubMembers?sub_id=eq.{sub_id}", headers=HEADERS, json=data)
     return res.status_code == 204
+
 
 # ✅ 로그인 처리
 st.title("🛡️ 악마길드 관리 시스템")
