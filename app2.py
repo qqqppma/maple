@@ -113,7 +113,7 @@ if menu == "길드원 등록":
                 position_edit = st.text_input("직위", selected_row["position"])
                 active_edit = st.selectbox("활동 여부", [True, False], index=0 if selected_row["active"] else 1)
                 resume_date_edit = st.date_input("활동 재개일", value=pd.to_datetime(selected_row["resume_date"]).date() if selected_row["resume_date"] else None)
-                join_date_edit = st.date_input("가입일", value=pd.to_datetime(selected_row["join_date"]).date())
+                join_date_edit = st.date_input("가입일", value=pd.to_datetime(selected_row["join_date"]).date() if selected_row["join_date"] else None)
                 note_edit = st.text_input("비고", selected_row["note"])
                 guild_name_edit = st.text_input("길드명", selected_row["guild_name"])
                 withdrawn_edit = st.selectbox("탈퇴 여부", [False, True], index=1 if selected_row["withdrawn"] else 0)
@@ -127,19 +127,13 @@ if menu == "길드원 등록":
                         "nickname": nickname_edit,
                         "position": position_edit,
                         "active": active_edit,
-                        "join_date": join_date_edit.isoformat(),
                         "note": note_edit,
                         "guild_name": guild_name_edit,
                         "withdrawn": withdrawn_edit
                     }
-                    if resume_date_edit:
-                        updated_data["resume_date"] = resume_date_edit.isoformat()
-                    else:
-                        updated_data["resume_date"] = None
-                    if withdraw_date_edit:
-                        updated_data["withdraw_date"] = withdraw_date_edit.isoformat()
-                    else:
-                        updated_data["withdraw_date"] = None
+                    updated_data["resume_date"] = resume_date_edit.isoformat() if resume_date_edit else None
+                    updated_data["join_date"] = join_date_edit.isoformat() if join_date_edit else None
+                    updated_data["withdraw_date"] = withdraw_date_edit.isoformat() if withdraw_date_edit else None
 
                     if update_member(selected_row["id"], updated_data):
                         st.success("수정 완료!")
@@ -160,7 +154,7 @@ if menu == "길드원 등록":
         position_input = st.text_input("직위")
         active = st.selectbox("활동 여부", [True, False])
         resume_date = st.date_input("활동 재개일", value=None)
-        join_date = st.date_input("가입일", value=date.today())
+        join_date = st.date_input("가입일", value=None)
         note = st.text_input("비고")
         guild_name = st.text_input("길드명")
         withdrawn = st.selectbox("탈퇴 여부", [False, True])
@@ -172,13 +166,14 @@ if menu == "길드원 등록":
                 "nickname": nickname_input,
                 "position": position_input,
                 "active": active,
-                "join_date": join_date.isoformat(),
                 "note": note,
                 "guild_name": guild_name,
                 "withdrawn": withdrawn
             }
             if resume_date:
                 data["resume_date"] = resume_date.isoformat()
+            if join_date:
+                data["join_date"] = join_date.isoformat()
             if withdraw_date:
                 data["withdraw_date"] = withdraw_date.isoformat()
 
