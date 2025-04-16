@@ -40,12 +40,12 @@ def get_mainmembers():
         return res.json()
     return []
 # 
-def update_mainember(sub_id, data):
-    res = requests.patch(f"{SUPABASE_URL}/rest/v1/MainMembers?sub_id=eq.{sub_id}", headers=HEADERS, json=data)
+def update_mainember(member_id, data):
+    res = requests.patch(f"{SUPABASE_URL}/rest/v1/MainMembers?sub_id=eq.{member_id}", headers=HEADERS, json=data)
     return res.status_code == 204
 
-def delete_submember(sub_id):
-    res = requests.delete(f"{SUPABASE_URL}/rest/v1/MainMembers?sub_id=eq.{sub_id}", headers=HEADERS)
+def delete_mainmember(member_id):
+    res = requests.delete(f"{SUPABASE_URL}/rest/v1/MainMembers?sub_id=eq.{member_id}", headers=HEADERS)
     return res.status_code == 204
 
 # ✅ Supabase 부캐 테이블 관련 함수
@@ -378,7 +378,7 @@ elif menu == "악마길드 길컨관리":
 
         with col2:
             if st.button("🗑 삭제", key="main_delete_btn"):
-                if delete_submember(selected_row["id"]):
+                if delete_mainmember(selected_row["id"]):
                     st.success("🗑 삭제 완료")
                     st.rerun()
                 else:
