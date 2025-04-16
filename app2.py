@@ -274,6 +274,9 @@ elif menu == "악마길드 길컨관리":
 
     if mainmembers:
         df_main = pd.DataFrame(mainmembers)
+        # ✅ ID를 자동으로 다시 부여
+        df_main = df_main.reset_index(drop=True)
+        df_main["id"] = df_main.index + 1
         df_main_display = df_main.rename(columns={
             "nickname": "닉네임",
             "position": "직위",
@@ -452,6 +455,9 @@ elif menu == "부캐릭터 관리":
                 continue
             df_main = df_sub[df_sub["main_name"] == main]
             if not df_main.empty:
+                # ✅ ID 재정렬
+                df_sub = df_sub.reset_index(drop=True)  
+                df_sub["id"] = df_sub.index + 1
                 display_df = df_main.rename(columns={
                     "sub_name": "부캐 닉네임",
                     "suro": "수로",
