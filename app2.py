@@ -33,6 +33,13 @@ def update_member(member_id, data):
 def delete_member(member_id):
     res = requests.delete(f"{SUPABASE_URL}/rest/v1/Members?id=eq.{member_id}", headers=HEADERS)
     return res.status_code == 204
+#전체 코드에서 사용되는 함수
+def get_position_priority(pos):
+            priority = {"길드마스터": 1, "부마스터": 2, "길드원": 3}
+            return priority.get(pos, 99)
+def korean_first_sort(value):
+            return (not bool(re.match(r"[가-힣]", str(value)[0])), value)
+
 # ✅ Supabase 본캐길드 길드컨트롤 관련 함수
 def get_mainmembers():
     res = requests.get(f"{SUPABASE_URL}/rest/v1/MainMembers?select=*&order=position.asc", headers=HEADERS)
@@ -158,13 +165,6 @@ if menu == "악마 길드원 정보 등록":
     if not df.empty:
         df["position"] = df["position"].fillna("")
         
-        
-
-        def get_position_priority(pos):
-            priority = {"길드마스터": 1, "부마스터": 2, "길드원": 3}
-            return priority.get(pos, 99)
-        def korean_first_sort(value):
-            return (not bool(re.match(r"[가-힣]", str(value)[0])), value)
         df = df.sort_values(by=["position", "nickname"],
                             key=lambda x: x.map(get_position_priority) if x.name == "position" else x.map(korean_first_sort))
         
@@ -275,7 +275,10 @@ elif menu == "악마길드 길컨관리":
     if mainmembers:
         df_main = pd.DataFrame(mainmembers)
         # ✅ ID를 자동으로 다시 부여
-        df_main = df_main.reset_index(drop=True)
+        df_main = df_main.sort_values(
+        by=["position", "nickname"],
+        key=lambda x: x.map(get_position_priority) if x.name == "position" else x.map(korean_first_sort)
+        ).reset_index(drop=True)
         df_main["id"] = df_main.index + 1
         df_main_display = df_main.rename(columns={
             "nickname": "닉네임",
