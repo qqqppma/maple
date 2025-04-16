@@ -290,22 +290,21 @@ elif menu == "악마길드 길컨관리":
     with st.form("main_member_add_form"):
         if is_admin and mainmembers:
             st.markdown("### ✏️ 메인 캐릭터 수정 및 삭제")
-    
+        
             selected = st.selectbox("수정/삭제할 닉네임 선택", [m["nickname"] for m in mainmembers])
             selected_row = [m for m in mainmembers if m["nickname"] == selected][0]
 
-            with st.form("edit_main_form"):
-                suro_input_edit = st.selectbox("수로 참여 여부", [True, False], index=0 if selected_row["suro"] else 1)
-                suro_score_edit = st.number_input("수로 점수", min_value=0, step=1, value=selected_row["suro_score"])
-                flag_input_edit = st.selectbox("플래그 참여 여부", [True, False], index=0 if selected_row["flag"] else 1)
-                flag_score_edit = st.number_input("플래그 점수", min_value=0, step=1, value=selected_row["flag_score"])
-                mission_point_edit = st.number_input("주간미션포인트", min_value=0, step=1, value=selected_row["mission_point"])
-                event_sum_edit = st.number_input("합산", min_value=0, step=1, value=selected_row["event_sum"])
+            suro_input_edit = st.selectbox("수로 참여 여부", [True, False], index=0 if selected_row["suro"] else 1)
+            suro_score_edit = st.number_input("수로 점수", min_value=0, step=1, value=selected_row["suro_score"])
+            flag_input_edit = st.selectbox("플래그 참여 여부", [True, False], index=0 if selected_row["flag"] else 1)
+            flag_score_edit = st.number_input("플래그 점수", min_value=0, step=1, value=selected_row["flag_score"])
+            mission_point_edit = st.number_input("주간미션포인트", min_value=0, step=1, value=selected_row["mission_point"])
+            event_sum_edit = st.number_input("합산", min_value=0, step=1, value=selected_row["event_sum"])
 
-                update_btn = st.form_submit_button("✅ 수정")
-                delete_btn = st.form_submit_button("🗑 삭제")
-
-                if update_btn:
+            # ✅ submit buttons OUTSIDE of any form
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("✅ 수정"):
                     updated = {
                         "suro": suro_input_edit,
                         "suro_score": suro_score_edit,
@@ -319,8 +318,8 @@ elif menu == "악마길드 길컨관리":
                         st.rerun()
                     else:
                         st.error("🚫 수정 실패")
-
-                if delete_btn:
+            with col2:
+                if st.button("🗑 삭제"):
                     if delete_submember(selected_row["id"]):
                         st.success("🗑 삭제 완료")
                         st.rerun()
