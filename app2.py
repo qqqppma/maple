@@ -410,6 +410,7 @@ elif menu == "부캐릭터 관리":
 
     with st.form("add_sub_form"):
         selected_main = st.selectbox("본캐 닉네임 선택", main_names)
+        guild_name1 = st.text_input("길드 이름")
         sub_name = st.text_input("부캐 이름")
         suro_text = st.selectbox("수로 참여", ["참여", "미참여"])
         suro = suro_text == "참여"
@@ -428,6 +429,7 @@ elif menu == "부캐릭터 관리":
             else:
                 data = {
                     "sub_id": sub_id,
+                    "guild_name1": guild_name1,
                     "sub_name": sub_name,
                     "main_name": selected_main,
                     "suro": suro,
@@ -462,6 +464,7 @@ elif menu == "부캐릭터 관리":
                 df_sub = df_sub.reset_index(drop=True)  
                 df_sub["id"] = df_sub.index + 1
                 display_df = df_main.rename(columns={
+                    "guild_name1": "부캐 길드",
                     "sub_name": "부캐 닉네임",
                     "suro": "수로",
                     "suro_score": "수로 점수",
@@ -471,7 +474,7 @@ elif menu == "부캐릭터 관리":
                 })
 
                 st.markdown(f"### 🔹 {main} - 부캐 {len(display_df)}개")
-                st.dataframe(display_df[["sub_id", "부캐 닉네임", "수로", "수로 점수", "플래그", "플래그 점수", "주간미션포인트"]])
+                st.dataframe(display_df[["sub_id","부캐 길드", "부캐 닉네임", "수로", "수로 점수", "플래그", "플래그 점수", "주간미션포인트"]])
 
                 if is_admin:
                     with st.expander(f"✏️ {main} 부캐 수정"):
