@@ -156,6 +156,7 @@ if menu == "악마 길드원 정보 등록":
         
         df = df.reset_index(drop=True)
         df["id"] = df.index + 1
+
         st.dataframe(df.reset_index(drop=True))
 
         if is_admin:
@@ -286,6 +287,7 @@ elif menu == "부캐릭터 관리":
             df_main = df_sub[df_sub["main_name"] == main]
             if not df_main.empty:
                 display_df = df_main.rename(columns={
+                    "sub_name": "부캐 닉네임",
                     "suro": "수로",
                     "suro_score": "수로 점수",
                     "flag": "플래그",
@@ -294,7 +296,7 @@ elif menu == "부캐릭터 관리":
                 })
 
                 st.markdown(f"### 🔹 {main} - 부캐 {len(display_df)}개")
-                st.dataframe(display_df[["sub_id", "sub_name", "수로", "수로 점수", "플래그", "플래그 점수", "주간미션포인트"]])
+                st.dataframe(display_df[["sub_id", "부캐 닉네임", "수로", "수로 점수", "플래그", "플래그 점수", "주간미션포인트"]])
 
                 if is_admin:
                     with st.expander(f"✏️ {main} 부캐 수정"):
