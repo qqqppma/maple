@@ -241,22 +241,25 @@ if menu == "악마 길드원 정보 등록":
 
         submitted = st.form_submit_button("등록")
         if submitted:
-            data = {
-                "nickname": nickname_input,
-                "position": position_input,
-                "active": active,
-                "note": note,
-                "guild_name": guild_name,
-                "withdrawn": withdrawn,
-                "resume_date": resume_date.isoformat() if resume_date else None,
-                "join_date": join_date.isoformat() if join_date else None,
-                "withdraw_date": withdraw_date.isoformat() if withdraw_date else None
-            }
-            if insert_member(data):
-                st.success("✅ 길드원이 등록되었습니다!")
-                st.rerun()
+            if nickname_input in df["nickname"].values:
+                st.warning(f"⚠️ '{nickname_input}' 닉네임은 이미 등록되어 있습니다.")
             else:
-                st.error("🚫 등록에 실패했습니다. 데이터를 다시 확인해주세요.")
+                data = {
+                    "nickname": nickname_input,
+                    "position": position_input,
+                    "active": active,
+                    "note": note,
+                    "guild_name": guild_name,
+                    "withdrawn": withdrawn,
+                    "resume_date": resume_date.isoformat() if resume_date else None,
+                    "join_date": join_date.isoformat() if join_date else None,
+                    "withdraw_date": withdraw_date.isoformat() if withdraw_date else None
+                }
+                if insert_member(data):
+                    st.success("✅ 길드원이 등록되었습니다!")
+                    st.rerun()
+                else:
+                    st.error("🚫 등록에 실패했습니다. 데이터를 다시 확인해주세요.")
 elif menu == "악마길드 길컨관리":
     st.subheader("👥악마길드 길드컨트롤 관리")
 
@@ -312,24 +315,27 @@ elif menu == "악마길드 길컨관리":
         submitted = st.form_submit_button("등록")
 
         if submitted:
-            new_data = {
-                "nickname": nickname_input,
-                "position": position_value,
-                "suro": suro_input,
-                "suro_score": suro_score_input,
-                "flag": flag_input,
-                "flag_score": flag_score_input,
-                "mission_point": mission_point_input,
-                "event_sum": event_sum_input
-            }
-
-            res = requests.post(f"{SUPABASE_URL}/rest/v1/MainMembers", headers=HEADERS, json=new_data)
-            if res.status_code == 201:
-                st.success("✅ 메인 캐릭터가 등록되었습니다!")
-                st.rerun()
+            if nickname_input in df_main["nickname"].values:
+                st.warning(f"⚠️ '{nickname_input}' 닉네임은 이미 메인 캐릭터로 등록되어 있습니다.")
             else:
-                st.error(f"❌ 등록 실패! 에러 코드: {res.status_code}")
-                st.code(res.text)
+                new_data = {
+                    "nickname": nickname_input,
+                    "position": position_value,
+                    "suro": suro_input,
+                    "suro_score": suro_score_input,
+                    "flag": flag_input,
+                    "flag_score": flag_score_input,
+                    "mission_point": mission_point_input,
+                    "event_sum": event_sum_input
+                }
+
+                res = requests.post(f"{SUPABASE_URL}/rest/v1/MainMembers", headers=HEADERS, json=new_data)
+                if res.status_code == 201:
+                    st.success("✅ 메인 캐릭터가 등록되었습니다!")
+                    st.rerun()
+                else:
+                    st.error(f"❌ 등록 실패! 에러 코드: {res.status_code}")
+                    st.code(res.text)
 
     # ✅ 수정/삭제 섹션 (등록 폼 밖에서 별도로 처리)
     if is_admin and mainmembers:
@@ -411,22 +417,25 @@ elif menu == "부캐릭터 관리":
         if submit_sub:
             count = sum(df_sub['main_name'] == selected_main) + 1 if not df_sub.empty else 1
             sub_id = f"{selected_main}_{count}"
-            data = {
-                "sub_id": sub_id,
-                "sub_name": sub_name,
-                "main_name": selected_main,
-                "suro": suro,
-                "suro_score": suro_score,
-                "flag": flag,
-                "flag_score": flag_score,
-                "mission_point": mission_point,
-                "created_by": nickname
-            }
-            if insert_submember(data):
-                st.success(f"✅ {sub_id} 등록 완료")
-                st.rerun()
+            if not df_sub[(df_sub["main_name"] == selected_main) & (df_sub["sub_name"] == sub_name)].empty:
+                st.warning(f"⚠️ '{selected_main}'의 부캐 '{sub_name}'은 이미 등록되어 있습니다.")
             else:
-                st.error("🚫 등록 실패")
+                data = {
+                    "sub_id": sub_id,
+                    "sub_name": sub_name,
+                    "main_name": selected_main,
+                    "suro": suro,
+                    "suro_score": suro_score,
+                    "flag": flag,
+                    "flag_score": flag_score,
+                    "mission_point": mission_point,
+                    "created_by": nickname
+                }
+                if insert_submember(data):
+                    st.success(f"✅ {sub_id} 등록 완료")
+                    st.rerun()
+                else:
+                    st.error("🚫 등록 실패")
 
     st.markdown("---")
     st.subheader("📊 부캐릭터 요약")
