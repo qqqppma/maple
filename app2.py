@@ -291,7 +291,13 @@ elif menu == "악마길드 길컨관리":
         st.markdown("### ➕ 메인 캐릭터 등록")
 
         nickname_input = st.selectbox("닉네임", member_nicknames, key="nickname_input")
-        position_value = member_dict.get(nickname_input, "직위 정보 없음")
+        # ✅ 여기에 끼워 넣으세요 (직위 DataFrame 방식으로 가져오기)
+        df_members = pd.DataFrame(members)
+        row = df_members[df_members["nickname"] == nickname_input]
+        if not row.empty:
+            position_value = row.iloc[0]["position"]
+        else:
+            position_value = "직위 정보 없음"
         st.markdown(f"**직위:** `{position_value}`")
 
         suro_input = st.selectbox("수로 참여 여부", [True, False], key="suro_input")
