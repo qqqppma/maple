@@ -261,7 +261,7 @@ elif menu == "악마길드 길컨관리":
     st.subheader("👥악마길드 길드컨트롤 관리")
 
     mainmembers = get_mainmembers()
-    st.write("📦 가져온 mainmembers:", mainmembers)
+    # st.write("📦 가져온 mainmembers:", mainmembers)
 
     members = get_members()
 
