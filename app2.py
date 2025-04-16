@@ -454,8 +454,8 @@ elif menu == "부캐릭터 관리":
         df_sub = df_sub.reset_index(drop=True)       # 인덱스 재정렬
         df_sub["id"] = df_sub.index + 1              # id 다시 부여
         display_all_df = df_sub.rename(columns={
-            "id": "id",
-            "sub_id": "ID",
+            "id": "ID",
+            "sub_id": "Sub ID",
             "guild_name1": "부캐 길드",
             "sub_name": "부캐 닉네임",
             "main_name": "본캐 닉네임",
