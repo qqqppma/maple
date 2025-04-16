@@ -301,30 +301,30 @@ elif menu == "악마길드 길컨관리":
             mission_point_edit = st.number_input("주간미션포인트", min_value=0, step=1, value=selected_row["mission_point"])
             event_sum_edit = st.number_input("합산", min_value=0, step=1, value=selected_row["event_sum"])
 
-            # ✅ submit buttons OUTSIDE of any form
-            col1, col2 = st.columns(2)
-            with col1:
-                if st.button("✅ 수정"):
-                    updated = {
-                        "suro": suro_input_edit,
-                        "suro_score": suro_score_edit,
-                        "flag": flag_input_edit,
-                        "flag_score": flag_score_edit,
-                        "mission_point": mission_point_edit,
-                        "event_sum": event_sum_edit
-                    }
-                    if update_mainember(selected_row["id"], updated):
-                        st.success("✅ 수정 완료")
-                        st.rerun()
-                    else:
-                        st.error("🚫 수정 실패")
-            with col2:
-                if st.button("🗑 삭제"):
-                    if delete_submember(selected_row["id"]):
-                        st.success("🗑 삭제 완료")
-                        st.rerun()
-                    else:
-                        st.error("🚫 삭제 실패")
+            update_btn = st.form_submit_button("✅ 수정")
+            delete_btn = st.form_submit_button("🗑 삭제")
+
+            if update_btn:
+                updated = {
+                    "suro": suro_input_edit,
+                    "suro_score": suro_score_edit,
+                    "flag": flag_input_edit,
+                    "flag_score": flag_score_edit,
+                    "mission_point": mission_point_edit,
+                    "event_sum": event_sum_edit
+                }
+                if update_mainember(selected_row["id"], updated):
+                    st.success("✅ 수정 완료")
+                    st.rerun()
+                else:
+                    st.error("🚫 수정 실패")
+
+            if delete_btn:
+                if delete_submember(selected_row["id"]):
+                    st.success("🗑 삭제 완료")
+                    st.rerun()
+                else:
+                    st.error("🚫 삭제 실패")
 
         st.markdown("### ➕ 메인 캐릭터 등록")
 
