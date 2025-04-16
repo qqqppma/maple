@@ -260,23 +260,63 @@ if menu == "악마 길드원 정보 등록":
 elif menu == "악마길드 길컨관리":
     st.subheader("👥악마길드 길드컨트롤 관리")
     mainmembers = get_mainmembers()
+
     if not mainmembers:
         st.info("기록된 길드컨트롤 정보가 없습니다.")
     else:
-        main_names = [m['nickname'] for m in mainmembers]
+        # ✅ 데이터프레임 준비
         df_main = pd.DataFrame(mainmembers)
         df_main_display = df_main.rename(columns={
-            "nickname" : "닉네임",
-            "position" : "직위",
-            "suro" : "수로 참여 여부",
-            "suro_score" : "수로 점수",
-            "flag" : "플래그 참여 여부",
-            "flag_score" : "플래그 점수",
-            "mission_point" : "주간미션포인트",
-            "event_sum" : "합산",
+            "nickname": "닉네임",
+            "position": "직위",
+            "suro": "수로 참여 여부",
+            "suro_score": "수로 점수",
+            "flag": "플래그 참여 여부",
+            "flag_score": "플래그 점수",
+            "mission_point": "주간미션포인트",
+            "event_sum": "합산",
         })
-        
+
+        # ✅ 등록된 리스트 보여주기
         st.dataframe(df_main_display.reset_index(drop=True))
+
+        # ✅ 새로운 캐릭터 등록 폼
+        with st.form("main_member_add_form"):
+            st.markdown("### ➕ 메인 캐릭터 등록")
+
+            nickname_input = st.text_input("닉네임")
+            position_input = st.text_input("직위")
+            suro_input = st.selectbox("수로 참여 여부", [True, False])
+            suro_score_input = st.number_input("수로 점수", min_value=0, step=1)
+            flag_input = st.selectbox("플래그 참여 여부", [True, False])
+            flag_score_input = st.number_input("플래그 점수", min_value=0, step=1)
+            mission_point_input = st.number_input("주간미션포인트", min_value=0, step=1)
+            event_sum_input = st.number_input("합산", min_value=0, step=1)
+
+            submitted = st.form_submit_button("등록")
+
+            if submitted:
+                new_data = {
+                    "nickname": nickname_input,
+                    "position": position_input,
+                    "suro": suro_input,
+                    "suro_score": suro_score_input,
+                    "flag": flag_input,
+                    "flag_score": flag_score_input,
+                    "mission_point": mission_point_input,
+                    "event_sum": event_sum_input
+                }
+
+                res = requests.post(f"{SUPABASE_URL}/rest/v1/MainMembers", headers=HEADERS, json=new_data)
+                if res.status_code == 201:
+                    st.success("✅ 메인 캐릭터가 등록되었습니다!")
+                    st.rerun()
+                else:
+                    st.error(f"❌ 등록 실패! 에러 코드: {res.status_code}")
+                    st.code(res.text)
+
+                
+                
 
 
 elif menu == "부캐릭터 관리":
