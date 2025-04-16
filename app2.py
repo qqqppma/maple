@@ -149,7 +149,7 @@ if st.sidebar.button("로그아웃"):
 nickname = st.session_state["user"]
 is_admin = st.session_state["is_admin"]
 
-menu = st.sidebar.radio("메뉴", ["악마 길드원 정보 등록", "악마길드 길컨관리", "부캐릭터 관리", "만들게", "한두개가","아니네요"])
+menu = st.sidebar.radio("메뉴", ["악마 길드원 정보 등록", "악마길드 길컨관리", "부캐릭터 관리"])
 
 if menu == "악마 길드원 정보 등록":
     st.subheader("👥 길드원 정보 등록")
@@ -261,9 +261,7 @@ elif menu == "악마길드 길컨관리":
     st.subheader("👥악마길드 길드컨트롤 관리")
     mainmembers = get_mainmembers()
 
-    if not mainmembers:
-        st.info("기록된 길드컨트롤 정보가 없습니다.")
-    else:
+    if mainmembers:
         # ✅ 데이터프레임 준비
         df_main = pd.DataFrame(mainmembers)
         df_main_display = df_main.rename(columns={
@@ -276,9 +274,11 @@ elif menu == "악마길드 길컨관리":
             "mission_point": "주간미션포인트",
             "event_sum": "합산",
         })
-
         # ✅ 등록된 리스트 보여주기
         st.dataframe(df_main_display.reset_index(drop=True))
+    else:
+        st.info("기록된 길드컨트롤 정보가 없습니다.")
+    
 
         # ✅ 새로운 캐릭터 등록 폼
         with st.form("main_member_add_form"):
