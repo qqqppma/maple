@@ -39,7 +39,7 @@ def get_mainmembers():
     if res.status_code == 200:
         return res.json()
     return []
-# 
+
 def update_mainember(member_id, data):
     res = requests.patch(f"{SUPABASE_URL}/rest/v1/MainMembers?sub_id=eq.{member_id}", headers=HEADERS, json=data)
     return res.status_code == 204
@@ -377,6 +377,8 @@ elif menu == "악마길드 길컨관리":
                     st.error("🚫 수정 실패")
 
         with col2:
+            st.write("🧪 삭제 대상 ID 확인:", selected_row["id"])
+
             if st.button("🗑 삭제", key="main_delete_btn"):
                 if delete_mainmember(selected_row["id"]):
                     st.success("🗑 삭제 완료")
