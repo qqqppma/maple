@@ -465,7 +465,8 @@ elif menu == "부캐릭터 관리":
             "flag_score": "플래그 점수",
             "mission_point": "주간미션포인트"
         })
-        st.dataframe(display_all_df.reset_index(drop=True))
+        st.dataframe(display_all_df[["ID", "Sub ID", "부캐 길드","부캐 닉네임", "본캐 닉네임","수로", "수로 점수", "플래그", "플래그 점수", "주간미션포인트"
+                                     ]].reset_index(drop=True))
     else:
         st.info("등록된 부캐릭터가 없습니다.")
 
