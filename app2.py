@@ -447,6 +447,27 @@ elif menu == "부캐릭터 관리":
 
     st.markdown("---")
     st.subheader("📊 부캐릭터 요약")
+
+    # ✅ 부캐 전체 목록 테이블 추가 (이 위치!)
+    st.markdown("### 📑 등록된 전체 부캐릭터 목록")
+    if not df_sub.empty:
+        display_all_df = df_sub.rename(columns={
+            "sub_id": "ID",
+            "guild_name1": "부캐 길드",
+            "sub_name": "부캐 닉네임",
+            "main_name": "본캐 닉네임",
+            "suro": "수로",
+            "suro_score": "수로 점수",
+            "flag": "플래그",
+            "flag_score": "플래그 점수",
+            "mission_point": "주간미션포인트"
+        })
+        st.dataframe(display_all_df.reset_index(drop=True))
+    else:
+        st.info("등록된 부캐릭터가 없습니다.")
+
+
+
     selected_main_filter = st.selectbox(
         "🔍 본캐 닉네임으로 검색", ["전체 보기"] + main_names, index=0
     )
