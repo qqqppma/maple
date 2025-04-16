@@ -35,11 +35,11 @@ def delete_member(member_id):
     return res.status_code == 204
 # ✅ Supabase 본캐길드 길드컨트롤 관련 함수
 def get_mainmembers():
-    res = requests.get(f"{SUPABASE_URL}/rest/v1/MainMembers?select=*&order=sub_id.asc", headers=HEADERS)
+    res = requests.get(f"{SUPABASE_URL}/rest/v1/MainMembers?select=*", headers=HEADERS)
     if res.status_code == 200:
         return res.json()
     return []
-
+# &order=sub_id.asc
 def update_mainember(sub_id, data):
     res = requests.patch(f"{SUPABASE_URL}/rest/v1/MainMembers?sub_id=eq.{sub_id}", headers=HEADERS, json=data)
     return res.status_code == 204
@@ -261,6 +261,8 @@ elif menu == "악마길드 길컨관리":
     st.subheader("👥악마길드 길드컨트롤 관리")
 
     mainmembers = get_mainmembers()
+    st.write("📦 가져온 mainmembers:", mainmembers)
+
     members = get_members()
 
     # ✅ 오타 수정 + 닉네임-직위 dict 생성
