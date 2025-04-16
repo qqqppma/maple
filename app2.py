@@ -450,6 +450,9 @@ elif menu == "부캐릭터 관리":
     selected_main_filter = st.selectbox(
         "🔍 본캐 닉네임으로 검색", ["전체 보기"] + main_names, index=0
     )
+    # ✅ 부캐 필터 셀렉트박스 추가
+    sub_names = df_sub["sub_name"].unique().tolist()
+    selected_sub_filter = st.selectbox("🔍 부캐 닉네임으로 검색", ["전체 보기"] + sub_names, index=0)
 
 
     if df_sub.empty or "main_name" not in df_sub.columns:
@@ -459,10 +462,12 @@ elif menu == "부캐릭터 관리":
             if selected_main_filter != "전체 보기" and main != selected_main_filter:
                 continue
             df_main = df_sub[df_sub["main_name"] == main]
-            if not df_main.empty:
+            if selected_sub_filter != "전체 보기":
+                df_main = df_main[df_main["sub_name"] == selected_sub_filter]
+            elif not df_main.empty:
                 # ✅ ID 재정렬
-                df_sub = df_sub.reset_index(drop=True)  
-                df_sub["id"] = df_sub.index + 1
+                df_main = df_main.reset_index(drop=True)  
+                df_main["id"] = df_main.index + 1
                 display_df = df_main.rename(columns={
                     "guild_name1": "부캐 길드",
                     "sub_name": "부캐 닉네임",
@@ -481,6 +486,8 @@ elif menu == "부캐릭터 관리":
                         selected_sub = display_df["sub_id"].tolist()
                         for sub in selected_sub:
                             sub_row = df_main[df_main["sub_id"] == sub].iloc[0]
+                             # ✅ 부캐 길드명 수정 추가
+                            new_guild_name = st.text_input("부캐 길드", value=sub_row.get("guild_name1", ""), key=f"guild_{sub}")
 
                             selected_suro = st.selectbox("수로 참여", ["참여", "미참여"], index=0 if sub_row["suro"] else 1, key=f"suro_select_{sub}")
                             new_suro = selected_suro == "참여"
@@ -495,6 +502,7 @@ elif menu == "부캐릭터 관리":
 
                             if st.button("저장", key=f"save_{sub}"):
                                 update_data = {
+                                    "guild_name1": new_guild_name,
                                     "suro": new_suro,
                                     "suro_score": new_suro_score,
                                     "flag": new_flag,
