@@ -451,7 +451,10 @@ elif menu == "부캐릭터 관리":
     # ✅ 부캐 전체 목록 테이블 추가 (이 위치!)
     st.markdown("### 📑 등록된 전체 부캐릭터 목록")
     if not df_sub.empty:
+        df_sub = df_sub.reset_index(drop=True)       # 인덱스 재정렬
+        df_sub["id"] = df_sub.index + 1              # id 다시 부여
         display_all_df = df_sub.rename(columns={
+            "id": "id",
             "sub_id": "ID",
             "guild_name1": "부캐 길드",
             "sub_name": "부캐 닉네임",
