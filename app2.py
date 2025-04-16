@@ -143,6 +143,9 @@ if menu == "악마 길드원 정보 등록":
     df = pd.DataFrame(members)
     if not df.empty:
         df["position"] = df["position"].fillna("")
+        df = df.reset_index(drop=True)
+        df["id"] = df.index + 1
+
         def get_position_priority(pos):
             priority = {"길드마스터": 1, "부마스터": 2, "길드원": 3}
             return priority.get(pos, 99)
