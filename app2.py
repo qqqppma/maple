@@ -2,7 +2,6 @@ import streamlit as st
 import requests
 import pandas as pd
 from datetime import date
-from datetime import datatime
 import re
 import urllib.parse
 
@@ -306,7 +305,7 @@ elif menu == "악마길드 길컨관리":
         submitted = st.form_submit_button("등록")
 
         if submitted:
-            sub_id = f"{nickname_input}_{int(datetime.now().timestamp())}"
+            # sub_id = f"{nickname_input}_{int(datetime.now().timestamp())}"
             new_data = {
                 "nickname": nickname_input,
                 "position": position_value,  # ✅ 자동 연동된 직위
