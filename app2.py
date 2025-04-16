@@ -460,9 +460,7 @@ elif menu == "부캐릭터 관리":
             if selected_main_filter != "전체 보기" and main != selected_main_filter:
                 continue
             df_main = df_sub[df_sub["main_name"] == main]
-            if selected_sub_filter != "전체 보기":
-                df_main = df_main[df_main["sub_name"] == selected_sub_filter]
-            elif not df_main.empty:
+            if not df_main.empty:
                 # ✅ ID 재정렬
                 df_main = df_main.reset_index(drop=True)  
                 df_main["id"] = df_main.index + 1
@@ -482,10 +480,11 @@ elif menu == "부캐릭터 관리":
                 if is_admin:
                     with st.expander(f"✏️ {main} 부캐 수정"):
                         sub_names = df_main["sub_name"].tolist()
-                        
-                        # ✅ 여기! 부캐 선택 필터를 부캐 길드 위에 위치시킴
-                        selected_sub_name = st.selectbox("🔍 수정할 부캐 선택", sub_names, key=f"select_{main}")
-                        sub_row = df_main[df_main["sub_name"] == selected_sub_name].iloc[0]
+                        selected_sub_filter = st.selectbox("🔍 수정할 부캐 선택", sub_names, key=f"select_{main}")
+
+                        # ✅ 선택된 부캐만 필터링
+                        df_main = df_main[df_main["sub_name"] == selected_sub_filter]
+                        sub_row = df_main.iloc[0]
                         sub = sub_row["sub_id"]
 
                         # 🔽 이 아래부터는 수정 입력 영역
