@@ -33,6 +33,20 @@ def update_member(member_id, data):
 def delete_member(member_id):
     res = requests.delete(f"{SUPABASE_URL}/rest/v1/Members?id=eq.{member_id}", headers=HEADERS)
     return res.status_code == 204
+# ✅ Supabase 본캐길드 길드컨트롤 관련 함수
+def get_mainmembers():
+    res = requests.get(f"{SUPABASE_URL}/rest/v1/MainMembers?select=*&order=sub_id.asc", headers=HEADERS)
+    if res.status_code == 200:
+        return res.json()
+    return []
+
+def update_mainember(sub_id, data):
+    res = requests.patch(f"{SUPABASE_URL}/rest/v1/MainMembers?sub_id=eq.{sub_id}", headers=HEADERS, json=data)
+    return res.status_code == 204
+
+def delete_submember(sub_id):
+    res = requests.delete(f"{SUPABASE_URL}/rest/v1/MainMembers?sub_id=eq.{sub_id}", headers=HEADERS)
+    return res.status_code == 204
 
 # ✅ Supabase 부캐 테이블 관련 함수
 def insert_submember(data):
@@ -135,7 +149,7 @@ if st.sidebar.button("로그아웃"):
 nickname = st.session_state["user"]
 is_admin = st.session_state["is_admin"]
 
-menu = st.sidebar.radio("메뉴", ["악마 길드원 정보 등록", "부캐릭터 관리", "만들게", "한두개가","아니네요"])
+menu = st.sidebar.radio("메뉴", ["악마 길드원 정보 등록", "악마길드 길컨관리", "부캐릭터 관리", "만들게", "한두개가","아니네요"])
 
 if menu == "악마 길드원 정보 등록":
     st.subheader("👥 길드원 정보 등록")
@@ -243,6 +257,27 @@ if menu == "악마 길드원 정보 등록":
                 st.rerun()
             else:
                 st.error("🚫 등록에 실패했습니다. 데이터를 다시 확인해주세요.")
+elif menu == "악마길드 길컨관리":
+    st.subheader("👥악마길드 길드컨트롤 관리")
+    mainmembers = get_mainmembers()
+    if not mainmembers:
+        st.info("기록된 길드컨트롤 정보가 없습니다.")
+    else:
+        main_names = [m['nickname'] for m in mainmembers]
+        df_main = pd.DataFrame(mainmembers)
+        df_main_display = df_main.rename(columns={
+            "nickname" : "닉네임",
+            "position" : "직위",
+            "suro" : "수로 참여 여부",
+            "suro_score" : "수로 점수",
+            "flag" : "플래그 참여 여부",
+            "flag_score" : "플래그 점수",
+            "mission_point" : "주간미션포인트",
+            "event_sum" : "합산",
+        })
+        
+        st.dataframe(df_main_display.reset_index(drop=True))
+
 
 elif menu == "부캐릭터 관리":
     st.subheader("👥 부캐릭터 등록 및 관리")
