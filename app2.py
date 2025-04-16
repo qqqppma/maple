@@ -286,70 +286,31 @@ elif menu == "악마길드 길컨관리":
     else:
         st.info("기록된 길드컨트롤 정보가 없습니다.")
 
-    # ✅ 캐릭터 등록 폼 (닉네임 선택 시 직위 자동 표시)
+    # ✅ 캐릭터 등록 & 수정 폼 (닉네임 선택 시 직위 자동 표시)
     with st.form("main_member_add_form"):
-        if is_admin and mainmembers:
-            st.markdown("### ✏️ 메인 캐릭터 수정 및 삭제")
-        
-            selected = st.selectbox("수정/삭제할 닉네임 선택", [m["nickname"] for m in mainmembers])
-            selected_row = [m for m in mainmembers if m["nickname"] == selected][0]
-
-            suro_input_edit = st.selectbox("수로 참여 여부", [True, False], index=0 if selected_row["suro"] else 1)
-            suro_score_edit = st.number_input("수로 점수", min_value=0, step=1, value=selected_row["suro_score"])
-            flag_input_edit = st.selectbox("플래그 참여 여부", [True, False], index=0 if selected_row["flag"] else 1)
-            flag_score_edit = st.number_input("플래그 점수", min_value=0, step=1, value=selected_row["flag_score"])
-            mission_point_edit = st.number_input("주간미션포인트", min_value=0, step=1, value=selected_row["mission_point"])
-            event_sum_edit = st.number_input("합산", min_value=0, step=1, value=selected_row["event_sum"])
-
-            update_btn = st.form_submit_button("✅ 수정")
-            delete_btn = st.form_submit_button("🗑 삭제")
-
-            if update_btn:
-                updated = {
-                    "suro": suro_input_edit,
-                    "suro_score": suro_score_edit,
-                    "flag": flag_input_edit,
-                    "flag_score": flag_score_edit,
-                    "mission_point": mission_point_edit,
-                    "event_sum": event_sum_edit
-                }
-                if update_mainember(selected_row["id"], updated):
-                    st.success("✅ 수정 완료")
-                    st.rerun()
-                else:
-                    st.error("🚫 수정 실패")
-
-            if delete_btn:
-                if delete_submember(selected_row["id"]):
-                    st.success("🗑 삭제 완료")
-                    st.rerun()
-                else:
-                    st.error("🚫 삭제 실패")
-
         st.markdown("### ➕ 메인 캐릭터 등록")
 
-        nickname_input = st.selectbox("닉네임", member_nicknames)
+        nickname_input = st.selectbox("닉네임", member_nicknames, key="nickname_input")
         position_value = member_dict.get(nickname_input, "직위 정보 없음")
-
-        # ✅ 자동 표시된 직위
         st.markdown(f"**직위:** `{position_value}`")
 
-        suro_input = st.selectbox("수로 참여 여부", [True, False])
-        suro_score_input = st.number_input("수로 점수", min_value=0, step=1)
+        suro_input = st.selectbox("수로 참여 여부", [True, False], key="suro_input")
+        suro_score_input = st.number_input("수로 점수", min_value=0, step=1, key="suro_score_input")
 
-        flag_input = st.selectbox("플래그 참여 여부", [True, False])
-        flag_score_input = st.number_input("플래그 점수", min_value=0, step=1)
+        flag_input = st.selectbox("플래그 참여 여부", [True, False], key="flag_input")
+        flag_score_input = st.number_input("플래그 점수", min_value=0, step=1, key="flag_score_input")
 
-        mission_point_input = st.number_input("주간미션포인트", min_value=0, step=1)
-        event_sum_input = st.number_input("합산", min_value=0, step=1)
+        mission_point_input = st.number_input("주간미션포인트", min_value=0, step=1, key="mission_point_input")
+        event_sum_input = st.number_input("합산", min_value=0, step=1, key="event_sum_input")
 
         submitted = st.form_submit_button("등록")
 
         if submitted:
             sub_id = f"{nickname_input}_{int(datetime.now().timestamp())}"
             new_data = {
+                "sub_id": sub_id,
                 "nickname": nickname_input,
-                "position": position_value,  # ✅ 자동 연동된 직위
+                "position": position_value,
                 "suro": suro_input,
                 "suro_score": suro_score_input,
                 "flag": flag_input,
@@ -365,6 +326,59 @@ elif menu == "악마길드 길컨관리":
             else:
                 st.error(f"❌ 등록 실패! 에러 코드: {res.status_code}")
                 st.code(res.text)
+
+    # ✅ 수정/삭제 섹션 (등록 폼 밖에서 별도로 처리)
+    if is_admin and mainmembers:
+        st.markdown("### ✏️ 메인 캐릭터 수정 및 삭제")
+
+        selected = st.selectbox("수정/삭제할 닉네임 선택", [m["nickname"] for m in mainmembers])
+        selected_row = [m for m in mainmembers if m["nickname"] == selected][0]
+
+        suro_input_edit = st.selectbox("수로 참여 여부", [True, False],
+                                    index=0 if selected_row["suro"] else 1,
+                                    key="suro_edit")
+        suro_score_edit = st.number_input("수로 점수", min_value=0, step=1,
+                                        value=selected_row["suro_score"],
+                                        key="suro_score_edit")
+
+        flag_input_edit = st.selectbox("플래그 참여 여부", [True, False],
+                                    index=0 if selected_row["flag"] else 1,
+                                    key="flag_edit")
+        flag_score_edit = st.number_input("플래그 점수", min_value=0, step=1,
+                                        value=selected_row["flag_score"],
+                                        key="flag_score_edit")
+
+        mission_point_edit = st.number_input("주간미션포인트", min_value=0, step=1,
+                                            value=selected_row["mission_point"],
+                                            key="mission_point_edit")
+        event_sum_edit = st.number_input("합산", min_value=0, step=1,
+                                        value=selected_row["event_sum"],
+                                        key="event_sum_edit")
+
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("✅ 수정", key="main_update_btn"):
+                updated = {
+                    "suro": suro_input_edit,
+                    "suro_score": suro_score_edit,
+                    "flag": flag_input_edit,
+                    "flag_score": flag_score_edit,
+                    "mission_point": mission_point_edit,
+                    "event_sum": event_sum_edit
+                }
+                if update_mainember(selected_row["id"], updated):
+                    st.success("✅ 수정 완료")
+                    st.rerun()
+                else:
+                    st.error("🚫 수정 실패")
+
+        with col2:
+            if st.button("🗑 삭제", key="main_delete_btn"):
+                if delete_submember(selected_row["id"]):
+                    st.success("🗑 삭제 완료")
+                    st.rerun()
+                else:
+                    st.error("🚫 삭제 실패")
                 
                 
 
