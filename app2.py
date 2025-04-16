@@ -291,7 +291,7 @@ elif menu == "악마길드 길컨관리":
         st.markdown("### ➕ 메인 캐릭터 등록")
 
         nickname_input = st.selectbox("닉네임", member_nicknames, key="nickname_input")
-        # ✅ 여기에 끼워 넣으세요 (직위 DataFrame 방식으로 가져오기)
+        # ✅ 직위 DataFrame 방식으로 가져오기
         df_members = pd.DataFrame(members)
         row = df_members[df_members["nickname"] == nickname_input]
         if not row.empty:
@@ -312,9 +312,7 @@ elif menu == "악마길드 길컨관리":
         submitted = st.form_submit_button("등록")
 
         if submitted:
-            sub_id = f"{nickname_input}_{int(datetime.now().timestamp())}"
             new_data = {
-                "sub_id": sub_id,
                 "nickname": nickname_input,
                 "position": position_value,
                 "suro": suro_input,
@@ -365,12 +363,12 @@ elif menu == "악마길드 길컨관리":
         with col1:
             if st.button("✅ 수정", key="main_update_btn"):
                 updated = {
-                    "suro": suro_input_edit,
-                    "suro_score": suro_score_edit,
-                    "flag": flag_input_edit,
-                    "flag_score": flag_score_edit,
-                    "mission_point": mission_point_edit,
-                    "event_sum": event_sum_edit
+                    "suro": bool(suro_input_edit),
+                    "suro_score": int(suro_score_edit) if suro_score_edit is not None else 0,
+                    "flag": bool(flag_input_edit),
+                    "flag_score": int(flag_score_edit) if flag_score_edit is not None else 0,
+                    "mission_point": int(mission_point_edit) if mission_point_edit is not None else 0,
+                    "event_sum": int(event_sum_edit) if event_sum_edit is not None else 0
                 }
                 if update_mainember(selected_row["id"], updated):
                     st.success("✅ 수정 완료")
