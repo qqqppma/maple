@@ -259,10 +259,15 @@ if menu == "악마 길드원 정보 등록":
                 st.error("🚫 등록에 실패했습니다. 데이터를 다시 확인해주세요.")
 elif menu == "악마길드 길컨관리":
     st.subheader("👥악마길드 길드컨트롤 관리")
+
     mainmembers = get_mainmembers()
+    members = get_members()
+
+    # ✅ 오타 수정 + 닉네임-직위 dict 생성
+    member_dict = {m['nickname']: m['position'] for m in members if m.get('nickname')}
+    member_nicknames = sorted(member_dict.keys())
 
     if mainmembers:
-        # ✅ 데이터프레임 준비
         df_main = pd.DataFrame(mainmembers)
         df_main_display = df_main.rename(columns={
             "nickname": "닉네임",
@@ -274,47 +279,50 @@ elif menu == "악마길드 길컨관리":
             "mission_point": "주간미션포인트",
             "event_sum": "합산",
         })
-        # ✅ 등록된 리스트 보여주기
         st.dataframe(df_main_display.reset_index(drop=True))
     else:
         st.info("기록된 길드컨트롤 정보가 없습니다.")
-    
 
-        # ✅ 새로운 캐릭터 등록 폼
-        with st.form("main_member_add_form"):
-            st.markdown("### ➕ 메인 캐릭터 등록")
+    # ✅ 캐릭터 등록 폼 (닉네임 선택 시 직위 자동 표시)
+    with st.form("main_member_add_form"):
+        st.markdown("### ➕ 메인 캐릭터 등록")
 
-            nickname_input = st.text_input("닉네임")
-            position_input = st.text_input("직위")
-            suro_input = st.selectbox("수로 참여 여부", [True, False])
-            suro_score_input = st.number_input("수로 점수", min_value=0, step=1)
-            flag_input = st.selectbox("플래그 참여 여부", [True, False])
-            flag_score_input = st.number_input("플래그 점수", min_value=0, step=1)
-            mission_point_input = st.number_input("주간미션포인트", min_value=0, step=1)
-            event_sum_input = st.number_input("합산", min_value=0, step=1)
+        nickname_input = st.selectbox("닉네임", member_nicknames)
+        position_value = member_dict.get(nickname_input, "직위 정보 없음")
 
-            submitted = st.form_submit_button("등록")
+        # ✅ 자동 표시된 직위
+        st.markdown(f"**직위:** `{position_value}`")
 
-            if submitted:
-                new_data = {
-                    "nickname": nickname_input,
-                    "position": position_input,
-                    "suro": suro_input,
-                    "suro_score": suro_score_input,
-                    "flag": flag_input,
-                    "flag_score": flag_score_input,
-                    "mission_point": mission_point_input,
-                    "event_sum": event_sum_input
-                }
+        suro_input = st.selectbox("수로 참여 여부", [True, False])
+        suro_score_input = st.number_input("수로 점수", min_value=0, step=1)
 
-                res = requests.post(f"{SUPABASE_URL}/rest/v1/MainMembers", headers=HEADERS, json=new_data)
-                if res.status_code == 201:
-                    st.success("✅ 메인 캐릭터가 등록되었습니다!")
-                    st.rerun()
-                else:
-                    st.error(f"❌ 등록 실패! 에러 코드: {res.status_code}")
-                    st.code(res.text)
+        flag_input = st.selectbox("플래그 참여 여부", [True, False])
+        flag_score_input = st.number_input("플래그 점수", min_value=0, step=1)
 
+        mission_point_input = st.number_input("주간미션포인트", min_value=0, step=1)
+        event_sum_input = st.number_input("합산", min_value=0, step=1)
+
+        submitted = st.form_submit_button("등록")
+
+        if submitted:
+            new_data = {
+                "nickname": nickname_input,
+                "position": position_value,  # ✅ 자동 연동된 직위
+                "suro": suro_input,
+                "suro_score": suro_score_input,
+                "flag": flag_input,
+                "flag_score": flag_score_input,
+                "mission_point": mission_point_input,
+                "event_sum": event_sum_input
+            }
+
+            res = requests.post(f"{SUPABASE_URL}/rest/v1/MainMembers", headers=HEADERS, json=new_data)
+            if res.status_code == 201:
+                st.success("✅ 메인 캐릭터가 등록되었습니다!")
+                st.rerun()
+            else:
+                st.error(f"❌ 등록 실패! 에러 코드: {res.status_code}")
+                st.code(res.text)
                 
                 
 
