@@ -408,10 +408,10 @@ elif menu == "부캐릭터 관리":
         selected_main = st.selectbox("본캐 닉네임 선택", main_names)
         guild_name1 = st.text_input("길드 이름")
         sub_name = st.text_input("부캐 이름")
-        suro_text = st.selectbox("수로 참여", ["참여", "미참여"])
+        suro_text = st.selectbox("수로 참여", ["참여", "미참"])
         suro = suro_text == "참여"
         suro_score = st.number_input("수로 점수", min_value=0, step=1)
-        flag_text = st.selectbox("플래그 참여", ["참여", "미참여"])
+        flag_text = st.selectbox("플래그 참여", ["참여", "미참"])
         flag = flag_text == "참여"
         flag_score = st.number_input("플래그 점수", min_value=0, step=1)
         mission_point = st.number_input("주간미션포인트", min_value=0, step=1)
@@ -461,8 +461,7 @@ elif menu == "부캐릭터 관리":
             "flag_score": "플래그 점수",
             "mission_point": "주간미션포인트"
         })
-        st.dataframe(display_all_df[["ID", "Sub ID", "부캐 길드","부캐 닉네임", "본캐 닉네임","수로", "수로 점수", "플래그", "플래그 점수", "주간미션포인트"
-                                     ]].reset_index(drop=True))
+        st.dataframe(display_all_df[["ID", "Sub ID", "부캐 길드","부캐 닉네임", "본캐 닉네임","수로", "수로 점수", "플래그", "플래그 점수", "주간미션포인트"]].reset_index(drop=True))
     else:
         st.info("등록된 부캐릭터가 없습니다.")
 
