@@ -365,7 +365,7 @@ elif menu == "악마길드 길컨관리":
             "event_sum": "합산",
         })
         st.markdown("### 📋 현재 등록된 메인 캐릭터")
-        st.dataframe(df_main_display.reset_index(drop=True))
+        st.dataframe(df_main_display.reset_index(drop=True), use_container_width=True)
     else:
         st.info("기록된 길드컨트롤 정보가 없습니다.")
 
