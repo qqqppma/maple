@@ -92,13 +92,14 @@ def insert_weapon_rental(borrower, weapon_name, owner, start_date, end_date):
         "start_date": str(start_date),
         "end_date": str(end_date)
     }
+    res = requests.post(f"{SUPABASE_URL}/rest/v1/Weapon_Rentals", json=data, headers=HEADERS)
      # ✅ 실패 이유 출력
     if res.status_code != 201:
         st.error("❌ 등록 실패 (디버깅 정보)")
         st.code(f"Status Code: {res.status_code}\nResponse: {res.text}")
     
     return res.status_code == 201
-    # res = requests.post(f"{SUPABASE_URL}/rest/v1/Weapon_Rentals", json=data, headers=HEADERS)
+    
     # return res.status_code == 201
 # ✅ 데이터 수정
 def update_weapon_rental(row_id, data):
