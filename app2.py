@@ -667,7 +667,7 @@ elif menu == "보조대여 관리":
             st.markdown("**수정할 내용 입력:**")
             edit_borrower = st.text_input("대여자", value=selected_row["borrower"])
             edit_weapon = st.text_input("보조무기 이름", value=selected_row["weapon_name"])
-            edit_owner = st.text_input("소유주", value=selected_row["owner"])
+            edit_owner = st.text_input("소유자", value=selected_row["owner"])
             col1, col2 = st.columns(2)
             with col1:
                 edit_start = st.date_input("시작일", value=pd.to_datetime(selected_row["start_date"]))
@@ -751,7 +751,7 @@ elif menu == "드메템 대여 관리":
             st.markdown("**수정할 내용 입력:**")
             edit_drop_borrower = st.text_input("대여자", value=selected_row["drop_borrower"])
             edit_dropitem = st.text_input("드메템 이름", value=selected_row["dropitem_name"])
-            edit_drop_owner = st.text_input("소유주", value=selected_row["drop_owner"])
+            edit_drop_owner = st.text_input("소유자", value=selected_row["drop_owner"])
             col1, col2 = st.columns(2)
             with col1:
                 edit_start = st.date_input("시작일", value=pd.to_datetime(selected_row["start_date"]))
