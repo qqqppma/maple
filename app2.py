@@ -128,10 +128,10 @@ def insert_dropitem_rental(drop_borrower, dropitem_name, drop_owner, start_date,
         "end_date": str(end_date)
     }
     res = requests.post(f"{SUPABASE_URL}/rest/v1/DorpItem_Rentals", json=data, headers=HEADERS)
-     # ✅ 실패 이유 출력
-    # if res.status_code != 201:
-    #     st.error("❌ 등록 실패 (디버깅 정보)")
-    #     st.code(f"Status Code: {res.status_code}\nResponse: {res.text}")
+     ✅ 실패 이유 출력
+    if res.status_code != 201:
+        st.error("❌ 등록 실패 (디버깅 정보)")
+        st.code(f"Status Code: {res.status_code}\nResponse: {res.text}")
     
     return res.status_code == 201
     
