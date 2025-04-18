@@ -5,6 +5,8 @@ from datetime import date,datetime
 import re
 import urllib.parse
 import io
+import os
+from PIL import Image
 st.set_page_config(page_title="악마길드 관리 시스템", layout="wide")
 
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
@@ -632,93 +634,94 @@ elif menu == "부캐릭터 관리":
                             else:
                                 st.error("삭제 실패")
 
-#보조 대여 관리 코드
 elif menu == "보조대여 관리":
-       
-    # ✅ Streamlit UI
-    st.header("🛡️ 보조무기 대여 현황")
+    st.header("🔷 보조무기 대여 시스템")
 
-    # 📋 등록 폼
-    with st.form("register_form"):
-        st.markdown("### ➕ 대여 등록")
-        borrower = st.text_input("대여자 닉네임")
-        weapon_name = st.text_input("대여 보조무기 이름")
-        owner = st.text_input(" 소유자 닉네임")
+        # 로그인된 사용자 닉네임
+    nickname = st.session_state["user"]
+    owner = "자리스틸의왕"
+
+    # 보조무기 이미지 폴더 경로
+    IMAGE_FOLDER = "보조무기 사진"
+    CYGNUS_SHARED = ["나이트워커", "스트라이커", "플레임위자드", "윈드브레이커", "소울마스터"]
+
+    # UI 시작
+    st.header("🔷 보조무기 대여 시스템")
+
+    # 직업군 및 주스탯 선택
+    job_group = st.selectbox("🧩 직업군을 선택하세요", ["전사", "궁수", "법사", "도적", "해적", "특수직업"])
+    main_stat = st.selectbox("📊 주 스탯을 선택하세요", ["STR", "DEX", "INT", "LUK"])
+
+    job_data = {
+        "전사": {"STR": ["히어로", "팔라딘", "다크나이트", "소울마스터", "미하일", "아란", "카이저", "제로", "아델"]},
+        "궁수": {"DEX": ["보우마스터", "신궁", "패스파인더", "윈드브레이커", "메르세데스", "와일드헌터"]},
+        "법사": {"INT": ["아크메이지(썬콜)", "아크메이지(불독)", "비숍", "플레임위자드", "에반", "루미너스", "배틀메이지", "키네시스", "일리움"]},
+        "도적": {"LUK": ["나이트로드", "새도어", "듀얼블레이드", "나이트워커", "팬텀", "카데나", "호영"]},
+        "해적": {
+            "STR": ["바이퍼", "캐논슈터", "스트라이커"],
+            "DEX": ["메카닉", "엔젤릭버스터"],
+        },
+        "특수직업": {
+            "STR": ["데몬어벤져"],
+            "LUK": ["제논"]
+        }
+    }
+
+    job_options = job_data.get(job_group, {}).get(main_stat, [])
+    selected_job = st.selectbox("🔍 직업을 선택하세요", job_options if job_options else ["선택 가능한 직업이 없습니다"])
+
+    # 이미지 경로 확인 및 출력
+    if selected_job in CYGNUS_SHARED:
+        image_path = os.path.join(IMAGE_FOLDER, "시그너스보조.jpg")
+    else:
+        image_path = os.path.join(IMAGE_FOLDER, f"{selected_job}보조.jpg")
+
+    if os.path.exists(image_path):
+        st.image(Image.open(image_path), caption=f"{selected_job}의 보조무기", use_column_width=True)
+
+        # 시간표 UI
+        st.markdown(f"### ⏰ `{selected_job}` 시간 단위 대여")
+        times = [f"{str(h).zfill(2)}:00~{str(h+2).zfill(2)}:00" for h in range(0, 24, 2)]
+        days = ["일", "월", "화", "수", "목", "금", "토"]
+        selected_time_slots = []
+
+        for time in times:
+            cols = st.columns(len(days) + 1)
+            cols[0].markdown(f"**{time}**")
+            for i, day in enumerate(days):
+                key = f"{selected_job}_{day}_{time}"
+                if cols[i + 1].checkbox("", key=key):
+                    selected_time_slots.append(f"{day}-{time}")
+
+        # 대여 날짜 선택
+        st.markdown("### 📆 대여 기간")
         col1, col2 = st.columns(2)
         with col1:
-            start_date = st.date_input("대여 시작일", value=date.today())
+            start_date = st.date_input("시작일", value=date.today())
         with col2:
-            end_date = st.date_input("대여 종료일", value=date.today())
+            end_date = st.date_input("종료일", value=date.today())
 
-        if st.form_submit_button("등록"):
-            if insert_weapon_rental(borrower, weapon_name, owner, start_date, end_date):
-                st.success("✅ 등록 완료")
-                st.rerun()
+        # 등록 버튼
+        if st.button("📥 대여 등록"):
+            if not selected_time_slots:
+                st.warning("❗ 최소 1개 이상의 시간을 선택해주세요.")
             else:
-                st.error("❌ 등록 실패")
-
-     # 📊 데이터 조회 및 표시
-    data = fetch_weapon_rentals()
-    if data:
-        df = pd.DataFrame(data)
-        df = df.sort_values(by="id").reset_index(drop=True)
-
-        # 표시용 ID 및 대여기간 계산
-        df["ID"] = df.index + 1
-        df["대여기간"] = df.apply(
-            lambda row: f"{row['start_date']} ~ {row['end_date']} ({(pd.to_datetime(row['end_date']) - pd.to_datetime(row['start_date'])).days}일)",
-            axis=1
-        )
-
-        # 📄 대여 목록 출력
-        st.markdown("### 📄 대여 목록")
-        st.dataframe(df[["ID", "borrower", "weapon_name", "owner", "대여기간"]].rename(columns={
-            "borrower": "대여자",
-            "weapon_name": "보조무기",
-            "owner": "소유자"
-        }), use_container_width=True)
-        excel_data = convert_df_to_excel(df[["borrower", "weapon_name", "owner", "start_date", "end_date"]])
-        st.download_button("📥 보조무기 대여 현황 다운로드", data=excel_data, file_name="보조무기_대여현황.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-
-        # ✏️ 수정 & 삭제 대상 선택
-        st.markdown("### ✏️ 수정 또는 삭제")
-        df["선택항목"] = df["borrower"] + " | " + df["weapon_name"]
-        selected = st.selectbox("수정/삭제할 표시 ID 선택", df["선택항목"])
-        selected_row = df[df["선택항목"] == selected].iloc[0]
-        actual_id = selected_row["id"]
-
-        # ✍️ 수정 폼
-        with st.form("edit_form"):
-            st.markdown("**수정할 내용 입력:**")
-            edit_borrower = st.text_input("대여자", value=selected_row["borrower"])
-            edit_weapon = st.text_input("보조무기 이름", value=selected_row["weapon_name"])
-            edit_owner = st.text_input("소유자", value=selected_row["owner"])
-            col1, col2 = st.columns(2)
-            with col1:
-                edit_start = st.date_input("시작일", value=pd.to_datetime(selected_row["start_date"]))
-            with col2:
-                edit_end = st.date_input("종료일", value=pd.to_datetime(selected_row["end_date"]))
-            if st.form_submit_button("수정"):
-                updated = update_weapon_rental(actual_id, {
-                    "borrower": edit_borrower,
-                    "weapon_name": edit_weapon,
-                    "owner": edit_owner,
-                    "start_date": str(edit_start),
-                    "end_date": str(edit_end)
-                })
-                if updated:
-                    st.success("✏️ 수정 완료")
-                    st.rerun()
+                weapon_name = selected_job + " 보조무기"
+                rental_data = {
+                    "borrower": nickname,
+                    "weapon_name": weapon_name,
+                    "owner": owner,
+                    "start_date": str(start_date),
+                    "end_date": str(end_date),
+                    "time_slots": ", ".join(selected_time_slots)
+                }
+                response = requests.post(f"{SUPABASE_URL}/rest/v1/Weapon_Rentals", headers=HEADERS, json=rental_data)
+                if response.status_code == 201:
+                    st.success("✅ 대여 등록이 완료되었습니다!")
                 else:
-                    st.error("수정 실패")
-
-        # 🗑 삭제 버튼
-        if st.button("❌ 삭제"):
-            if delete_weapon_rental(actual_id):
-                st.success("🗑 삭제 완료")
-                st.rerun()
-            else:
-                st.error("삭제 실패")
+                    st.error(f"❌ 등록 실패: {response.status_code}")
+    else:
+        st.warning("📸 보유 중인 보조무기가 없습니다.")
 
  #드메 대여 관리 코드
 elif menu == "드메템 대여 관리":
