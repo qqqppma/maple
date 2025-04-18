@@ -714,7 +714,7 @@ elif menu == "드메템 대여 관리":
             end_date = st.date_input("대여 종료일", value=date.today())
 
         if st.form_submit_button("등록"):
-            if insert_weapon_rental(drop_borrower, dropitem_name, drop_owner, start_date, end_date):
+            if insert_dropitem_rental(drop_borrower, dropitem_name, drop_owner, start_date, end_date):
                 st.success("✅ 등록 완료")
                 st.rerun()
             else:
