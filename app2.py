@@ -4,6 +4,7 @@ import pandas as pd
 from datetime import date,datetime
 import re
 import urllib.parse
+import io
 st.set_page_config(page_title="악마길드 관리 시스템", layout="wide")
 
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
@@ -148,6 +149,16 @@ def delete_dropitem_rental(row_id):
     res = requests.delete(url, headers=HEADERS)
     return res.status_code == 204
 
+# ✅ .xlsx로 파일 저장
+def convert_df_to_excel(df):
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        df.to_excel(writer, index=False, sheet_name="Sheet1")
+        writer.close()
+    processed_data = output.getvalue()
+    return processed_data
+
+# =====================================================================================#
 # ✅ 로그인 처리 (주소창 유지 + 로그아웃 + 디코딩 적용)
 st.title("\U0001F6E1️ 악마길드 관리 시스템")
 
@@ -255,6 +266,9 @@ if menu == "악마 길드원 정보 등록":
             })
 
         st.dataframe(df_display.reset_index(drop=True),use_container_width=True)
+            # ✅ 다운로드 버튼 추가
+        excel_data = convert_df_to_excel(df_display)
+        st.download_button("📥 길드원 목록 다운로드", data=excel_data, file_name="길드원_목록.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
         if is_admin:
             selected_name = st.selectbox("수정 또는 삭제할 닉네임 선택", df["nickname"])
@@ -367,6 +381,9 @@ elif menu == "악마길드 길컨관리":
         })
         st.markdown("### 📋 현재 등록된 메인 캐릭터")
         st.dataframe(df_main_display.reset_index(drop=True), use_container_width=True)
+        excel_data = convert_df_to_excel(df_main_display)
+        st.download_button("📥 메인 캐릭터 다운로드", data=excel_data, file_name="메인캐릭터.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
     else:
         st.info("기록된 길드컨트롤 정보가 없습니다.")
 
@@ -533,6 +550,9 @@ elif menu == "부캐릭터 관리":
             "mission_point": "주간미션포인트"
         })
         st.dataframe(display_all_df[["ID", "Sub ID", "부캐 길드","부캐 닉네임", "본캐 닉네임","수로", "수로 점수", "플래그", "플래그 점수", "주간미션포인트"]].reset_index(drop=True), use_container_width=True)
+        excel_data = convert_df_to_excel(display_all_df)
+        st.download_button("📥 부캐릭터 목록 다운로드", data=excel_data, file_name="부캐릭터_목록.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
     else:
         st.info("등록된 부캐릭터가 없습니다.")
 
@@ -657,6 +677,9 @@ elif menu == "보조대여 관리":
             "weapon_name": "보조무기",
             "owner": "소유자"
         }), use_container_width=True)
+        excel_data = convert_df_to_excel(df[["borrower", "weapon_name", "owner", "start_date", "end_date"]])
+        st.download_button("📥 보조무기 대여 현황 다운로드", data=excel_data, file_name="보조무기_대여현황.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
         # ✏️ 수정 & 삭제 대상 선택
         st.markdown("### ✏️ 수정 또는 삭제")
         df["선택항목"] = df["borrower"] + " | " + df["weapon_name"]
@@ -742,6 +765,9 @@ elif menu == "드메템 대여 관리":
             "dropitem_name": "보조무기",
             "drop_owner": "소유자"
         }), use_container_width=True)
+        # ✅ 다운로드 버튼
+        excel_data = convert_df_to_excel(df[["drop_borrower", "dropitem_name", "drop_owner", "start_date", "end_date"]])
+        st.download_button("📥 드메템 대여 현황 다운로드", data=excel_data, file_name="드메템_대여현황.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
         # ✏️ 수정 & 삭제 대상 선택
         st.markdown("### ✏️ 수정 또는 삭제")
         df["선택항목"] = df["drop_borrower"] + " | " + df["dropitem_name"]
