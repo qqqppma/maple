@@ -787,7 +787,7 @@ elif menu == "드메템 대여 관리":
             with col2:
                 edit_end = st.date_input("종료일", value=pd.to_datetime(selected_row["end_date"]))
             if st.form_submit_button("수정"):
-                updated = update_weapon_rental(actual_id, {
+                updated = update_dropitem_rental(actual_id, {
                     "drop_borrower": edit_drop_borrower,
                     "dropitem_name": edit_dropitem,
                     "drop_owner": edit_drop_owner,
