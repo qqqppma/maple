@@ -253,7 +253,7 @@ if menu == "악마 길드원 정보 등록":
             "withdraw_date": "탈퇴일"
             })
 
-        st.dataframe(df_display.reset_index(drop=True))
+        st.dataframe(df_display.reset_index(drop=True),use_container_width=True)
 
         if is_admin:
             selected_name = st.selectbox("수정 또는 삭제할 닉네임 선택", df["nickname"])
