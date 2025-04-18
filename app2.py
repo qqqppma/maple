@@ -220,12 +220,14 @@ if menu == "악마 길드원 정보 등록":
             with st.form("edit_form"):
                 nickname_edit = st.text_input("닉네임", selected_row["nickname"])
                 position_edit = st.text_input("직위", selected_row["position"])
-                active_edit = st.selectbox("활동 여부", [True, False], index=0 if selected_row["active"] else 1)
+                active_edit = st.selectbox("활동 여부", ["활동중", "비활동"], index=0 if selected_row["active"] else 1)
+                active1 = True if active_edit == "활동중" else False
                 resume_date_edit = st.date_input("활동 재개일", value=pd.to_datetime(selected_row["resume_date"]).date() if selected_row["resume_date"] else None)
                 join_date_edit = st.date_input("가입일", value=pd.to_datetime(selected_row["join_date"]).date() if selected_row["join_date"] else None)
                 note_edit = st.text_input("비고", selected_row["note"])
                 guild_name_edit = st.text_input("길드명", selected_row["guild_name"])
-                withdrawn_edit = st.selectbox("탈퇴 여부", [False, True], index=1 if selected_row["withdrawn"] else 0)
+                withdrawn_edit_display = st.selectbox("탈퇴 여부", ["탈퇴함", "여기만한 길드 없다"], index=1 if selected_row["withdrawn"] else 0)
+                withdrawn_edit = True if withdrawn_edit_display == "탈퇴함" else False
                 withdraw_date_edit = st.date_input("탈퇴일", value=pd.to_datetime(selected_row["withdraw_date"]).date() if selected_row["withdraw_date"] else None)
 
                 update_btn = st.form_submit_button("✏️ 수정")
@@ -235,7 +237,7 @@ if menu == "악마 길드원 정보 등록":
                     updated_data = {
                         "nickname": nickname_edit,
                         "position": position_edit,
-                        "active": active_edit,
+                        "active": active1,
                         "note": note_edit,
                         "guild_name": guild_name_edit,
                         "withdrawn": withdrawn_edit,
@@ -260,12 +262,14 @@ if menu == "악마 길드원 정보 등록":
     with st.form("add_member_form"):
         nickname_input = st.text_input("닉네임")
         position_input = st.text_input("직위")
-        active = st.selectbox("활동 여부", [True, False])
+        active_edit1 = st.selectbox("활동 여부", ["활동중", "비활동"])
+        active2 = True if active_edit == "활동중" else False
         resume_date = st.date_input("활동 재개일", value=None)
         join_date = st.date_input("가입일", value=None)
         note = st.text_input("비고")
         guild_name = st.text_input("길드명")
-        withdrawn = st.selectbox("탈퇴 여부", [False, True])
+        withdrawn_display = st.selectbox("탈퇴 여부", ["탈퇴함", "여기만한 길드 없다"])
+        withdrawn =True if withdrawn_display == "탈퇴함" else False
         withdraw_date = st.date_input("탈퇴일", value=None)
 
         submitted = st.form_submit_button("등록")
@@ -276,7 +280,7 @@ if menu == "악마 길드원 정보 등록":
                 data = {
                     "nickname": nickname_input,
                     "position": position_input,
-                    "active": active,
+                    "active": active2,
                     "note": note,
                     "guild_name": guild_name,
                     "withdrawn": withdrawn,
@@ -338,10 +342,12 @@ elif menu == "악마길드 길컨관리":
             position_value = "직위 정보 없음"
         st.markdown(f"**직위:** `{position_value}`")
 
-        suro_input = st.selectbox("수로 참여 여부", [True, False], key="suro_input")
+        suro_display = st.selectbox("수로 참여 여부", ["참여", "미참"], key="suro_input")
+        suro_input = True if suro_display == "참여" else False
         suro_score_input = st.number_input("수로 점수", min_value=0, step=1, key="suro_score_input")
 
-        flag_input = st.selectbox("플래그 참여 여부", [True, False], key="flag_input")
+        flag_display = st.selectbox("플래그 참여 여부", ["참여", "미참"], key="flag_input")
+        flag_input = True if suro_display == "참여" else False
         flag_score_input = st.number_input("플래그 점수", min_value=0, step=1, key="flag_score_input")
 
         mission_point_input = st.number_input("주간미션포인트", min_value=0, step=1, key="mission_point_input")
@@ -379,26 +385,16 @@ elif menu == "악마길드 길컨관리":
         selected = st.selectbox("수정/삭제할 닉네임 선택", [m["nickname"] for m in mainmembers])
         selected_row = [m for m in mainmembers if m["nickname"] == selected][0]
 
-        suro_input_edit = st.selectbox("수로 참여 여부", [True, False],
-                                    index=0 if selected_row["suro"] else 1,
-                                    key="suro_edit")
-        suro_score_edit = st.number_input("수로 점수", min_value=0, step=1,
-                                        value=selected_row["suro_score"],
-                                        key="suro_score_edit")
+        suro_input_display = st.selectbox("수로 참여 여부", ["참여", "미참"],index=0 if selected_row["suro"] else 1,key="suro_edit")
+        suro_input_edit = True if suro_input_display == "참여" else False
+        suro_score_edit = st.number_input("수로 점수", min_value=0, step=1,value=selected_row["suro_score"],key="suro_score_edit")
 
-        flag_input_edit = st.selectbox("플래그 참여 여부", [True, False],
-                                    index=0 if selected_row["flag"] else 1,
-                                    key="flag_edit")
-        flag_score_edit = st.number_input("플래그 점수", min_value=0, step=1,
-                                        value=selected_row["flag_score"],
-                                        key="flag_score_edit")
+        flag_input_display = st.selectbox("플래그 참여 여부", ["참여", "미참"],index=0 if selected_row["flag"] else 1, key="flag_edit")
+        flag_input_edit = True if flag_input_display == "참여" else False
+        flag_score_edit = st.number_input("플래그 점수", min_value=0, step=1, value=selected_row["flag_score"], key="flag_score_edit")
 
-        mission_point_edit = st.number_input("주간미션포인트", min_value=0, step=1,
-                                            value=selected_row["mission_point"],
-                                            key="mission_point_edit")
-        event_sum_edit = st.number_input("합산", min_value=0, step=1,
-                                        value=selected_row["event_sum"],
-                                        key="event_sum_edit")
+        mission_point_edit = st.number_input("주간미션포인트", min_value=0, step=1, value=selected_row["mission_point"],key="mission_point_edit")
+        event_sum_edit = st.number_input("합산", min_value=0, step=1, value=selected_row["event_sum"],key="event_sum_edit")
 
         col1, col2 = st.columns(2)
         with col1:
@@ -441,10 +437,10 @@ elif menu == "부캐릭터 관리":
         selected_main = st.selectbox("본캐 닉네임 선택", main_names)
         guild_name1 = st.text_input("길드 이름")
         sub_name = st.text_input("부캐 이름")
-        suro_text = st.selectbox("수로 참여", ["참여", "미참여"])
+        suro_text = st.selectbox("수로 참여", ["참여", "미참"])
         suro = suro_text == "참여"
         suro_score = st.number_input("수로 점수", min_value=0, step=1)
-        flag_text = st.selectbox("플래그 참여", ["참여", "미참여"])
+        flag_text = st.selectbox("플래그 참여", ["참여", "미참"])
         flag = flag_text == "참여"
         flag_score = st.number_input("플래그 점수", min_value=0, step=1)
         mission_point = st.number_input("주간미션포인트", min_value=0, step=1)
@@ -494,8 +490,7 @@ elif menu == "부캐릭터 관리":
             "flag_score": "플래그 점수",
             "mission_point": "주간미션포인트"
         })
-        st.dataframe(display_all_df[["ID", "Sub ID", "부캐 길드","부캐 닉네임", "본캐 닉네임","수로", "수로 점수", "플래그", "플래그 점수", "주간미션포인트"
-                                     ]].reset_index(drop=True))
+        st.dataframe(display_all_df[["ID", "Sub ID", "부캐 길드","부캐 닉네임", "본캐 닉네임","수로", "수로 점수", "플래그", "플래그 점수", "주간미션포인트"]].reset_index(drop=True))
     else:
         st.info("등록된 부캐릭터가 없습니다.")
 
