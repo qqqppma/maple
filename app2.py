@@ -4,6 +4,7 @@ import pandas as pd
 from datetime import date,datetime
 import re
 import urllib.parse
+st.set_page_config(page_title="악마길드 관리 시스템", layout="wide")
 
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
 SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
@@ -531,7 +532,7 @@ elif menu == "부캐릭터 관리":
             "flag_score": "플래그 점수",
             "mission_point": "주간미션포인트"
         })
-        st.dataframe(display_all_df[["ID", "Sub ID", "부캐 길드","부캐 닉네임", "본캐 닉네임","수로", "수로 점수", "플래그", "플래그 점수", "주간미션포인트"]].reset_index(drop=True))
+        st.dataframe(display_all_df[["ID", "Sub ID", "부캐 길드","부캐 닉네임", "본캐 닉네임","수로", "수로 점수", "플래그", "플래그 점수", "주간미션포인트"]].reset_index(drop=True), use_container_width=True)
     else:
         st.info("등록된 부캐릭터가 없습니다.")
 
@@ -565,7 +566,7 @@ elif menu == "부캐릭터 관리":
                 })
 
                 st.markdown(f"### 🔹 {main} - 부캐 {len(display_df)}개")
-                st.dataframe(display_df[["sub_id","부캐 길드", "부캐 닉네임", "수로", "수로 점수", "플래그", "플래그 점수", "주간미션포인트"]])
+                st.dataframe(display_df[["sub_id","부캐 길드", "부캐 닉네임", "수로", "수로 점수", "플래그", "플래그 점수", "주간미션포인트"]], use_container_width=True)
 
                 if is_admin:
                     with st.expander(f"✏️ {main} 부캐 수정"):
@@ -655,7 +656,7 @@ elif menu == "보조대여 관리":
             "borrower": "대여자",
             "weapon_name": "보조무기",
             "owner": "소유자"
-        }))
+        }), use_container_width=True)
         # ✏️ 수정 & 삭제 대상 선택
         st.markdown("### ✏️ 수정 또는 삭제")
         df["선택항목"] = df["borrower"] + " | " + df["weapon_name"]
@@ -740,7 +741,7 @@ elif menu == "드메템 대여 관리":
             "drop_borrower": "대여자",
             "dropitem_name": "보조무기",
             "drop_owner": "소유자"
-        }))
+        }), use_container_width=True)
         # ✏️ 수정 & 삭제 대상 선택
         st.markdown("### ✏️ 수정 또는 삭제")
         df["선택항목"] = df["drop_borrower"] + " | " + df["dropitem_name"]
