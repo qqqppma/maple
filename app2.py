@@ -659,7 +659,7 @@ elif menu == "보조대여 관리":
         # ✏️ 수정 & 삭제 대상 선택
         st.markdown("### ✏️ 수정 또는 삭제")
         df["선택항목"] = df["borrower"] + " | " + df["weapon_name"]
-        selected = st.selectbox("수정/삭제할 표시 ID 선택", df["선택항목목"])
+        selected = st.selectbox("수정/삭제할 표시 ID 선택", df["선택항목"])
         selected_row = df[df["선택항목"] == selected].iloc[0]
         actual_id = selected_row["id"]
 
