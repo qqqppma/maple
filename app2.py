@@ -742,9 +742,10 @@ elif menu == "드메템 대여 관리":
         }))
         # ✏️ 수정 & 삭제 대상 선택
         st.markdown("### ✏️ 수정 또는 삭제")
-        selected = st.selectbox("수정/삭제할 표시 ID 선택", df["대여자"])
-        selected_row = df[df["대여자"] == selected].iloc[0]
-        actual_id = selected_row["대여자"]
+        df["선택항목"] = df["drop_borrower"] + " | " + df["dropitem_name"]
+        selected = st.selectbox("수정/삭제할 표시 ID 선택", df["선택항목"])
+        selected_row = df[df["선택항목"] == selected].iloc[0]
+        actual_id = selected_row["id"]
 
         # ✍️ 수정 폼
         with st.form("edit_form"):
