@@ -77,6 +77,35 @@ def delete_submember(sub_id):
     res = requests.delete(f"{SUPABASE_URL}/rest/v1/SubMembers?sub_id=eq.{sub_id}", headers=HEADERS)
     return res.status_code == 204
 
+# ✅ 보조무기 대여 현황 관련 함수
+def fetch_weapon_rentals():
+    res = requests.get(f"{SUPABASE_URL}/rest/v1/Weapon_Rentals?select=*&order=id.desc", headers=HEADERS)
+    if res.status_code == 200:
+        return res.json()
+    return []
+
+def insert_weapon_rental(borrower, weapon_name, owner, start_date, end_date):
+    data = {
+        "borrower": borrower,
+        "weapon_name": weapon_name,
+        "owner": owner,
+        "start_date": str(start_date),
+        "end_date": str(end_date)
+    }
+    res = requests.post(f"{SUPABASE_URL}/rest/v1/Weapon_Rentals", json=data, headers=HEADERS)
+    return res.status_code == 201
+# ✅ 데이터 수정
+def update_weapon_rental(row_id, data):
+    url = f"{SUPABASE_URL}/rest/v1/Weapon_Rentals?id=eq.{row_id}"
+    res = requests.patch(url, json=data, headers=HEADERS)
+    return res.status_code == 204
+
+# ✅ 데이터 삭제
+def delete_weapon_rental(row_id):
+    url = f"{SUPABASE_URL}/rest/v1/Weapon_Rentals?id=eq.{row_id}"
+    res = requests.delete(url, headers=HEADERS)
+    return res.status_code == 204
+
 # ✅ 로그인 처리 (주소창 유지 + 로그아웃 + 디코딩 적용)
 st.title("\U0001F6E1️ 악마길드 관리 시스템")
 
@@ -156,7 +185,7 @@ if st.sidebar.button("로그아웃"):
 nickname = st.session_state["user"]
 is_admin = st.session_state["is_admin"]
 
-menu = st.sidebar.radio("메뉴", ["악마 길드원 정보 등록", "악마길드 길컨관리", "부캐릭터 관리"])
+menu = st.sidebar.radio("메뉴", ["악마 길드원 정보 등록", "악마길드 길컨관리", "부캐릭터 관리","보조대여 관리리"])
 
 if menu == "악마 길드원 정보 등록":
     st.subheader("👥 길드원 정보 등록")
@@ -545,3 +574,87 @@ elif menu == "부캐릭터 관리":
                                 st.rerun()
                             else:
                                 st.error("삭제 실패")
+
+
+elif menu == "보조대여 관리":
+       
+    # ✅ Streamlit UI
+    st.header("🛡️ 보조무기 대여 현황")
+
+    # 📋 등록 폼
+    with st.form("register_form"):
+        st.markdown("### ➕ 대여 등록")
+        borrower = st.text_input("대여자 닉네임")
+        weapon_name = st.text_input("대여 보조무기 이름")
+        owner = st.text_input(" 소유자 닉네임")
+        col1, col2 = st.columns(2)
+        with col1:
+            start_date = st.date_input("대여 시작일", value=date.today())
+        with col2:
+            end_date = st.date_input("대여 종료일", value=date.today())
+
+        if st.form_submit_button("등록"):
+            if insert_weapon_rental(borrower, weapon_name, owner, start_date, end_date):
+                st.success("✅ 등록 완료")
+                st.rerun()
+            else:
+                st.error("❌ 등록 실패")
+
+     # 📊 데이터 조회 및 표시
+    data = fetch_weapon_rentals()
+    if data:
+        df = pd.DataFrame(data)
+        df = df.sort_values(by="id").reset_index(drop=True)
+
+        # 표시용 ID 및 대여기간 계산
+        df["ID"] = df.index + 1
+        df["대여기간"] = df.apply(
+            lambda row: f"{row['start_date']} ~ {row['end_date']} ({(pd.to_datetime(row['end_date']) - pd.to_datetime(row['start_date'])).days}일)",
+            axis=1
+        )
+
+        # 📄 대여 목록 출력
+        st.markdown("### 📄 대여 목록")
+        st.dataframe(df[["ID", "borrower", "weapon_name", "owner", "대여기간"]].rename(columns={
+            "borrower": "대여자",
+            "weapon_name": "보조무기",
+            "owner": "소유자"
+        }))
+        # ✏️ 수정 & 삭제 대상 선택
+        st.markdown("### ✏️ 수정 또는 삭제")
+        selected = st.selectbox("수정/삭제할 표시 ID 선택", df["표시 ID"])
+        selected_row = df[df["표시 ID"] == selected].iloc[0]
+        actual_id = selected_row["id"]
+
+        # ✍️ 수정 폼
+        with st.form("edit_form"):
+            st.markdown("**수정할 내용 입력:**")
+            edit_borrower = st.text_input("대여자", value=selected_row["borrower"])
+            edit_weapon = st.text_input("보조무기 이름", value=selected_row["weapon_name"])
+            edit_owner = st.text_input("소유주", value=selected_row["owner"])
+            col1, col2 = st.columns(2)
+            with col1:
+                edit_start = st.date_input("시작일", value=pd.to_datetime(selected_row["start_date"]))
+            with col2:
+                edit_end = st.date_input("종료일", value=pd.to_datetime(selected_row["end_date"]))
+            if st.form_submit_button("수정"):
+                updated = update_weapon_rental(actual_id, {
+                    "borrower": edit_borrower,
+                    "weapon_name": edit_weapon,
+                    "owner": edit_owner,
+                    "start_date": str(edit_start),
+                    "end_date": str(edit_end)
+                })
+                if updated:
+                    st.success("✏️ 수정 완료")
+                    st.rerun()
+                else:
+                    st.error("수정 실패")
+
+        # 🗑 삭제 버튼
+        if st.button("❌ 삭제"):
+            if delete_weapon_rental(actual_id):
+                st.success("🗑 삭제 완료")
+                st.rerun()
+            else:
+                st.error("삭제 실패")
