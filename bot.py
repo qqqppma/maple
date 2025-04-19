@@ -4,7 +4,7 @@ import discord
 from datetime import datetime
 from supabase import create_client, Client
 from threading import Thread
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 
 # ✅ 환경변수 로딩 (.env 사용 시)
 # load_dotenv()
