@@ -13,8 +13,17 @@ from threading import Thread
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 print("DEBUG ENV CHANNEL_ID:", os.getenv("CHANNEL_ID"))
+print("DEBUG ENV CHANNEL_ID:", os.getenv("CHANNEL_ID"))
+
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
-CHANNEL_ID = int(os.getenv("CHANNEL_ID"))
+# CHANNEL_ID = int(os.getenv("CHANNEL_ID"))
+try:
+    CHANNEL_ID = int(os.getenv("CHANNEL_ID"))
+except TypeError:
+    print("❌ CHANNEL_ID 환경변수가 비어 있습니다!")
+    exit(1)
+## 왜수정이 안되는데
+
 
 # ✅ Supabase 클라이언트
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
