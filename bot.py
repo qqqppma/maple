@@ -6,18 +6,15 @@ from supabase import create_client, Client
 from threading import Thread
 # from dotenv import load_dotenv
 
-# ✅ 환경변수 로딩 (.env 사용 시)
+# ✅ 환경변수 로딩 (.env 사용 시 필요)
 # load_dotenv()
 
 # ✅ 환경변수 불러오기
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
-print("DEBUG ENV CHANNEL_ID:", os.getenv("CHANNEL_ID"))
-print("DEBUG ENV CHANNEL_ID:", os.getenv("CHANNEL_ID"))
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
-# CHANNEL_ID = int(os.getenv("CHANNEL_ID"))
 
-# ✅ 여기에 예외처리 코드 넣기 (제일 먼저 실행되어야 함)
+# ✅ 채널 ID 로딩 및 예외 처리
 try:
     channel_id_str = os.getenv("CHANNEL_ID")
     if not channel_id_str:
@@ -27,10 +24,11 @@ except ValueError as e:
     print(f"❌ CHANNEL_ID 로딩 실패: {e}")
     exit(1)
 
-print("✅ DEBUG - DISCORD_TOKEN:", DISCORD_TOKEN is not None)
+# ✅ 디버깅 출력
+print("✅ DEBUG - DISCORD_TOKEN 존재 여부:", DISCORD_TOKEN is not None)
 print("✅ DEBUG - CHANNEL_ID:", CHANNEL_ID)
-
-
+print("✅ DEBUG - SUPABASE_URL:", SUPABASE_URL)
+print("✅ DEBUG - SUPABASE_KEY 존재 여부:", SUPABASE_KEY is not None)
 
 # ✅ Supabase 클라이언트
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
@@ -50,7 +48,9 @@ async def on_ready():
         await channel.send("✅ 봇이 채널에 정상 연결되었습니다!")
     except Exception as e:
         print(f"❌ 채널 불러오기 실패: {e}")
+        return
 
+    # ✅ Supabase 실시간 이벤트 핸들러
     def handle_insert(payload):
         data = payload["new"]
         msg = f"📥 `{data['borrower']}`님이 `{data['weapon_name']}` 을 대여 요청하였습니다."
@@ -62,7 +62,11 @@ async def on_ready():
         msg = f"🗑 `{data['borrower']}`님이 대여한 `{data['weapon_name']}` 이/가 {now} 부로 반납완료 되었습니다."
         asyncio.run_coroutine_threadsafe(channel.send(msg), client.loop)
 
-    supabase.table("Weapon_Rentals").on("INSERT", handle_insert).on("DELETE", handle_delete).subscribe()
+    try:
+        supabase.table("Weapon_Rentals").on("INSERT", handle_insert).on("DELETE", handle_delete).subscribe()
+        print("✅ Supabase 구독 시작됨")
+    except Exception as e:
+        print(f"❌ Supabase 실시간 구독 실패: {e}")
 
-# ✅ 봇 실행
+# ✅ 디스코드 봇 실행
 Thread(target=client.run, args=(DISCORD_TOKEN,)).start()
