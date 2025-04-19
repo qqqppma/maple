@@ -5,4 +5,4 @@ xlsxwriter
 discord.py
 supabase
 python-dotenv
-
+#수정
