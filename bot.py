@@ -35,7 +35,14 @@ client = discord.Client(intents=intents)
 @client.event
 async def on_ready():
     print(f"✅ 디스코드 봇 로그인됨: {client.user}")
-    channel = await client.fetch_channel(CHANNEL_ID)
+    print(f"🔍 채널 ID: {CHANNEL_ID}")
+
+    try:
+        channel = await client.fetch_channel(CHANNEL_ID)
+        print(f"📢 채널 로딩 성공: {channel.name}")
+        await channel.send("✅ 봇이 채널에 정상 연결되었습니다!")
+    except Exception as e:
+        print(f"❌ 채널 불러오기 실패: {e}")
 
     def handle_insert(payload):
         data = payload["new"]
