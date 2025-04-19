@@ -14,15 +14,22 @@ SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 print("DEBUG ENV CHANNEL_ID:", os.getenv("CHANNEL_ID"))
 print("DEBUG ENV CHANNEL_ID:", os.getenv("CHANNEL_ID"))
-
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 # CHANNEL_ID = int(os.getenv("CHANNEL_ID"))
+
+# ✅ 여기에 예외처리 코드 넣기 (제일 먼저 실행되어야 함)
 try:
-    CHANNEL_ID = int(os.getenv("CHANNEL_ID"))
-except TypeError:
-    print("❌ CHANNEL_ID 환경변수가 비어 있습니다!")
+    channel_id_str = os.getenv("CHANNEL_ID")
+    if not channel_id_str:
+        raise ValueError("환경변수 CHANNEL_ID가 설정되지 않았습니다.")
+    CHANNEL_ID = int(channel_id_str)
+except ValueError as e:
+    print(f"❌ CHANNEL_ID 로딩 실패: {e}")
     exit(1)
-## 왜수정이 안되는데
+
+print("✅ DEBUG - DISCORD_TOKEN:", DISCORD_TOKEN is not None)
+print("✅ DEBUG - CHANNEL_ID:", CHANNEL_ID)
+
 
 
 # ✅ Supabase 클라이언트
