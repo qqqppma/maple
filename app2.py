@@ -724,89 +724,89 @@ elif menu == "보조대여 관리":
         st.warning("📸 보유 중인 보조무기가 없습니다.")
 
  #드메 대여 관리 코드
-elif menu == "드메템 대여 관리":
+# elif menu == "드메템 대여 관리":
        
-    # ✅ Streamlit UI
-    st.header("🛡️ 드메템 대여 현황")
+#     # ✅ Streamlit UI
+#     st.header("🛡️ 드메템 대여 현황")
 
-    # 📋 등록 폼
-    with st.form("register_form"):
-        st.markdown("### ➕ 대여 등록")
-        drop_borrower = st.text_input("대여자 닉네임")
-        dropitem_name = st.text_input("대여 드메템 목록")
-        drop_owner = st.text_input(" 소유자 닉네임")
-        col1, col2 = st.columns(2)
-        with col1:
-            start_date = st.date_input("대여 시작일", value=date.today())
-        with col2:
-            end_date = st.date_input("대여 종료일", value=date.today())
+#     # 📋 등록 폼
+#     with st.form("register_form"):
+#         st.markdown("### ➕ 대여 등록")
+#         drop_borrower = st.text_input("대여자 닉네임")
+#         dropitem_name = st.text_input("대여 드메템 목록")
+#         drop_owner = st.text_input(" 소유자 닉네임")
+#         col1, col2 = st.columns(2)
+#         with col1:
+#             start_date = st.date_input("대여 시작일", value=date.today())
+#         with col2:
+#             end_date = st.date_input("대여 종료일", value=date.today())
 
-        if st.form_submit_button("등록"):
-            if insert_dropitem_rental(drop_borrower, dropitem_name, drop_owner, start_date, end_date):
-                st.success("✅ 등록 완료")
-                st.rerun()
-            else:
-                st.error("❌ 등록 실패")
+#         if st.form_submit_button("등록"):
+#             if insert_dropitem_rental(drop_borrower, dropitem_name, drop_owner, start_date, end_date):
+#                 st.success("✅ 등록 완료")
+#                 st.rerun()
+#             else:
+#                 st.error("❌ 등록 실패")
 
-     # 📊 데이터 조회 및 표시
-    data = fetch_dropitem_rentals()
-    if data:
-        df = pd.DataFrame(data)
-        df = df.sort_values(by="id").reset_index(drop=True)
+#      # 📊 데이터 조회 및 표시
+#     data = fetch_dropitem_rentals()
+#     if data:
+#         df = pd.DataFrame(data)
+#         df = df.sort_values(by="id").reset_index(drop=True)
 
-        # 표시용 ID 및 대여기간 계산
-        df["ID"] = df.index + 1
-        df["대여기간"] = df.apply(
-            lambda row: f"{row['start_date']} ~ {row['end_date']} ({(pd.to_datetime(row['end_date']) - pd.to_datetime(row['start_date'])).days}일)",
-            axis=1
-        )
+#         # 표시용 ID 및 대여기간 계산
+#         df["ID"] = df.index + 1
+#         df["대여기간"] = df.apply(
+#             lambda row: f"{row['start_date']} ~ {row['end_date']} ({(pd.to_datetime(row['end_date']) - pd.to_datetime(row['start_date'])).days}일)",
+#             axis=1
+#         )
 
-        # 📄 대여 목록 출력
-        st.markdown("### 📄 대여 목록")
-        st.dataframe(df[["ID", "drop_borrower", "dropitem_name", "drop_owner", "대여기간"]].rename(columns={
-            "drop_borrower": "대여자",
-            "dropitem_name": "보조무기",
-            "drop_owner": "소유자"
-        }), use_container_width=True)
-        # ✅ 다운로드 버튼
-        excel_data = convert_df_to_excel(df[["drop_borrower", "dropitem_name", "drop_owner", "start_date", "end_date"]])
-        st.download_button("📥 드메템 대여 현황 다운로드", data=excel_data, file_name="드메템_대여현황.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-        # ✏️ 수정 & 삭제 대상 선택
-        st.markdown("### ✏️ 수정 또는 삭제")
-        df["선택항목"] = df["drop_borrower"] + " | " + df["dropitem_name"]
-        selected = st.selectbox("수정/삭제할 표시 ID 선택", df["선택항목"])
-        selected_row = df[df["선택항목"] == selected].iloc[0]
-        actual_id = selected_row["id"]
+#         # 📄 대여 목록 출력
+#         st.markdown("### 📄 대여 목록")
+#         st.dataframe(df[["ID", "drop_borrower", "dropitem_name", "drop_owner", "대여기간"]].rename(columns={
+#             "drop_borrower": "대여자",
+#             "dropitem_name": "보조무기",
+#             "drop_owner": "소유자"
+#         }), use_container_width=True)
+#         # ✅ 다운로드 버튼
+#         excel_data = convert_df_to_excel(df[["drop_borrower", "dropitem_name", "drop_owner", "start_date", "end_date"]])
+#         st.download_button("📥 드메템 대여 현황 다운로드", data=excel_data, file_name="드메템_대여현황.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+#         # ✏️ 수정 & 삭제 대상 선택
+#         st.markdown("### ✏️ 수정 또는 삭제")
+#         df["선택항목"] = df["drop_borrower"] + " | " + df["dropitem_name"]
+#         selected = st.selectbox("수정/삭제할 표시 ID 선택", df["선택항목"])
+#         selected_row = df[df["선택항목"] == selected].iloc[0]
+#         actual_id = selected_row["id"]
 
-        # ✍️ 수정 폼
-        with st.form("edit_form"):
-            st.markdown("**수정할 내용 입력:**")
-            edit_drop_borrower = st.text_input("대여자", value=selected_row["drop_borrower"])
-            edit_dropitem = st.text_input("드메템 이름", value=selected_row["dropitem_name"])
-            edit_drop_owner = st.text_input("소유자", value=selected_row["drop_owner"])
-            col1, col2 = st.columns(2)
-            with col1:
-                edit_start = st.date_input("시작일", value=pd.to_datetime(selected_row["start_date"]))
-            with col2:
-                edit_end = st.date_input("종료일", value=pd.to_datetime(selected_row["end_date"]))
-            if st.form_submit_button("수정"):
-                updated = update_dropitem_rental(actual_id, {
-                    "drop_borrower": edit_drop_borrower,
-                    "dropitem_name": edit_dropitem,
-                    "drop_owner": edit_drop_owner,
-                    "start_date": str(edit_start),
-                    "end_date": str(edit_end)
-                })
-                if updated:
-                    st.success("✏️ 수정 완료")
-                    st.rerun()
-                else:
-                    st.error("수정 실패")
+#         # ✍️ 수정 폼
+#         with st.form("edit_form"):
+#             st.markdown("**수정할 내용 입력:**")
+#             edit_drop_borrower = st.text_input("대여자", value=selected_row["drop_borrower"])
+#             edit_dropitem = st.text_input("드메템 이름", value=selected_row["dropitem_name"])
+#             edit_drop_owner = st.text_input("소유자", value=selected_row["drop_owner"])
+#             col1, col2 = st.columns(2)
+#             with col1:
+#                 edit_start = st.date_input("시작일", value=pd.to_datetime(selected_row["start_date"]))
+#             with col2:
+#                 edit_end = st.date_input("종료일", value=pd.to_datetime(selected_row["end_date"]))
+#             if st.form_submit_button("수정"):
+#                 updated = update_dropitem_rental(actual_id, {
+#                     "drop_borrower": edit_drop_borrower,
+#                     "dropitem_name": edit_dropitem,
+#                     "drop_owner": edit_drop_owner,
+#                     "start_date": str(edit_start),
+#                     "end_date": str(edit_end)
+#                 })
+#                 if updated:
+#                     st.success("✏️ 수정 완료")
+#                     st.rerun()
+#                 else:
+#                     st.error("수정 실패")
 
-        # 🗑 삭제 버튼
-        if st.button("❌ 삭제"):
-            if delete_dropitem_rental(actual_id):
-                st.success("🗑 삭제 완료")
-                st.rerun()
-            else:
-                st.error("삭제 실패")
+#         # 🗑 삭제 버튼
+#         if st.button("❌ 삭제"):
+#             if delete_dropitem_rental(actual_id):
+#                 st.success("🗑 삭제 완료")
+#                 st.rerun()
+#             else:
+#                 st.error("삭제 실패")

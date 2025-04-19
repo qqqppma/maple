@@ -4,14 +4,21 @@ import discord
 from datetime import datetime
 from supabase import create_client, Client
 from threading import Thread
+from dotenv import load_dotenv
 
-SUPABASE_URL = os.getenv("https://tkhcojfyvdjahenllbab.supabase.co")
-SUPABASE_KEY = os.getenv("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRraGNvamZ5dmRqYWhlbmxsYmFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ2ODU2MzUsImV4cCI6MjA2MDI2MTYzNX0.HfejJXhxGsRdzr9UUgW57SSpOGG21iQcfxguvxEfDhU")
-DISCORD_TOKEN = os.getenv("MTM2MjcwODY5MzY3NzkwNDA0NA.GFQ2uX.-9oWHu1cW3XZe49xFCuTrNa0xpgETmhW2ULpuc")
-CHANNEL_ID = int(os.getenv("1362709414729089154"))
+# ✅ 환경변수 로딩 (.env 사용 시)
+load_dotenv()
 
+# ✅ 환경변수 불러오기
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
+CHANNEL_ID = int(os.getenv("CHANNEL_ID"))
+
+# ✅ Supabase 클라이언트
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
+# ✅ Discord 봇 설정
 intents = discord.Intents.default()
 client = discord.Client(intents=intents)
 
@@ -33,5 +40,5 @@ async def on_ready():
 
     supabase.table("Weapon_Rentals").on("INSERT", handle_insert).on("DELETE", handle_delete).subscribe()
 
-# Run bot
+# ✅ 봇 실행
 Thread(target=client.run, args=(DISCORD_TOKEN,)).start()
