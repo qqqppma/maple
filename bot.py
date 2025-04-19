@@ -35,7 +35,7 @@ client = discord.Client(intents=intents)
 @client.event
 async def on_ready():
     print(f"✅ 디스코드 봇 로그인됨: {client.user}")
-    channel = client.get_channel(CHANNEL_ID)
+    channel = await client.fetch_channel(CHANNEL_ID)
 
     def handle_insert(payload):
         data = payload["new"]
