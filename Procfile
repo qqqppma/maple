@@ -1,1 +1,1 @@
-worker: python maple/bot.py
+worker: python bot.py
