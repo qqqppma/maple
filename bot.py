@@ -7,7 +7,7 @@ from threading import Thread
 from dotenv import load_dotenv
 
 # ✅ 환경변수 로딩 (.env 사용 시)
-load_dotenv()
+# load_dotenv()
 
 # ✅ 환경변수 불러오기
 SUPABASE_URL = os.getenv("SUPABASE_URL")
