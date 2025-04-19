@@ -12,6 +12,7 @@ from threading import Thread
 # ✅ 환경변수 불러오기
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+print("DEBUG ENV CHANNEL_ID:", os.getenv("CHANNEL_ID"))
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 CHANNEL_ID = int(os.getenv("CHANNEL_ID"))
 
