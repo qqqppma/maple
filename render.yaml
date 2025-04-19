@@ -1,0 +1,15 @@
+services:
+  - type: worker
+    name: weapon-rental-discord-bot
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python bot.py"
+    envVars:
+      - key: DISCORD_TOKEN
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
+      - key: CHANNEL_ID
+        sync: false
