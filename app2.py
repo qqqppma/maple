@@ -712,7 +712,7 @@ elif menu == "보조대여 관리":
         image_path = os.path.join(IMAGE_FOLDER, f"{selected_job}보조.jpg")
 
     if os.path.exists(image_path):
-        st.image(Image.open(image_path), caption=f"{selected_job}의 보조무기", use_container_width=True)
+        st.image(Image.open(image_path), caption=f"{selected_job}의 보조무기", use_container_width=300)
 
         # 📆 날짜 생성 (오늘부터 7일)
         today = date.today()
