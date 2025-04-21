@@ -506,7 +506,7 @@ elif menu == "악마길드 길컨관리":
                     st.error("🚫 수정 실패")
 
         with col2:
-            st.write("🧪 삭제 대상 ID 확인:", selected_row["ID"])
+            st.write("🧪 삭제 대상 ID 확인:", selected_row["id"])
 
             if st.button("🗑 삭제", key="main_delete_btn"):
                 if delete_mainmember(selected_row["ID"]):
