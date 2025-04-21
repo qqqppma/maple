@@ -68,5 +68,6 @@ async def on_ready():
     except Exception as e:
         print(f"❌ Supabase 실시간 구독 실패: {e}")
 
-# ✅ 디스코드 봇 실행
-Thread(target=client.run, args=(DISCORD_TOKEN,)).start()
+# ✅ 디스코드 봇 실행 (Thread 제거!)
+if __name__ == "__main__":
+    client.run(DISCORD_TOKEN)
