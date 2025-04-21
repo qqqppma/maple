@@ -102,6 +102,12 @@ async def polling_loop():
 @client.event
 async def on_ready():
     print(f"🤖 디스코드 봇 로그인됨: {client.user}")
+
+    # ✅ 상태 메시지 설정
+    await client.change_presence(
+        activity=discord.Game(name="KST 기준 04~12는 쉬는시간입니다. 2분마다 작동합니다.")
+    )
+    
     # ✅ 현재 시각 확인용 로그
     now_utc = datetime.utcnow()
     now_local = datetime.now()
