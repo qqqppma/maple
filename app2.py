@@ -10,6 +10,7 @@ from PIL import Image
 from datetime import date, timedelta
 st.set_page_config(page_title="악마길드 관리 시스템", layout="wide")
 from supabase import create_client, Client
+import json
 
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
 SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
@@ -765,7 +766,7 @@ elif menu == "보조대여 관리":
                 rental_data = {
                     "borrower": selected_borrower,
                     "weapon_name": weapon_name,
-                    "owner": owner,
+                    "owner": json.dumps(owner),
                     "start_date": str(start_date),
                     "end_date": str(end_date),
                 
@@ -792,6 +793,8 @@ elif menu == "보조대여 관리":
 
             df["대여기간"] = df.apply(get_time_range, axis=1)
 
+            df["owner"] = df["owner"].apply(lambda x: json.loads(x)[0] if isinstance(x, str) and x.startswith("[") else x)
+
             st.markdown("### 📄 보조무기 대여 현황")
             st.dataframe(df[["ID", "borrower", "weapon_name", "owner", "대여기간"]], use_container_width=True)
 
@@ -806,11 +809,11 @@ elif menu == "보조대여 관리":
 
             # 🔁 반납 가능한 항목 필터링
             for _, row in df.iterrows():
-                if row["owner"] == nickname:
+                owners = json.loads(row["owner"]) if isinstance(row["owner"], str) and row["owner"].startswith("[") else [row["owner"]]
+                if nickname in owners:
                     with st.expander(f"🛡️ '{row['weapon_name']}' - 대여자: {row['borrower']}"):
                         st.markdown(f"**대여기간:** `{row['start_date']} ~ {row['end_date']}`")
-                        st.markdown(f"**소유자:** `{row['owner']}`")
-
+                        st.markdown(f"**소유자:** `{', '.join(owners)}`")
                         if st.button("🗑 반납 완료", key=f"return_{row['id']}"):
                             if delete_weapon_rental(row["id"]):
                                 st.success("✅ 반납 완료되었습니다!")
@@ -906,9 +909,10 @@ elif menu == "드메템 대여 관리":
     if drop_data:
         df = pd.DataFrame(drop_data).sort_values(by="id").reset_index(drop=True)
         df["ID"] = df.index + 1
-        df["대여기간"] = df.apply(
-            lambda row: f"{row['start_date']} ~ {row['end_date']}", axis=1
-        )
+        df["대여기간"] = df.apply(lambda row: f"{row['start_date']} ~ {row['end_date']}", axis=1)
+
+        df["drop_owner"] = df["drop_owner"].apply(lambda x: json.loads(x)[0] if isinstance(x, str) and x.startswith("[") else x)
+
         st.markdown("### 📄 드메템 대여 현황")
         st.dataframe(df[["ID", "drop_borrower", "dropitem_name", "drop_owner", "대여기간"]], use_container_width=True)
 
@@ -918,10 +922,11 @@ elif menu == "드메템 대여 관리":
 
         # 🔁 반납 처리 버튼
         for _, row in df.iterrows():
-            if nickname in owners:
+            owners_list = json.loads(row["drop_owner"]) if isinstance(row["drop_owner"], str) and row["drop_owner"].startswith("[") else [row["drop_owner"]]
+            if nickname in owners_list:
                 with st.expander(f"🛡️ '{row['dropitem_name']}' - 대여자: {row['drop_borrower']}"):
                     st.markdown(f"**대여기간:** `{row['start_date']} ~ {row['end_date']}`")
-                    st.markdown(f"**소유자:** `{row['drop_owner']}`")
+                    st.markdown(f"**소유자:** `{', '.join(owners_list)}`")
 
                     if st.button("🗑 반납 완료", key=f"drop_return_{row['id']}"):
                         if delete_dropitem_rental(row["id"]):
@@ -929,4 +934,3 @@ elif menu == "드메템 대여 관리":
                             st.rerun()
                         else:
                             st.error("❌ 반납 실패! 다시 시도해주세요.")
-
