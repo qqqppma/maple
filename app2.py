@@ -203,7 +203,7 @@ def authenticate_user(user_id, password):
     
 # =====================================================================================#
 # ✅ 자동 로그인 처리: 쿼리 파라미터 기반
-query_params = st.experimental_get_query_params()
+query_params = st.query_params()
 query_nickname = query_params.get("nickname", [None])[0]
 query_key = query_params.get("key", [None])[0]
 
@@ -239,7 +239,7 @@ if "user" not in st.session_state:
                             st.session_state["user"] = user_info["user_id"]
                             st.session_state["nickname"] = user_info["nickname"]
                             st.session_state["is_admin"] = user_info["nickname"] in ADMIN_USERS
-                            st.experimental_set_query_params(nickname=user_info["nickname"], key=login_pw)
+                            st.query_params(nickname=user_info["nickname"], key=login_pw)
                             st.rerun()
                         else:
                             st.error("❌ 아이디 또는 비밀번호가 잘못되었습니다.")
@@ -299,7 +299,7 @@ is_admin = st.session_state["is_admin"]
 st.sidebar.write(f"👤 로그인: {nickname}")
 if st.sidebar.button("로그아웃"):
     st.session_state.clear()
-    st.experimental_set_query_params()
+    st.query_params()
     st.rerun()
 
 
