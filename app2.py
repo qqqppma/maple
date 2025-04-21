@@ -460,13 +460,20 @@ elif menu == "악마길드 길컨관리":
         st.markdown("### ➕ 메인 캐릭터 등록")
 
         nickname_input = st.selectbox("닉네임", member_nicknames, key="nickname_input")
-        # ✅ 직위 DataFrame 방식으로 가져오기
+        # ✅ 직위를 MainMembers → Members 순서로 우선 가져오기
         df_members = pd.DataFrame(members)
-        row = df_members[df_members["nickname"] == nickname_input]
-        if not row.empty:
-            position_value = row.iloc[0]["position"]
+        df_mainmembers = pd.DataFrame(mainmembers)
+
+        main_row = df_mainmembers[df_mainmembers["nickname"] == nickname_input]
+        if not main_row.empty:
+            position_value = main_row.iloc[0]["position"]  # ✅ 우선 MainMembers에서 찾음
         else:
-            position_value = "직위 정보 없음"
+            row = df_members[df_members["nickname"] == nickname_input]
+            if not row.empty:
+                position_value = row.iloc[0]["position"]
+            else:
+                position_value = "직위 정보 없음"
+
         st.markdown(f"**직위:** `{position_value}`")
 
         suro_display = st.selectbox("수로 참여 여부", ["참여", "미참"], key="suro_input")
