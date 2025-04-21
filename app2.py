@@ -269,7 +269,7 @@ if menu == "악마 길드원 정보 등록":
                             key=lambda x: x.map(get_position_priority) if x.name == "position" else x.map(korean_first_sort))
         
         df = df.reset_index(drop=True)
-        df["id"] = df.index + 1
+        df["ID"] = df.index + 1
         # ✅ 컬럼명을 한글로 바꾸기
         df_display = df.rename(columns={
             "nickname": "닉네임",
@@ -288,7 +288,7 @@ if menu == "악마 길드원 정보 등록":
         # ✅ 탈퇴 여부 대신 표시용 컬럼으로 보여주기
         st.dataframe(
             df_display[[
-                "id", "닉네임", "직위", "활동 여부", "활동 재개일", "가입일", "비고", "길드명", "탈퇴 여부 ✅", "탈퇴일"
+                "ID", "닉네임", "직위", "활동 여부", "활동 재개일", "가입일", "비고", "길드명", "탈퇴 여부 ✅", "탈퇴일"
             ]].reset_index(drop=True),
             use_container_width=True
         )
