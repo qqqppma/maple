@@ -679,42 +679,40 @@ elif menu == "보조대여 관리":
     if os.path.exists(image_path):
         st.image(Image.open(image_path), caption=f"{selected_job}의 보조무기", use_container_width=True)
 
-        # 📆 날짜 및 요일 생성 (오늘부터 7일까지만)
+        # 📆 날짜 및 요일 생성
         today = date.today()
         dates = [today + timedelta(days=i) for i in range(7)]
         date_labels = [d.strftime("%m/%d") for d in dates]
         day_names = ["월", "화", "수", "목", "금", "토", "일"]
         weekday_labels = [day_names[d.weekday()] for d in dates]
 
-        # ⏱ 시간대 정의
+        # 시간대 정의
         time_slots = [f"{h:02d}:00~{(h+2)%24:02d}:00" for h in range(0, 24, 2)]
 
         # ✅ UI 시작
         st.markdown(f"### ⏰ `{selected_job}` 시간 단위 대여")
 
-        # ✅ 전체 선택 체크박스
-        col_all, _ = st.columns([1, 10])
-        select_all = col_all.checkbox("전체 선택")
-
-        # ✅ 헤더: 요일 및 날짜
+        # ✅ 요일 + 전체선택 헤더
+        day_selected = {}
         cols = st.columns(len(dates) + 1)
         cols[0].markdown("#### ")
         for i, (day, label) in enumerate(zip(weekday_labels, date_labels)):
-            cols[i+1].markdown(f"#### {day} {label}")
+            with cols[i + 1]:
+                st.markdown(f"#### {day}<br/>{label}", unsafe_allow_html=True)
+                day_selected[i] = st.checkbox("전체", key=f"day_select_{i}")
 
-        # ✅ 본문: 시간대 체크박스
+        # ✅ 시간표 본문
         selection = {}
         for time in time_slots:
             row = st.columns(len(dates) + 1)
             row[0].markdown(f"**{time}**")
             for j, d in enumerate(dates):
                 key = f"{d}_{time}"
-                selection[key] = row[j+1].checkbox("", value=select_all, key=key)
+                value = day_selected[j]  # 요일 전체선택 값 사용
+                selection[key] = row[j + 1].checkbox("", value=value, key=key)
 
-        # ✅ 선택된 항목 수집
+        # ✅ 선택된 슬롯 모음
         selected_time_slots = [k for k, v in selection.items() if v]
-
-        # ✅ 7일 초과 경고
         selected_days = set([k.split("_")[0] for k in selected_time_slots])
         if len(selected_days) > 7:
             st.warning("❗ 대여 기간은 최대 7일까지만 선택할 수 있습니다.")
