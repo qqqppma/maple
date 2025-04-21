@@ -48,13 +48,13 @@ def insert_member(data):
     return res.status_code == 201
 
 def update_member(member_id, data):
-    url = f"{SUPABASE_URL}/rest/v1/Members?id=eq.{member_id}" #디버깅코드
+    # url = f"{SUPABASE_URL}/rest/v1/Members?id=eq.{member_id}" #디버깅코드
     res = requests.patch(f"{SUPABASE_URL}/rest/v1/Members?id=eq.{member_id}", headers=HEADERS, json=data)
     # 디버깅코드
-    st.write("📤 PATCH 요청:", url)
-    st.write("📦 데이터:", data)
-    st.write("📥 응답코드:", res.status_code)
-    st.write("📥 응답본문:", res.text)
+    # st.write("📤 PATCH 요청:", url)
+    # st.write("📦 데이터:", data)
+    # st.write("📥 응답코드:", res.status_code)
+    # st.write("📥 응답본문:", res.text)
     return res.status_code == 204
 
 def delete_member(member_id):
@@ -334,13 +334,13 @@ if menu == "악마 길드원 정보 등록":
                         "join_date": join_date_edit.isoformat() if join_date_edit else None,
                         "withdraw_date": withdraw_date_edit.isoformat() if withdraw_date_edit else None
                     }
-                    if update_member(selected_row["id"], updated_data):
+                    if update_member(selected_row["ID"], updated_data):
                         st.success("수정 완료!")
                         st.rerun()
                     else:
                         st.error("수정 실패!")
                 elif delete_btn:
-                    if delete_member(selected_row["id"]):
+                    if delete_member(selected_row["ID"]):
                         st.success("삭제 완료!")
                         st.rerun()
                     else:
@@ -401,7 +401,7 @@ elif menu == "악마길드 길컨관리":
         by=["position", "nickname"],
         key=lambda x: x.map(get_position_priority) if x.name == "position" else x.map(korean_first_sort)
         ).reset_index(drop=True)
-        df_main["id"] = df_main.index + 1
+        df_main["ID"] = df_main.index + 1
         df_main_display = df_main.rename(columns={
             "nickname": "닉네임",
             "position": "직위",
@@ -506,10 +506,10 @@ elif menu == "악마길드 길컨관리":
                     st.error("🚫 수정 실패")
 
         with col2:
-            st.write("🧪 삭제 대상 ID 확인:", selected_row["id"])
+            st.write("🧪 삭제 대상 ID 확인:", selected_row["ID"])
 
             if st.button("🗑 삭제", key="main_delete_btn"):
-                if delete_mainmember(selected_row["id"]):
+                if delete_mainmember(selected_row["ID"]):
                     st.success("🗑 삭제 완료")
                     st.rerun()
                 else:
@@ -569,9 +569,9 @@ elif menu == "부캐릭터 관리":
     st.markdown("### 📑 등록된 전체 부캐릭터 목록")
     if not df_sub.empty:
         df_sub = df_sub.reset_index(drop=True)       # 인덱스 재정렬
-        df_sub["id"] = df_sub.index + 1              # id 다시 부여
+        df_sub["ID"] = df_sub.index + 1              # id 다시 부여
         display_all_df = df_sub.rename(columns={
-            "id": "ID",
+            "ID": "ID",
             "sub_id": "Sub ID",
             "guild_name1": "부캐 길드",
             "sub_name": "부캐 닉네임",
@@ -607,7 +607,7 @@ elif menu == "부캐릭터 관리":
             if not df_main.empty:
                 # ✅ ID 재정렬
                 df_main = df_main.reset_index(drop=True)  
-                df_main["id"] = df_main.index + 1
+                df_main["ID"] = df_main.index + 1
                 display_df = df_main.rename(columns={
                     "guild_name1": "부캐 길드",
                     "sub_name": "부캐 닉네임",
