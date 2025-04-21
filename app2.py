@@ -679,20 +679,20 @@ elif menu == "보조대여 관리":
     if os.path.exists(image_path):
         st.image(Image.open(image_path), caption=f"{selected_job}의 보조무기", use_container_width=True)
 
-        # 📆 날짜 및 요일 생성
+        # 📆 날짜 생성 (오늘부터 7일)
         today = date.today()
         dates = [today + timedelta(days=i) for i in range(7)]
         date_labels = [d.strftime("%m/%d") for d in dates]
         day_names = ["월", "화", "수", "목", "금", "토", "일"]
         weekday_labels = [day_names[d.weekday()] for d in dates]
 
-        # 시간대 정의
+        # ⏱ 시간대 정의 (2시간 단위)
         time_slots = [f"{h:02d}:00~{(h+2)%24:02d}:00" for h in range(0, 24, 2)]
 
-        # ✅ UI 시작
+        # ✅ UI 헤더
         st.markdown(f"### ⏰ `{selected_job}` 시간 단위 대여")
 
-        # ✅ 요일 + 전체선택 헤더
+        # ✅ 요일별 전체선택 체크박스
         day_selected = {}
         cols = st.columns(len(dates) + 1)
         cols[0].markdown("#### ")
@@ -701,23 +701,27 @@ elif menu == "보조대여 관리":
                 st.markdown(f"#### {day}<br/>{label}", unsafe_allow_html=True)
                 day_selected[i] = st.checkbox("전체", key=f"day_select_{i}")
 
-       # ✅ 시간표 본문
+        # ✅ 시간표 체크박스 생성
         selection = {}
         for time in time_slots:
             row = st.columns(len(dates) + 1)
             row[0].markdown(f"**{time}**")
             for j, d in enumerate(dates):
-                key = f"{d}_{time}"
-                value = day_selected[j]  # 요일 전체선택 값 사용
+                key = f"{d} {time}"
+                value = day_selected[j]  # 해당 요일 전체 선택 여부 반영
                 selection[key] = row[j + 1].checkbox("", value=value, key=key)
 
-        # ✅ 선택된 슬롯 모음
+        # ✅ 선택된 항목 정리
         selected_time_slots = [k for k, v in selection.items() if v]
-        selected_days = set([k.split("_")[0] for k in selected_time_slots])
+        selected_days = set([
+            datetime.strptime(k.split()[0], "%Y-%m-%d").date()
+            for k in selected_time_slots
+        ])
+
         if len(selected_days) > 7:
             st.warning("❗ 대여 기간은 최대 7일까지만 선택할 수 있습니다.")
 
-        # 📆 대여 날짜 선택
+        # 📆 날짜 입력
         st.markdown("### 📆 대여 기간")
         col1, col2 = st.columns(2)
         with col1:
@@ -725,7 +729,7 @@ elif menu == "보조대여 관리":
         with col2:
             end_date = st.date_input("종료일", value=date.today())
 
-        # 📥 등록 버튼
+        # ✅ 대여 등록 버튼
         if st.button("📥 대여 등록"):
             if not selected_time_slots:
                 st.warning("❗ 최소 1개 이상의 시간을 선택해주세요.")
@@ -741,37 +745,41 @@ elif menu == "보조대여 관리":
                     "end_date": str(end_date),
                     "time_slots": ", ".join(selected_time_slots)
                 }
-                response = requests.post(f"{SUPABASE_URL}/rest/v1/Weapon_Rentals", headers=HEADERS, json=rental_data)
+                response = requests.post(
+                    f"{SUPABASE_URL}/rest/v1/Weapon_Rentals",
+                    headers=HEADERS,
+                    json=rental_data
+                )
                 if response.status_code == 201:
                     st.success("✅ 대여 등록이 완료되었습니다!")
                 else:
                     st.error(f"❌ 등록 실패: {response.status_code}")
 
-        # 📊 대여 현황 테이블 표시
-        weapon_data = fetch_weapon_rentals()
-        if weapon_data:
-            df = pd.DataFrame(weapon_data).sort_values(by="id").reset_index(drop=True)
-            df["ID"] = df.index + 1
-            df["대여기간"] = df.apply(
-                lambda row: f"{row['start_date']} ~ {row['end_date']}", axis=1
-            )
+                # 📊 대여 현황 테이블 표시
+                weapon_data = fetch_weapon_rentals()
+                if weapon_data:
+                    df = pd.DataFrame(weapon_data).sort_values(by="id").reset_index(drop=True)
+                    df["ID"] = df.index + 1
+                    df["대여기간"] = df.apply(
+                        lambda row: f"{row['start_date']} ~ {row['end_date']}", axis=1
+                    )
 
-            st.markdown("### 📄 보조무기 대여 현황")
-            st.dataframe(df[["ID", "borrower", "weapon_name", "owner", "대여기간"]], use_container_width=True)
+                    st.markdown("### 📄 보조무기 대여 현황")
+                    st.dataframe(df[["ID", "borrower", "weapon_name", "owner", "대여기간"]], use_container_width=True)
 
-            # 🔁 반납 가능한 항목 필터링
-            for _, row in df.iterrows():
-                if row["owner"] == nickname:
-                    with st.expander(f"🛡️ '{row['weapon_name']}' - 대여자: {row['borrower']}"):
-                        st.markdown(f"**대여기간:** `{row['start_date']} ~ {row['end_date']}`")
-                        st.markdown(f"**소유자:** `{row['owner']}`")
+                    # 🔁 반납 가능한 항목 필터링
+                    for _, row in df.iterrows():
+                        if row["owner"] == nickname:
+                            with st.expander(f"🛡️ '{row['weapon_name']}' - 대여자: {row['borrower']}"):
+                                st.markdown(f"**대여기간:** `{row['start_date']} ~ {row['end_date']}`")
+                                st.markdown(f"**소유자:** `{row['owner']}`")
 
-                        if st.button("🗑 반납 완료", key=f"return_{row['id']}"):
-                            if delete_weapon_rental(row["id"]):
-                                st.success("✅ 반납 완료되었습니다!")
-                                st.rerun()
-                            else:
-                                st.error("❌ 반납 실패! 다시 시도해주세요.")
+                                if st.button("🗑 반납 완료", key=f"return_{row['id']}"):
+                                    if delete_weapon_rental(row["id"]):
+                                        st.success("✅ 반납 완료되었습니다!")
+                                        st.rerun()
+                                    else:
+                                        st.error("❌ 반납 실패! 다시 시도해주세요.")
     else:
         st.warning("📸 보유 중인 보조무기가 없습니다.")
 
