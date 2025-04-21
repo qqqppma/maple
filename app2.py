@@ -202,7 +202,7 @@ def authenticate_user(user_id, password):
         return None
     
 # =====================================================================================#
-# ✅ 자동 로그인 처리: 쿼리 파라미터 기반
+# ✅ 자동 로그인 처리: 쿼리 파라미터 기반 유지
 query_params = st.query_params
 query_nickname = query_params.get("nickname", [None])[0]
 query_key = query_params.get("key", [None])[0]
@@ -215,9 +215,9 @@ if query_nickname and query_key and "user" not in st.session_state:
         st.session_state["is_admin"] = user_info["nickname"] in ADMIN_USERS
         st.rerun()
 
-# ✅ 로그인 화면 렌더링
+# ✅ 로그인/회원가입 UI
 if "user" not in st.session_state:
-    st.title("🛡️ 악마길드 관리 시스템")
+    st.title("\U0001F6E1️ 악마길드 관리 시스템")
 
     if "signup_mode" not in st.session_state:
         st.session_state.signup_mode = False
@@ -239,7 +239,7 @@ if "user" not in st.session_state:
                             st.session_state["user"] = user_info["user_id"]
                             st.session_state["nickname"] = user_info["nickname"]
                             st.session_state["is_admin"] = user_info["nickname"] in ADMIN_USERS
-                            st.query_params.update({"nickname": user_info["nickname"], "key": login_pw})
+                            st.query_params.update(nickname=user_info["nickname"], key=login_pw)
                             st.rerun()
                         else:
                             st.error("❌ 아이디 또는 비밀번호가 잘못되었습니다.")
@@ -299,7 +299,7 @@ is_admin = st.session_state["is_admin"]
 st.sidebar.write(f"👤 로그인: {nickname}")
 if st.sidebar.button("로그아웃"):
     st.session_state.clear()
-    st.query_params
+    st.query_params.clear()
     st.rerun()
 
 
