@@ -191,7 +191,7 @@ def insert_user(user_id, password, nickname):
         "nickname": nickname
     }
     res = supabase.table("Users").insert(user_data).execute()
-    return res.status_code == 201
+    return bool(res.data)
 
 def authenticate_user(user_id, password):
     response = supabase.table("Users").select("*").eq("user_id", user_id).eq("password", password).execute()
@@ -252,7 +252,7 @@ if "user" not in st.session_state:
         with col2:
             new_id = st.text_input("사용할 아이디")
             new_pw = st.text_input("비밀번호", type="password")
-            new_nick = st.text_input("본캐 닉네임 (Members 등록 닉네임)")
+            new_nick = st.text_input("본캐 닉네임")
 
             c1, c2 = st.columns(2)
             with c1:
