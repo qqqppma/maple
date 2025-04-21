@@ -203,17 +203,16 @@ def authenticate_user(user_id, password):
     
 # =====================================================================================#
 # ✅ 자동 로그인 처리: 쿼리 파라미터 기반 (확실한 위치, rerun 정상 반영)
-if "user" not in st.session_state:
-    query_nickname = st.query_params.get("nickname", [None])[0]
-    query_key = st.query_params.get("key", [None])[0]
+query_nickname = st.query_params.get("nickname", [None])[0]
+query_key = st.query_params.get("key", [None])[0]
 
-    if query_nickname and query_key:
-        user_info = authenticate_user(query_nickname.strip(), query_key.strip())
-        if user_info:
-            st.session_state["user"] = user_info["user_id"]
-            st.session_state["nickname"] = user_info["nickname"]
-            st.session_state["is_admin"] = user_info["nickname"] in ADMIN_USERS
-            st.experimental_rerun()
+if query_nickname and query_key:
+    user_info = authenticate_user(query_nickname.strip(), query_key.strip())
+    if user_info:
+        st.session_state["user"] = user_info["user_id"]
+        st.session_state["nickname"] = user_info["nickname"]
+        st.session_state["is_admin"] = user_info["nickname"] in ADMIN_USERS
+        st.experimental_rerun()
 
 # ✅ 로그인 상태 아닐 때만 로그인/회원가입 UI 노출
 if "user" not in st.session_state:
@@ -301,7 +300,7 @@ if st.sidebar.button("로그아웃"):
     st.query_params.clear()
     st.rerun()
 
-menu = st.sidebar.radio("메뉴", ["악마 길드원 정보 등록", "악마길드 길컨관리", "부캐릭터 관리","보조대여 관리","드메템 대여 관리"])
+menu = st.sidebar.radio("메뉴", ["악마 길드원 정보 등록", "악마길드 길컨관리", "부캐릭터 관리","보조대여 신청","드메템 대여 신청"])
 
 if menu == "악마 길드원 정보 등록":
     st.subheader("👥 길드원 정보 등록")
@@ -337,7 +336,7 @@ if menu == "악마 길드원 정보 등록":
             ]].reset_index(drop=True),
             use_container_width=True
         )
-            # ✅ 다운로드 버튼 추가
+        # ✅ 다운로드 버튼 추가
         excel_data = convert_df_to_excel(df_display)
         st.download_button("📥 길드원 목록 다운로드", data=excel_data, file_name="길드원_목록.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
