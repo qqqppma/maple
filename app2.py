@@ -653,7 +653,7 @@ elif menu == "보조대여 관리":
 
         # 로그인된 사용자 닉네임
     nickname = st.session_state["user"]
-    owner = "자리스틸의왕"
+    owner = ["자리스틸의왕","죤냇","새훨","나영진","o차월o"]
 
     # 보조무기 이미지 폴더 경로
     IMAGE_FOLDER = "보조무기 사진"
@@ -820,91 +820,112 @@ elif menu == "보조대여 관리":
     else:
         st.warning("📸 보유 중인 보조무기가 없습니다.")
 
- #드메 대여 관리 코드
+ # ✅ 드메템 대여 관리
 elif menu == "드메템 대여 관리":
-       
-    # ✅ Streamlit UI
-    st.header("🛡️ 드메템 대여 현황")
-    st.header("아직 미완성된 기능입니다.")
+    st.header("🛡️ 드메템 대여 시스템")
+    nickname = st.session_state["user"]
+    owners = ["자리스틸의왕", "새훨", "죤냇", "나영진"]
 
-#     # 📋 등록 폼
-#     with st.form("register_form"):
-#         st.markdown("### ➕ 대여 등록")
-#         drop_borrower = st.text_input("대여자 닉네임")
-#         dropitem_name = st.text_input("대여 드메템 목록")
-#         drop_owner = st.text_input(" 소유자 닉네임")
-#         col1, col2 = st.columns(2)
-#         with col1:
-#             start_date = st.date_input("대여 시작일", value=date.today())
-#         with col2:
-#             end_date = st.date_input("대여 종료일", value=date.today())
+    # ✅ 대여자 선택 드롭다운
+    st.markdown("#### 👤 대여자 선택")
+    nickname_options = get_all_character_names(nickname)
+    selected_borrower = st.selectbox("드메템 대여자로 등록할 캐릭터는?", nickname_options)
 
-#         if st.form_submit_button("등록"):
-#             if insert_dropitem_rental(drop_borrower, dropitem_name, drop_owner, start_date, end_date):
-#                 st.success("✅ 등록 완료")
-#                 st.rerun()
-#             else:
-#                 st.error("❌ 등록 실패")
+    # ✅ 드메템 종류 선택
+    item_options = ["보스드랍세트", "사냥드메세트1", "사냥드메세트2"]
+    selected_item = st.selectbox("대여할 드메템을 선택하세요", item_options)
 
-#      # 📊 데이터 조회 및 표시
-#     data = fetch_dropitem_rentals()
-#     if data:
-#         df = pd.DataFrame(data)
-#         df = df.sort_values(by="id").reset_index(drop=True)
+    # 📆 날짜 생성 (오늘부터 7일)
+    today = date.today()
+    dates = [today + timedelta(days=i) for i in range(7)]
+    date_labels = [d.strftime("%m/%d") for d in dates]
+    day_names = ["월", "화", "수", "목", "금", "토", "일"]
+    weekday_labels = [day_names[d.weekday()] for d in dates]
 
-#         # 표시용 ID 및 대여기간 계산
-#         df["ID"] = df.index + 1
-#         df["대여기간"] = df.apply(
-#             lambda row: f"{row['start_date']} ~ {row['end_date']} ({(pd.to_datetime(row['end_date']) - pd.to_datetime(row['start_date'])).days}일)",
-#             axis=1
-#         )
+    # ✅ 요일별 전체선택 체크박스
+    day_selected = {}
+    cols = st.columns(len(dates) + 1)
+    cols[0].markdown("#### ")
+    for i, (day, label) in enumerate(zip(weekday_labels, date_labels)):
+        with cols[i + 1]:
+            st.markdown(f"#### {day}<br/>{label}", unsafe_allow_html=True)
+            day_selected[i] = st.checkbox("전체", key=f"drop_day_select_{i}")
 
-#         # 📄 대여 목록 출력
-#         st.markdown("### 📄 대여 목록")
-#         st.dataframe(df[["ID", "drop_borrower", "dropitem_name", "drop_owner", "대여기간"]].rename(columns={
-#             "drop_borrower": "대여자",
-#             "dropitem_name": "보조무기",
-#             "drop_owner": "소유자"
-#         }), use_container_width=True)
-#         # ✅ 다운로드 버튼
-#         excel_data = convert_df_to_excel(df[["drop_borrower", "dropitem_name", "drop_owner", "start_date", "end_date"]])
-#         st.download_button("📥 드메템 대여 현황 다운로드", data=excel_data, file_name="드메템_대여현황.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-#         # ✏️ 수정 & 삭제 대상 선택
-#         st.markdown("### ✏️ 수정 또는 삭제")
-#         df["선택항목"] = df["drop_borrower"] + " | " + df["dropitem_name"]
-#         selected = st.selectbox("수정/삭제할 표시 ID 선택", df["선택항목"])
-#         selected_row = df[df["선택항목"] == selected].iloc[0]
-#         actual_id = selected_row["id"]
+    # ✅ 시간 선택은 24시간 단위 (0~24)
+    time_slots = ["00:00~24:00"]
+    selection = {}
+    for time in time_slots:
+        row = st.columns(len(dates) + 1)
+        row[0].markdown(f"**{time}**")
+        for j, d in enumerate(dates):
+            key = f"{d} {time}"
+            value = day_selected[j]  # 해당 요일 전체 선택 여부 반영
+            selection[key] = row[j + 1].checkbox("", value=value, key=key)
 
-#         # ✍️ 수정 폼
-#         with st.form("edit_form"):
-#             st.markdown("**수정할 내용 입력:**")
-#             edit_drop_borrower = st.text_input("대여자", value=selected_row["drop_borrower"])
-#             edit_dropitem = st.text_input("드메템 이름", value=selected_row["dropitem_name"])
-#             edit_drop_owner = st.text_input("소유자", value=selected_row["drop_owner"])
-#             col1, col2 = st.columns(2)
-#             with col1:
-#                 edit_start = st.date_input("시작일", value=pd.to_datetime(selected_row["start_date"]))
-#             with col2:
-#                 edit_end = st.date_input("종료일", value=pd.to_datetime(selected_row["end_date"]))
-#             if st.form_submit_button("수정"):
-#                 updated = update_dropitem_rental(actual_id, {
-#                     "drop_borrower": edit_drop_borrower,
-#                     "dropitem_name": edit_dropitem,
-#                     "drop_owner": edit_drop_owner,
-#                     "start_date": str(edit_start),
-#                     "end_date": str(edit_end)
-#                 })
-#                 if updated:
-#                     st.success("✏️ 수정 완료")
-#                     st.rerun()
-#                 else:
-#                     st.error("수정 실패")
+    # ✅ 선택된 항목 정리
+    selected_time_slots = [k for k, v in selection.items() if v]
+    selected_days = set([
+        datetime.strptime(k.split()[0], "%Y-%m-%d").date()
+        for k in selected_time_slots
+    ])
 
-#         # 🗑 삭제 버튼
-#         if st.button("❌ 삭제"):
-#             if delete_dropitem_rental(actual_id):
-#                 st.success("🗑 삭제 완료")
-#                 st.rerun()
-#             else:
-#                 st.error("삭제 실패")
+    if len(selected_days) > 7:
+        st.warning("❗ 대여 기간은 최대 7일까지만 선택할 수 있습니다.")
+
+    # 📆 날짜 입력
+    st.markdown("### 📆 대여 기간")
+    col1, col2 = st.columns(2)
+    with col1:
+        start_date = st.date_input("시작일", value=date.today())
+    with col2:
+        end_date = st.date_input("종료일", value=date.today())
+
+    # 등록 버튼
+    if st.button("📥 대여 등록"):
+        if not selected_time_slots:
+            st.warning("❗ 최소 1개 이상의 요일을 선택해주세요.")
+        elif len(selected_days) > 7:
+            st.warning("❗ 대여 기간은 최대 7일까지만 선택할 수 있습니다.")
+        else:
+            rental_data = {
+                "drop_borrower": selected_borrower,
+                "dropitem_name": selected_item,
+                "drop_owner": nickname,
+                "start_date": str(start_date),
+                "end_date": str(end_date),
+                "time_slots": ", ".join(selected_time_slots)
+            }
+            response = requests.post(f"{SUPABASE_URL}/rest/v1/DropItem_Rentals", headers=HEADERS, json=rental_data)
+            if response.status_code == 201:
+                st.success("✅ 대여 등록이 완료되었습니다!")
+            else:
+                st.error(f"❌ 등록 실패: {response.status_code}")
+
+    # 📊 대여 현황 테이블 표시
+    drop_data = fetch_dropitem_rentals()
+    if drop_data:
+        df = pd.DataFrame(drop_data).sort_values(by="id").reset_index(drop=True)
+        df["ID"] = df.index + 1
+        df["대여기간"] = df.apply(
+            lambda row: f"{row['start_date']} ~ {row['end_date']}", axis=1
+        )
+        st.markdown("### 📄 드메템 대여 현황")
+        st.dataframe(df[["ID", "drop_borrower", "dropitem_name", "drop_owner", "대여기간"]], use_container_width=True)
+
+        # ✅ 다운로드 버튼 추가
+        excel_data = convert_df_to_excel(df[["drop_borrower", "dropitem_name", "drop_owner", "start_date", "end_date", "time_slots"]])
+        st.download_button("📥 드메템 대여 현황 다운로드", data=excel_data, file_name="드메템_대여현황.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+        # 🔁 반납 처리 버튼
+        for _, row in df.iterrows():
+            if nickname in owners:
+                with st.expander(f"🛡️ '{row['dropitem_name']}' - 대여자: {row['drop_borrower']}"):
+                    st.markdown(f"**대여기간:** `{row['start_date']} ~ {row['end_date']}`")
+                    st.markdown(f"**소유자:** `{row['drop_owner']}`")
+
+                    if st.button("🗑 반납 완료", key=f"drop_return_{row['id']}"):
+                        if delete_dropitem_rental(row["id"]):
+                            st.success("✅ 반납 완료되었습니다!")
+                            st.rerun()
+                        else:
+                            st.error("❌ 반납 실패! 다시 시도해주세요.")
