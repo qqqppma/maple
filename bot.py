@@ -102,6 +102,14 @@ async def polling_loop():
 @client.event
 async def on_ready():
     print(f"🤖 디스코드 봇 로그인됨: {client.user}")
+    # ✅ 현재 시각 확인용 로그
+    now_utc = datetime.utcnow()
+    now_local = datetime.now()
+    now_kst = datetime.utcnow().replace(tzinfo=timezone.utc).astimezone(timezone(timedelta(hours=9)))
+
+    print(f"🕓 [DEBUG] datetime.utcnow(): {now_utc}")
+    print(f"🕓 [DEBUG] datetime.now(): {now_local}")
+    print(f"🕓 [DEBUG] KST 변환 시각: {now_kst}")
     client.loop.create_task(polling_loop())
 
 if __name__ == "__main__":
