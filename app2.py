@@ -9,6 +9,7 @@ import os
 from PIL import Image
 from datetime import date, timedelta
 st.set_page_config(page_title="악마길드 관리 시스템", layout="wide")
+from supabase import create_client, Client
 
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
 SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
@@ -17,16 +18,17 @@ HEADERS = {
     "Authorization": f"Bearer {SUPABASE_KEY}",
     "Content-Type": "application/json"
 }
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 ADMIN_USERS = ["자리스틸의왕", "나영진", "죤냇", "o차월o"]
 
 # ✅ 모든 캐릭터 닉네임 불러오기 함수 (Main + Sub)
 def get_all_character_names(nickname):
-    # MainMembers에서 본캐릭터 불러오기
-    main_res = supabase.table("MainMembers").select("nickname").eq("user", nickname).execute()
+    # 본캐 목록 가져오기 (nickname이 Members 테이블에 존재하는 본캐)
+    main_res = supabase.table("MainMembers").select("nickname").eq("nickname", nickname).execute()
     main_names = [row["nickname"] for row in main_res.data] if main_res.data else []
 
-    # SubMembers에서 부캐릭터 불러오기
+    # 부캐 목록 가져오기 (SubMembers에서 main_name이 nickname과 일치)
     sub_res = supabase.table("SubMembers").select("sub_name").eq("main_name", nickname).execute()
     sub_names = [row["sub_name"] for row in sub_res.data] if sub_res.data else []
 
@@ -659,7 +661,7 @@ elif menu == "보조대여 관리":
 
     # UI 시작
     st.header("🔷 보조무기 대여 시스템")
-    
+
     # ✅ 대여자 선택 드롭다운
     st.markdown("#### 👤 대여자 선택")
     nickname_options = get_all_character_names(nickname)
