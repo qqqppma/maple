@@ -446,7 +446,9 @@ elif menu == "악마길드 길컨관리":
             "event_sum": "합산",
         })
         st.markdown("### 📋 현재 등록된 메인 캐릭터")
-        st.dataframe(df_main_display.reset_index(drop=True), use_container_width=True)
+        st.dataframe(
+        df_main_display[["ID", "닉네임", "직위", "수로 참여 여부", "수로 점수", "플래그 참여 여부", "플래그 점수", "주간미션포인트", "합산"]],
+        use_container_width=True)
         excel_data = convert_df_to_excel(df_main_display)
         st.download_button("📥 메인 캐릭터 다운로드", data=excel_data, file_name="메인캐릭터.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
