@@ -701,7 +701,7 @@ elif menu == "보조대여 관리":
                 st.markdown(f"#### {day}<br/>{label}", unsafe_allow_html=True)
                 day_selected[i] = st.checkbox("전체", key=f"day_select_{i}")
 
-        # ✅ 시간표 본문
+       # ✅ 시간표 본문
         selection = {}
         for time in time_slots:
             row = st.columns(len(dates) + 1)
@@ -716,7 +716,8 @@ elif menu == "보조대여 관리":
         selected_days = set([k.split("_")[0] for k in selected_time_slots])
         if len(selected_days) > 7:
             st.warning("❗ 대여 기간은 최대 7일까지만 선택할 수 있습니다.")
-        # 대여 날짜 선택
+
+        # 📆 대여 날짜 선택
         st.markdown("### 📆 대여 기간")
         col1, col2 = st.columns(2)
         with col1:
@@ -724,10 +725,12 @@ elif menu == "보조대여 관리":
         with col2:
             end_date = st.date_input("종료일", value=date.today())
 
-        # 등록 버튼
+        # 📥 등록 버튼
         if st.button("📥 대여 등록"):
             if not selected_time_slots:
                 st.warning("❗ 최소 1개 이상의 시간을 선택해주세요.")
+            elif len(selected_days) > 7:
+                st.warning("❗ 대여 기간은 최대 7일까지만 선택할 수 있습니다.")
             else:
                 weapon_name = selected_job + " 보조무기"
                 rental_data = {
@@ -743,6 +746,7 @@ elif menu == "보조대여 관리":
                     st.success("✅ 대여 등록이 완료되었습니다!")
                 else:
                     st.error(f"❌ 등록 실패: {response.status_code}")
+
         # 📊 대여 현황 테이블 표시
         weapon_data = fetch_weapon_rentals()
         if weapon_data:
