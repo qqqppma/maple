@@ -202,81 +202,83 @@ def authenticate_user(user_id, password):
         return None
     
 # =====================================================================================#
-# ✅ 로그인 처리 (주소창 유지 + 로그아웃 + 디코딩 적용)
-st.title("\U0001F6E1️ 악마길드 관리 시스템")
+# ✅ 로그인 처리
+st.title("🛡️ 악마길드 관리 시스템")
 
-# 회원가입 모드 상태 설정
+# 회원가입 모드 초기화
 if "signup_mode" not in st.session_state:
     st.session_state.signup_mode = False
 
 if "user" not in st.session_state:
 
-    # 로그인 UI
+    # 로그인 화면
     if not st.session_state.signup_mode:
-        st.write("🧪 현재 signup_mode 상태:", st.session_state.signup_mode)
         st.subheader("🔐 로그인")
-        login_name = st.text_input("닉네임", key="login_name")
-        login_pw = st.text_input("비밀번호", type="password", key="login_pw")
 
-        col1, col2 = st.columns(2)
-        with col1:
-            login_btn = st.button("로그인")
+        col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
-            if st.button("회원가입"):
-                st.session_state.signup_mode = True
-                st.rerun()
+            login_id = st.text_input("아이디", key="login_id")
+            login_pw = st.text_input("비밀번호", type="password", key="login_pw")
 
-        if login_btn:
-            try:
-                res = supabase.table("Users").select("*").eq("nickname", login_name.strip()).eq("password", login_pw.strip()).execute()
-                if res.data:
-                    st.session_state["user"] = login_name
-                    st.session_state["is_admin"] = login_name in ADMIN_USERS
-                    st.query_params.update(nickname=login_name, key=login_pw)
+            btn_col1, btn_col2 = st.columns([1, 1])  # 같은 비율로 나눠서 딱 붙게 함
+            with btn_col1:
+                login_btn = st.button("로그인", use_container_width=True)
+            with btn_col2:
+                if st.button("회원가입", use_container_width=True):
+                    st.session_state.signup_mode = True
                     st.rerun()
-                else:
-                    st.error("❌ 등록된 길드원 캐릭터가 아닙니다.")
-            except Exception as e:
-                st.error(f"Supabase 오류: {e}")
+
+            if login_btn:
+                try:
+                    user_info = authenticate_user(login_id.strip(), login_pw.strip())
+                    if user_info:
+                        st.session_state["user"] = user_info["user_id"]      # 고유 ID 저장
+                        st.session_state["nickname"] = user_info["nickname"]  # 닉네임 따로 저장
+                        st.session_state["is_admin"] = user_info["nickname"] in ADMIN_USERS
+
+                        st.query_params.update(nickname=user_info["nickname"], key=login_pw)
+                        st.rerun()
+                    else:
+                        st.error("❌ 아이디 또는 비밀번호가 잘못되었습니다.")
+                except Exception as e:
+                    st.error(f"로그인 오류: {e}")
         st.stop()
 
-    # 회원가입 UI
+    # 회원가입 화면
     else:
         st.subheader("📝 회원가입")
 
-        new_id = st.text_input("사용할 ID")  # 실제 사용은 안 하지만 확장 가능성 위해 남김
-        new_pw = st.text_input("비밀번호", type="password")
-        new_nick = st.text_input("본캐 닉네임 (길드 등록 닉네임)")
-
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("가입하기"):
-                try:
-                    # 닉네임 중복 검사
-                    exist_check = supabase.table("Users").select("nickname").eq("nickname", new_nick.strip()).execute()
-                    if exist_check.data:
-                        st.warning("⚠️ 이미 존재하는 닉네임입니다.")
-                    else:
-                        # 신규 유저 삽입
-                        data = {
-                            "nickname": new_nick.strip(),
-                            "password": new_pw.strip()
-                        }
-                        res = supabase.table("Users").insert(data).execute()
-                        if res.status_code == 201:
-                            st.success("✅ 회원가입 완료! 로그인으로 돌아갑니다.")
-                            st.session_state.signup_mode = False
-                            st.rerun()
-                        else:
-                            st.error(f"🚫 회원가입 실패: {res.status_code}")
-                            st.code(res.text)
-                except Exception as e:
-                    st.error(f"회원가입 중 오류: {e}")
-
+        col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
-            if st.button("↩️ 돌아가기"):
-                st.session_state.signup_mode = False
-                st.rerun()
+            new_id = st.text_input("사용할 아이디")
+            new_pw = st.text_input("비밀번호", type="password")
+            new_nick = st.text_input("본캐 닉네임 (Members 등록 닉네임)")
+
+            c1, c2 = st.columns(2)
+            with c1:
+                if st.button("가입하기"):
+                    try:
+                        exist = supabase.table("Users").select("user_id").eq("user_id", new_id.strip()).execute()
+                        if exist.data:
+                            st.warning("⚠️ 이미 존재하는 아이디입니다.")
+                        else:
+                            # 닉네임 확인: Members 테이블에 존재하는지 검사
+                            guild_check = supabase.table("Members").select("nickname").eq("nickname", new_nick.strip()).execute()
+                            if not guild_check.data:
+                                st.warning("⚠️ 해당 닉네임은 길드에 등록되어 있지 않습니다.")
+                            else:
+                                if insert_user(new_id.strip(), new_pw.strip(), new_nick.strip()):
+                                    st.success("✅ 회원가입 완료! 로그인으로 이동합니다.")
+                                    st.session_state.signup_mode = False
+                                    st.rerun()
+                                else:
+                                    st.error("🚫 회원가입 실패")
+                    except Exception as e:
+                        st.error(f"회원가입 오류: {e}")
+            with c2:
+                if st.button("↩️ 돌아가기"):
+                    st.session_state.signup_mode = False
+                    st.rerun()
 
         st.stop()
 
