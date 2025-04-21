@@ -299,7 +299,7 @@ is_admin = st.session_state["is_admin"]
 st.sidebar.write(f"👤 로그인: {nickname}")
 if st.sidebar.button("로그아웃"):
     st.session_state.clear()
-    st.query_params()
+    st.query_params
     st.rerun()
 
 
