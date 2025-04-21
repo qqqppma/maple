@@ -429,10 +429,10 @@ elif menu == "악마길드 길컨관리":
 
     if mainmembers:
         df_main = pd.DataFrame(mainmembers)
-        # ✅ ID를 자동으로 다시 부여
+         # ✅ 메인 캐릭터 순서 정렬
         df_main = df_main.sort_values(
-        by=["position", "nickname"],
-        key=lambda x: x.map(get_position_priority) if x.name == "position" else x.map(korean_first_sort)
+            by=["position", "nickname"],
+            key=lambda x: x.map(get_position_priority) if x.name == "position" else x.map(korean_first_sort)
         ).reset_index(drop=True)
         df_main["ID"] = df_main.index + 1
         df_main_display = df_main.rename(columns={
@@ -542,14 +542,11 @@ elif menu == "악마길드 길컨관리":
             st.write("🧪 삭제 대상 ID 확인:", selected_row["id"])
 
             if st.button("🗑 삭제", key="main_delete_btn"):
-                if delete_mainmember(selected_row["ID"]):
+                if delete_mainmember(selected_row["id"]):
                     st.success("🗑 삭제 완료")
                     st.rerun()
                 else:
                     st.error("🚫 삭제 실패")
-                
-                
-
 
 elif menu == "부캐릭터 관리":
     st.subheader("👥 부캐릭터 등록 및 관리")
