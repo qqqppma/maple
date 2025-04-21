@@ -793,10 +793,10 @@ elif menu == "보조대여 관리":
 
             df["대여기간"] = df.apply(get_time_range, axis=1)
 
-            df["owner"] = df["owner"].apply(lambda x: json.loads(x)[0] if isinstance(x, str) and x.startswith("[") else x)
+            df["대표소유자"] = df["owner"].apply(lambda x: json.loads(x)[0] if isinstance(x, str) and x.startswith("[") else x)
 
             st.markdown("### 📄 보조무기 대여 현황")
-            st.dataframe(df[["ID", "borrower", "weapon_name", "owner", "대여기간"]], use_container_width=True)
+            st.dataframe(df[["ID", "borrower", "weapon_name", "대표소유자", "대여기간"]], use_container_width=True)
 
             excel_data = convert_df_to_excel(df[["ID", "borrower", "weapon_name", "owner", "대여기간"]])
             st.download_button(
@@ -911,10 +911,10 @@ elif menu == "드메템 대여 관리":
         df["ID"] = df.index + 1
         df["대여기간"] = df.apply(lambda row: f"{row['start_date']} ~ {row['end_date']}", axis=1)
 
-        df["drop_owner"] = df["drop_owner"].apply(lambda x: json.loads(x)[0] if isinstance(x, str) and x.startswith("[") else x)
+        df["대표소유자"] = df["drop_owner"].apply(lambda x: json.loads(x)[0] if isinstance(x, str) and x.startswith("[") else x)
 
         st.markdown("### 📄 드메템 대여 현황")
-        st.dataframe(df[["ID", "drop_borrower", "dropitem_name", "drop_owner", "대여기간"]], use_container_width=True)
+        st.dataframe(df[["ID", "drop_borrower", "dropitem_name", "대표소유자", "대여기간"]], use_container_width=True)
 
         # ✅ 다운로드 버튼 추가
         excel_data = convert_df_to_excel(df[["drop_borrower", "dropitem_name", "drop_owner", "start_date", "end_date", "time_slots"]])
