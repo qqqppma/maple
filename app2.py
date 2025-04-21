@@ -36,6 +36,7 @@ def get_all_character_names(nickname):
     return main_names + sub_names
 
 # ✅ Supabase 함수
+@st.cache_data(ttl=0)
 def get_members():
     res = requests.get(f"{SUPABASE_URL}/rest/v1/Members?select=*&order=position.desc", headers=HEADERS)
     if res.status_code == 200:
