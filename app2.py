@@ -202,7 +202,7 @@ def authenticate_user(user_id, password):
         return None
     
 # =====================================================================================#
-# ✅ 로그인 처리
+ #✅ 로그인 처리
 st.title("🛡️ 악마길드 관리 시스템")
 
 # 회원가입 모드 초기화
@@ -217,10 +217,11 @@ if "user" not in st.session_state:
 
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
-            with st.form("login_form"):  # ✅ 폼으로 묶어서 엔터키 대응
+            # ✅ 로그인 form (엔터키 대응)
+            with st.form("login_form"):
                 login_id = st.text_input("아이디", key="login_id")
                 login_pw = st.text_input("비밀번호", type="password", key="login_pw")
-                submitted = st.form_submit_button("로그인")  # ✅ 엔터로 동작
+                submitted = st.form_submit_button("로그인")  # ✅ 엔터 키 반응
 
                 if submitted:
                     try:
@@ -235,6 +236,14 @@ if "user" not in st.session_state:
                             st.error("❌ 아이디 또는 비밀번호가 잘못되었습니다.")
                     except Exception as e:
                         st.error(f"로그인 오류: {e}")
+
+            # ✅ form 바깥에 회원가입 버튼 (한 줄에 붙여서 표시)
+            btn1, btn2 = st.columns([1, 1])
+            with btn2:
+                if st.button("회원가입", use_container_width=True):
+                    st.session_state.signup_mode = True
+                    st.rerun()
+
         st.stop()
 
     # 회원가입 화면
@@ -255,7 +264,7 @@ if "user" not in st.session_state:
                         if exist.data:
                             st.warning("⚠️ 이미 존재하는 아이디입니다.")
                         else:
-                            # 닉네임 확인: Members 테이블에 존재하는지 검사
+                            # 닉네임 확인
                             guild_check = supabase.table("Members").select("nickname").eq("nickname", new_nick.strip()).execute()
                             if not guild_check.data:
                                 st.warning("⚠️ 해당 닉네임은 길드에 등록되어 있지 않습니다.")
@@ -268,13 +277,13 @@ if "user" not in st.session_state:
                                     st.error("🚫 회원가입 실패")
                     except Exception as e:
                         st.error(f"회원가입 오류: {e}")
+
             with c2:
                 if st.button("↩️ 돌아가기"):
                     st.session_state.signup_mode = False
                     st.rerun()
 
         st.stop()
-
 
 nickname = st.session_state["user"]
 is_admin = st.session_state["is_admin"]
