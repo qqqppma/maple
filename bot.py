@@ -3,13 +3,8 @@ import asyncio
 import discord
 from datetime import datetime
 from supabase import create_client, Client
-from threading import Thread
-# from dotenv import load_dotenv
 
-# ✅ 환경변수 로딩 (.env 사용 시 필요)
-# load_dotenv()
-
-# ✅ 환경변수 불러오기
+# ✅ 환경변수 불러오기 (Railway에선 .env 없어도 작동)
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
@@ -30,15 +25,25 @@ print("✅ DEBUG - CHANNEL_ID:", CHANNEL_ID)
 print("✅ DEBUG - SUPABASE_URL:", SUPABASE_URL)
 print("✅ DEBUG - SUPABASE_KEY 존재 여부:", SUPABASE_KEY is not None)
 
-# ✅ Supabase 클라이언트
+# ✅ Supabase 클라이언트 생성
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # ✅ Discord 봇 설정
 intents = discord.Intents.default()
 client = discord.Client(intents=intents)
 
+# ✅ 작동 시간 체크 함수 (04:00 ~ 12:00은 꺼짐)
+def is_active_time():
+    hour = datetime.now().hour
+    return hour < 4 or hour >= 12  # 새벽 4시 ~ 정오 전까지는 비활성
+
 @client.event
 async def on_ready():
+    if not is_active_time():
+        print("⏰ 현재는 작동 시간이 아니므로 봇을 종료합니다.")
+        await client.close()
+        return
+
     print(f"✅ 디스코드 봇 로그인됨: {client.user}")
     print(f"🔍 채널 ID: {CHANNEL_ID}")
 
@@ -52,22 +57,29 @@ async def on_ready():
 
     # ✅ Supabase 실시간 이벤트 핸들러
     def handle_insert(payload):
+        if not is_active_time():
+            return
         data = payload["new"]
         msg = f"📥 `{data['borrower']}`님이 `{data['weapon_name']}` 을 대여 요청하였습니다."
         asyncio.run_coroutine_threadsafe(channel.send(msg), client.loop)
 
     def handle_delete(payload):
+        if not is_active_time():
+            return
         data = payload["old"]
         now = datetime.now().strftime("%y-%m-%d %H:%M")
         msg = f"🗑 `{data['borrower']}`님이 대여한 `{data['weapon_name']}` 이/가 {now} 부로 반납완료 되었습니다."
         asyncio.run_coroutine_threadsafe(channel.send(msg), client.loop)
 
     try:
-        supabase.table("Weapon_Rentals").on("INSERT", handle_insert).on("DELETE", handle_delete).subscribe()
+        supabase.table("Weapon_Rentals")\
+            .on("INSERT", handle_insert)\
+            .on("DELETE", handle_delete)\
+            .subscribe()
         print("✅ Supabase 구독 시작됨")
     except Exception as e:
         print(f"❌ Supabase 실시간 구독 실패: {e}")
 
-# ✅ 디스코드 봇 실행 (Thread 제거!)
+# ✅ 디스코드 봇 실행
 if __name__ == "__main__":
     client.run(DISCORD_TOKEN)
