@@ -712,7 +712,16 @@ elif menu == "보조대여 관리":
         image_path = os.path.join(IMAGE_FOLDER, f"{selected_job}보조.jpg")
 
     if os.path.exists(image_path):
-        st.image(Image.open(image_path), caption=f"{selected_job}의 보조무기", use_container_width=300)
+        image = Image.open(image_path)
+
+        # 원하는 너비 (예: 400px)에 맞춰 비율 유지하며 리사이즈
+        base_width = 400
+        w_percent = base_width / float(image.size[0])
+        h_size = int((float(image.size[1]) * float(w_percent)))
+        resized_image = image.resize((base_width, h_size))
+
+        # 이미지 출력
+        st.image(resized_image, caption=f"{selected_job}의 보조무기")
 
         # 📆 날짜 생성 (오늘부터 7일)
         today = date.today()
