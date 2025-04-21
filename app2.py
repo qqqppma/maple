@@ -202,12 +202,12 @@ def authenticate_user(user_id, password):
         return None
     
 # =====================================================================================#
-# ✅ 자동 로그인 처리: 쿼리 파라미터 기반 유지
+# ✅ 자동 로그인 처리: 쿼리 파라미터 기반
 query_params = st.query_params
 query_nickname = query_params.get("nickname", [None])[0]
 query_key = query_params.get("key", [None])[0]
 
-if query_nickname and query_key and "user" not in st.session_state:
+if "user" not in st.session_state and query_nickname and query_key:
     user_info = authenticate_user(query_nickname.strip(), query_key.strip())
     if user_info:
         st.session_state["user"] = user_info["user_id"]
@@ -215,9 +215,9 @@ if query_nickname and query_key and "user" not in st.session_state:
         st.session_state["is_admin"] = user_info["nickname"] in ADMIN_USERS
         st.rerun()
 
-# ✅ 로그인/회원가입 UI
+# ✅ 로그인 상태 아닐 때만 로그인/회원가입 UI 노출
 if "user" not in st.session_state:
-    st.title("\U0001F6E1️ 악마길드 관리 시스템")
+    st.title("🛡️ 악마길드 관리 시스템")
 
     if "signup_mode" not in st.session_state:
         st.session_state.signup_mode = False
@@ -254,7 +254,6 @@ if "user" not in st.session_state:
 
         st.stop()
 
-    # ✅ 회원가입 화면
     else:
         st.subheader("📝 회원가입")
 
@@ -292,7 +291,7 @@ if "user" not in st.session_state:
 
         st.stop()
 
-# ✅ 로그인 이후 사이드바 표시
+# ✅ 로그인 이후 사이드바
 nickname = st.session_state["nickname"]
 is_admin = st.session_state["is_admin"]
 
@@ -301,7 +300,6 @@ if st.sidebar.button("로그아웃"):
     st.session_state.clear()
     st.query_params.clear()
     st.rerun()
-
 
 menu = st.sidebar.radio("메뉴", ["악마 길드원 정보 등록", "악마길드 길컨관리", "부캐릭터 관리","보조대여 관리","드메템 대여 관리"])
 
