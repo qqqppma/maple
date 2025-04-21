@@ -183,72 +183,102 @@ def convert_df_to_excel(df):
     processed_data = output.getvalue()
     return processed_data
 
+# ✅ 유저 회원가입정보 저장
+def insert_user(user_id, password, nickname):
+    user_data = {
+        "user_id": user_id,
+        "password": password,
+        "nickname": nickname
+    }
+    res = supabase.table("Users").insert(user_data).execute()
+    return res.status_code == 201
+
+def authenticate_user(user_id, password):
+    response = supabase.table("Users").select("*").eq("user_id", user_id).eq("password", password).execute()
+    users = response.data
+    if users:
+        return users[0]  # 로그인 성공 시 유저 정보 반환
+    else:
+        return None
+    
 # =====================================================================================#
 # ✅ 로그인 처리 (주소창 유지 + 로그아웃 + 디코딩 적용)
 st.title("\U0001F6E1️ 악마길드 관리 시스템")
 
-query_params = st.query_params
-if "user" not in st.session_state:
-    nickname_encoded = query_params.get("nickname", None)
-    key_encoded = query_params.get("key", None)
-
-    # ✅ 자동 로그인 조건 강화
-    if nickname_encoded and key_encoded:
-        login_name = urllib.parse.unquote(nickname_encoded)
-        login_pw = urllib.parse.unquote(key_encoded)
-
-        try:
-            csv_url = "https://raw.githubusercontent.com/qqqppma/maple/main/guild_user.csv"
-            df_users = pd.read_csv(csv_url, encoding="utf-8-sig")
-
-            df_users["닉네임"] = df_users["닉네임"].astype(str).str.strip()
-            df_users["비밀번호"] = df_users["비밀번호"].astype(str).str.strip()
-
-            matched = df_users[
-                (df_users["닉네임"] == login_name.strip()) &
-                (df_users["비밀번호"] == login_pw.strip())
-            ]
-
-            if not matched.empty:
-                st.session_state["user"] = login_name
-                st.session_state["is_admin"] = login_name in ADMIN_USERS
-                st.query_params.update(nickname=login_name, key=login_pw)
-                st.rerun()
-            else:
-                # 자동 로그인 실패 시 조용히 실패
-                st.stop()
-        except Exception as e:
-            st.error(f"CSV 로드 오류: {e}")
-            st.stop()
+# 회원가입 모드 상태 설정
+if "signup_mode" not in st.session_state:
+    st.session_state.signup_mode = False
 
 if "user" not in st.session_state:
-    st.subheader("\U0001F512 로그인")
-    login_name = st.text_input("닉네임")
-    login_pw = st.text_input("비밀번호", type="password")
 
-    if st.button("로그인"):
-        try:
-            csv_url = "https://raw.githubusercontent.com/qqqppma/maple/main/guild_user.csv"
-            df_users = pd.read_csv(csv_url, encoding="utf-8-sig")
+    # 로그인 UI
+    if not st.session_state.signup_mode:
+        st.subheader("🔐 로그인")
+        login_name = st.text_input("닉네임", key="login_name")
+        login_pw = st.text_input("비밀번호", type="password", key="login_pw")
 
-            df_users["닉네임"] = df_users["닉네임"].astype(str).str.strip()
-            df_users["비밀번호"] = df_users["비밀번호"].astype(str).str.strip()
-
-            matched = df_users[
-                (df_users["닉네임"] == login_name.strip()) &
-                (df_users["비밀번호"] == login_pw.strip())
-            ]
-
-            if not matched.empty:
-                st.session_state["user"] = login_name
-                st.session_state["is_admin"] = login_name in ADMIN_USERS
-                st.query_params.update(nickname=login_name, key=login_pw)
+        col1, col2 = st.columns(2)
+        with col1:
+            login_btn = st.button("로그인")
+        with col2:
+            if st.button("회원가입"):
+                st.session_state.signup_mode = True
                 st.rerun()
-            else:
-                st.error("❌ 일치하는 사용자 정보가 없습니다.")
-        except Exception as e:
-            st.error(f"CSV 로드 오류: {e}")
-    st.stop()
+
+        if login_btn:
+            try:
+                res = supabase.table("Users").select("*").eq("nickname", login_name.strip()).eq("password", login_pw.strip()).execute()
+                if res.data:
+                    st.session_state["user"] = login_name
+                    st.session_state["is_admin"] = login_name in ADMIN_USERS
+                    st.query_params.update(nickname=login_name, key=login_pw)
+                    st.rerun()
+                else:
+                    st.error("❌ 등록된 길드원 캐릭터가 아닙니다.")
+            except Exception as e:
+                st.error(f"Supabase 오류: {e}")
+        st.stop()
+
+    # 회원가입 UI
+    else:
+        st.subheader("📝 회원가입")
+
+        new_id = st.text_input("사용할 ID")  # 실제 사용은 안 하지만 확장 가능성 위해 남김
+        new_pw = st.text_input("비밀번호", type="password")
+        new_nick = st.text_input("본캐 닉네임 (길드 등록 닉네임)")
+
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("가입하기"):
+                try:
+                    # 닉네임 중복 검사
+                    exist_check = supabase.table("Users").select("nickname").eq("nickname", new_nick.strip()).execute()
+                    if exist_check.data:
+                        st.warning("⚠️ 이미 존재하는 닉네임입니다.")
+                    else:
+                        # 신규 유저 삽입
+                        data = {
+                            "nickname": new_nick.strip(),
+                            "password": new_pw.strip()
+                        }
+                        res = supabase.table("Users").insert(data).execute()
+                        if res.status_code == 201:
+                            st.success("✅ 회원가입 완료! 로그인으로 돌아갑니다.")
+                            st.session_state.signup_mode = False
+                            st.rerun()
+                        else:
+                            st.error(f"🚫 회원가입 실패: {res.status_code}")
+                            st.code(res.text)
+                except Exception as e:
+                    st.error(f"회원가입 중 오류: {e}")
+
+        with col2:
+            if st.button("↩️ 돌아가기"):
+                st.session_state.signup_mode = False
+                st.rerun()
+
+        st.stop()
+
 
 nickname = st.session_state["user"]
 is_admin = st.session_state["is_admin"]
