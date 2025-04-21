@@ -25,7 +25,7 @@ ADMIN_USERS = ["자리스틸의왕", "나영진", "죤냇", "o차월o"]
 # ✅ 모든 캐릭터 닉네임 불러오기 함수 (Main + Sub)
 def get_all_character_names(nickname):
     # 본캐 목록 가져오기 (nickname이 Members 테이블에 존재하는 본캐)
-    main_res = supabase.table("MainMembers").select("nickname").eq("nickname", nickname).execute()
+    main_res = supabase.table("Members").select("nickname").eq("nickname", nickname).execute()
     main_names = [row["nickname"] for row in main_res.data] if main_res.data else []
 
     # 부캐 목록 가져오기 (SubMembers에서 main_name이 nickname과 일치)
