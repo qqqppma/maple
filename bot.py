@@ -61,6 +61,14 @@ async def polling_loop():
                 current_ids.add(row_id)
                 current_data[row_id] = row
 
+                # ✅ ✅ ✅ 바로 여기! 첫 실행 시에는 상태만 저장하고 알림 생략
+            if not last_known_ids:
+                last_known_ids = current_ids
+                last_known_data = current_data
+                print("🚫 첫 실행이므로 알림 없이 상태만 초기화됨")
+                await asyncio.sleep(120)
+                continue
+
             # 1️⃣ 신규 등록 감지
             new_ids = current_ids - last_known_ids
             for new_id in new_ids:
