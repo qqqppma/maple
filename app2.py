@@ -768,7 +768,7 @@ elif menu == "보조대여 관리":
                     "owner": owner,
                     "start_date": str(start_date),
                     "end_date": str(end_date),
-                    "time_slots": ", ".join(selected_time_slots)
+                
                 }
                 response = requests.post(f"{SUPABASE_URL}/rest/v1/Weapon_Rentals", headers=HEADERS, json=rental_data)
                 if response.status_code == 201:
@@ -824,16 +824,16 @@ elif menu == "보조대여 관리":
 elif menu == "드메템 대여 관리":
     st.header("🛡️ 드메템 대여 시스템")
     nickname = st.session_state["user"]
-    owners = ["자리스틸의왕", "새훨", "죤냇", "나영진"]
+    owners = ["자리스틸의왕", "새훨", "죤냇", "나영진","o차월o"]
 
     # ✅ 대여자 선택 드롭다운
     st.markdown("#### 👤 대여자 선택")
     nickname_options = get_all_character_names(nickname)
-    selected_borrower = st.selectbox("드메템 대여자로 등록할 캐릭터는?", nickname_options)
+    selected_borrower = st.selectbox("드메템 대여자", nickname_options)
 
     # ✅ 드메템 종류 선택
     item_options = ["보스드랍세트", "사냥드메세트1", "사냥드메세트2"]
-    selected_item = st.selectbox("대여할 드메템을 선택하세요", item_options)
+    selected_item = st.selectbox("대여할 드메템 세트를 선택하세요", item_options)
 
     # 📆 날짜 생성 (오늘부터 7일)
     today = date.today()
@@ -859,8 +859,8 @@ elif menu == "드메템 대여 관리":
         row[0].markdown(f"**{time}**")
         for j, d in enumerate(dates):
             key = f"{d} {time}"
-            value = day_selected[j]  # 해당 요일 전체 선택 여부 반영
-            selection[key] = row[j + 1].checkbox("", value=value, key=key)
+            # value = day_selected[j]  # 해당 요일 전체 선택 여부 반영
+            selection[key] = row[j + 1].checkbox("", key=key)  # ,value=value << 전체 선택 코드 벨류값
 
     # ✅ 선택된 항목 정리
     selected_time_slots = [k for k, v in selection.items() if v]
@@ -929,3 +929,4 @@ elif menu == "드메템 대여 관리":
                             st.rerun()
                         else:
                             st.error("❌ 반납 실패! 다시 시도해주세요.")
+
