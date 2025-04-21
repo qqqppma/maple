@@ -732,6 +732,8 @@ elif menu == "보조대여 관리":
 
         # ✅ 선택된 항목 정리
         selected_time_slots = [k for k, v in selection.items() if v]
+        # ✅ 날짜 및 시간 정렬 추가
+        selected_time_slots.sort(key=lambda x: datetime.strptime(x.split()[0] + " " + x.split()[1][:5], "%Y-%m-%d %H:%M"))
         selected_days = set([
             datetime.strptime(k.split()[0], "%Y-%m-%d").date()
             for k in selected_time_slots
@@ -748,11 +750,14 @@ elif menu == "보조대여 관리":
         with col2:
             end_date = st.date_input("종료일", value=date.today())
 
+        # ✅ 대여 기간 계산
+        day_difference = (end_date - start_date).days + 1
+
         # 등록 버튼
         if st.button("📥 대여 등록"):
             if not selected_time_slots:
                 st.warning("❗ 최소 1개 이상의 시간을 선택해주세요.")
-            elif len(selected_days) > 7:  # ✅ 여기 추가!
+            elif day_difference > 7:
                 st.warning("❗ 대여 기간은 최대 7일까지만 선택할 수 있습니다.")
             else:
                 # ✅ 등록 실행
@@ -776,12 +781,27 @@ elif menu == "보조대여 관리":
         if weapon_data:
             df = pd.DataFrame(weapon_data).sort_values(by="id").reset_index(drop=True)
             df["ID"] = df.index + 1
-            df["대여기간"] = df.apply(
-                lambda row: f"{row['start_date']} ~ {row['end_date']}", axis=1
-            )
+
+            # ✅ '시작시간 ~ 종료시간' 포함한 대여기간 계산 함수 
+            def get_time_range(row):
+                slots = row.get("time_slots", "")
+                if not slots:
+                    return ""
+                times = sorted([s.strip() for s in slots.split(",") if s.strip()])
+                return f"{row['start_date']} {times[0]} ~ {row['end_date']} {times[-1]}" if times else ""
+
+            df["대여기간"] = df.apply(get_time_range, axis=1)
 
             st.markdown("### 📄 보조무기 대여 현황")
             st.dataframe(df[["ID", "borrower", "weapon_name", "owner", "대여기간"]], use_container_width=True)
+
+            excel_data = convert_df_to_excel(df[["ID", "borrower", "weapon_name", "owner", "대여기간"]])
+            st.download_button(
+                label="📥 보조무기 대여 현황 다운로드",
+                data=excel_data,
+                file_name="보조무기_대여현황.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
 
             # 🔁 반납 가능한 항목 필터링
             for _, row in df.iterrows():
