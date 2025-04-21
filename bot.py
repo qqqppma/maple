@@ -47,6 +47,13 @@ async def on_ready():
     print(f"✅ 디스코드 봇 로그인됨: {client.user}")
     print(f"🔍 채널 ID: {CHANNEL_ID}")
 
+    # ✅ 현재 봇이 속한 서버들과 텍스트 채널 목록 출력
+    print("📋 봇이 인식한 채널 목록:")
+    for guild in client.guilds:
+        print(f"🔸 서버: {guild.name}")
+        for channel in guild.text_channels:
+            print(f"  - 채널 이름: {channel.name}, 채널 ID: {channel.id}")
+
     try:
         channel = await client.fetch_channel(CHANNEL_ID)
         print(f"📢 채널 로딩 성공: {channel.name}")
