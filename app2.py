@@ -202,26 +202,34 @@ def authenticate_user(user_id, password):
         return None
     
 # =====================================================================================#
- #✅ 로그인 처리
-st.title("🛡️ 악마길드 관리 시스템")
+ # ✅ 자동 로그인 처리: 쿼리 파라미터 기반
+query_nickname = st.query_params.get("nickname")
+query_key = st.query_params.get("key")
 
-# 회원가입 모드 초기화
-if "signup_mode" not in st.session_state:
-    st.session_state.signup_mode = False
+if query_nickname and query_key and "user" not in st.session_state:
+    user_info = authenticate_user(query_nickname.strip(), query_key.strip())
+    if user_info:
+        st.session_state["user"] = user_info["user_id"]
+        st.session_state["nickname"] = user_info["nickname"]
+        st.session_state["is_admin"] = user_info["nickname"] in ADMIN_USERS
+        st.rerun()
 
+# ✅ 로그인 화면 렌더링
 if "user" not in st.session_state:
+    st.title("🛡️ 악마길드 관리 시스템")
 
-    # 로그인 화면
+    if "signup_mode" not in st.session_state:
+        st.session_state.signup_mode = False
+
     if not st.session_state.signup_mode:
         st.subheader("🔐 로그인")
 
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
-            # ✅ 로그인 form (엔터키 대응)
             with st.form("login_form"):
                 login_id = st.text_input("아이디", key="login_id")
                 login_pw = st.text_input("비밀번호", type="password", key="login_pw")
-                submitted = st.form_submit_button("로그인")  # ✅ 엔터 키 반응
+                submitted = st.form_submit_button("로그인")
 
                 if submitted:
                     try:
@@ -230,56 +238,17 @@ if "user" not in st.session_state:
                             st.session_state["user"] = user_info["user_id"]
                             st.session_state["nickname"] = user_info["nickname"]
                             st.session_state["is_admin"] = user_info["nickname"] in ADMIN_USERS
+                            st.query_params.update(nickname=user_info["nickname"], key=login_pw)
                             st.rerun()
                         else:
                             st.error("❌ 아이디 또는 비밀번호가 잘못되었습니다.")
                     except Exception as e:
                         st.error(f"로그인 오류: {e}")
 
-            # ✅ form 바깥에 회원가입 버튼 (한 줄에 붙여서 표시)
             btn1, btn2 = st.columns([1, 1])
             with btn2:
                 if st.button("회원가입", use_container_width=True):
                     st.session_state.signup_mode = True
-                    st.rerun()
-
-        st.stop()
-
-    # 회원가입 화면
-    else:
-        st.subheader("📝 회원가입")
-
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
-            new_id = st.text_input("사용할 아이디")
-            new_pw = st.text_input("비밀번호", type="password")
-            new_nick = st.text_input("본캐 닉네임")
-
-            c1, c2 = st.columns(2)
-            with c1:
-                if st.button("가입하기"):
-                    try:
-                        exist = supabase.table("Users").select("user_id").eq("user_id", new_id.strip()).execute()
-                        if exist.data:
-                            st.warning("⚠️ 이미 존재하는 아이디입니다.")
-                        else:
-                            # 닉네임 확인
-                            guild_check = supabase.table("Members").select("nickname").eq("nickname", new_nick.strip()).execute()
-                            if not guild_check.data:
-                                st.warning("⚠️ 해당 닉네임은 길드에 등록되어 있지 않습니다.")
-                            else:
-                                if insert_user(new_id.strip(), new_pw.strip(), new_nick.strip()):
-                                    st.success("✅ 회원가입 완료! 로그인으로 이동합니다.")
-                                    st.session_state.signup_mode = False
-                                    st.rerun()
-                                else:
-                                    st.error("🚫 회원가입 실패")
-                    except Exception as e:
-                        st.error(f"회원가입 오류: {e}")
-
-            with c2:
-                if st.button("↩️ 돌아가기"):
-                    st.session_state.signup_mode = False
                     st.rerun()
 
         st.stop()
