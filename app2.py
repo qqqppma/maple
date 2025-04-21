@@ -283,7 +283,7 @@ if menu == "악마 길드원 정보 등록":
             "withdraw_date": "탈퇴일"
             })
 
-        df_display["탈퇴 여부 ✅"] = df_display["탈퇴 여부"].apply(lambda x: "✅" if x else "")
+        df_display["탈퇴 여부 ✅"] = df_display["탈퇴 여부"].apply(lambda x: "✅" if str(x).lower() == "true" else "")
 
         # ✅ 탈퇴 여부 대신 표시용 컬럼으로 보여주기
         st.dataframe(
