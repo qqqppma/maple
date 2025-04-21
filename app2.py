@@ -7,6 +7,7 @@ import urllib.parse
 import io
 import os
 from PIL import Image
+from datetime import date, timedelta
 st.set_page_config(page_title="악마길드 관리 시스템", layout="wide")
 
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
@@ -676,22 +677,47 @@ elif menu == "보조대여 관리":
         image_path = os.path.join(IMAGE_FOLDER, f"{selected_job}보조.jpg")
 
     if os.path.exists(image_path):
-        st.image(Image.open(image_path), caption=f"{selected_job}의 보조무기", use_column_width=True)
+        st.image(Image.open(image_path), caption=f"{selected_job}의 보조무기", use_container_width=True)
 
-        # 시간표 UI
+        # 📆 날짜 및 요일 생성 (오늘부터 7일까지만)
+        today = date.today()
+        dates = [today + timedelta(days=i) for i in range(7)]
+        date_labels = [d.strftime("%m/%d") for d in dates]
+        day_names = ["월", "화", "수", "목", "금", "토", "일"]
+        weekday_labels = [day_names[d.weekday()] for d in dates]
+
+        # ⏱ 시간대 정의
+        time_slots = [f"{h:02d}:00~{(h+2)%24:02d}:00" for h in range(0, 24, 2)]
+
+        # ✅ UI 시작
         st.markdown(f"### ⏰ `{selected_job}` 시간 단위 대여")
-        times = [f"{str(h).zfill(2)}:00~{str(h+2).zfill(2)}:00" for h in range(0, 24, 2)]
-        days = ["일", "월", "화", "수", "목", "금", "토"]
-        selected_time_slots = []
 
-        for time in times:
-            cols = st.columns(len(days) + 1)
-            cols[0].markdown(f"**{time}**")
-            for i, day in enumerate(days):
-                key = f"{selected_job}_{day}_{time}"
-                if cols[i + 1].checkbox("", key=key):
-                    selected_time_slots.append(f"{day}-{time}")
+        # ✅ 전체 선택 체크박스
+        col_all, _ = st.columns([1, 10])
+        select_all = col_all.checkbox("전체 선택")
 
+        # ✅ 헤더: 요일 및 날짜
+        cols = st.columns(len(dates) + 1)
+        cols[0].markdown("#### ")
+        for i, (day, label) in enumerate(zip(weekday_labels, date_labels)):
+            cols[i+1].markdown(f"#### {day} {label}")
+
+        # ✅ 본문: 시간대 체크박스
+        selection = {}
+        for time in time_slots:
+            row = st.columns(len(dates) + 1)
+            row[0].markdown(f"**{time}**")
+            for j, d in enumerate(dates):
+                key = f"{d}_{time}"
+                selection[key] = row[j+1].checkbox("", value=select_all, key=key)
+
+        # ✅ 선택된 항목 수집
+        selected_time_slots = [k for k, v in selection.items() if v]
+
+        # ✅ 7일 초과 경고
+        selected_days = set([k.split("_")[0] for k in selected_time_slots])
+        if len(selected_days) > 7:
+            st.warning("❗ 대여 기간은 최대 7일까지만 선택할 수 있습니다.")
         # 대여 날짜 선택
         st.markdown("### 📆 대여 기간")
         col1, col2 = st.columns(2)
@@ -719,6 +745,31 @@ elif menu == "보조대여 관리":
                     st.success("✅ 대여 등록이 완료되었습니다!")
                 else:
                     st.error(f"❌ 등록 실패: {response.status_code}")
+        # 📊 대여 현황 테이블 표시
+        weapon_data = fetch_weapon_rentals()
+        if weapon_data:
+            df = pd.DataFrame(weapon_data).sort_values(by="id").reset_index(drop=True)
+            df["ID"] = df.index + 1
+            df["대여기간"] = df.apply(
+                lambda row: f"{row['start_date']} ~ {row['end_date']}", axis=1
+            )
+
+            st.markdown("### 📄 보조무기 대여 현황")
+            st.dataframe(df[["ID", "borrower", "weapon_name", "owner", "대여기간"]], use_container_width=True)
+
+            # 🔁 반납 가능한 항목 필터링
+            for _, row in df.iterrows():
+                if row["owner"] == nickname:
+                    with st.expander(f"🛡️ '{row['weapon_name']}' - 대여자: {row['borrower']}"):
+                        st.markdown(f"**대여기간:** `{row['start_date']} ~ {row['end_date']}`")
+                        st.markdown(f"**소유자:** `{row['owner']}`")
+
+                        if st.button("🗑 반납 완료", key=f"return_{row['id']}"):
+                            if delete_weapon_rental(row["id"]):
+                                st.success("✅ 반납 완료되었습니다!")
+                                st.rerun()
+                            else:
+                                st.error("❌ 반납 실패! 다시 시도해주세요.")
     else:
         st.warning("📸 보유 중인 보조무기가 없습니다.")
 
