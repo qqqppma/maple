@@ -285,7 +285,7 @@ if "user" not in st.session_state:
 
         st.stop()
 
-nickname = st.session_state["user"]
+nickname = st.session_state["nickname"]
 is_admin = st.session_state["is_admin"]
 
 st.sidebar.write(f"👤 로그인: {nickname}")
@@ -295,8 +295,6 @@ if st.sidebar.button("로그아웃"):
     st.query_params
     st.rerun()
 
-nickname = st.session_state["user"]
-is_admin = st.session_state["is_admin"]
 
 menu = st.sidebar.radio("메뉴", ["악마 길드원 정보 등록", "악마길드 길컨관리", "부캐릭터 관리","보조대여 관리","드메템 대여 관리"])
 
