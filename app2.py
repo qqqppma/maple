@@ -893,7 +893,7 @@ elif menu == "드메템 대여 관리":
             rental_data = {
                 "drop_borrower": selected_borrower,
                 "dropitem_name": selected_item,
-                "drop_owner": nickname,
+                "drop_owner": json.dumps(owners),
                 "start_date": str(start_date),
                 "end_date": str(end_date),
                 "time_slots": ", ".join(selected_time_slots)
