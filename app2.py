@@ -217,31 +217,24 @@ if "user" not in st.session_state:
 
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
-            login_id = st.text_input("아이디", key="login_id")
-            login_pw = st.text_input("비밀번호", type="password", key="login_pw")
+            with st.form("login_form"):  # ✅ 폼으로 묶어서 엔터키 대응
+                login_id = st.text_input("아이디", key="login_id")
+                login_pw = st.text_input("비밀번호", type="password", key="login_pw")
+                submitted = st.form_submit_button("로그인")  # ✅ 엔터로 동작
 
-            btn_col1, btn_col2 = st.columns([1, 1])  # 같은 비율로 나눠서 딱 붙게 함
-            with btn_col1:
-                login_btn = st.button("로그인", use_container_width=True)
-            with btn_col2:
-                if st.button("회원가입", use_container_width=True):
-                    st.session_state.signup_mode = True
-                    st.rerun()
-
-            if login_btn:
-                try:
-                    user_info = authenticate_user(login_id.strip(), login_pw.strip())
-                    if user_info:
-                        st.session_state["user"] = user_info["user_id"]      # 고유 ID 저장
-                        st.session_state["nickname"] = user_info["nickname"]  # 닉네임 따로 저장
-                        st.session_state["is_admin"] = user_info["nickname"] in ADMIN_USERS
-
-                        st.query_params.update(nickname=user_info["nickname"], key=login_pw)
-                        st.rerun()
-                    else:
-                        st.error("❌ 아이디 또는 비밀번호가 잘못되었습니다.")
-                except Exception as e:
-                    st.error(f"로그인 오류: {e}")
+                if submitted:
+                    try:
+                        user_info = authenticate_user(login_id.strip(), login_pw.strip())
+                        if user_info:
+                            st.session_state["user"] = user_info["user_id"]
+                            st.session_state["nickname"] = user_info["nickname"]
+                            st.session_state["is_admin"] = user_info["nickname"] in ADMIN_USERS
+                            st.query_params.update(nickname=user_info["nickname"], key=login_pw)
+                            st.rerun()
+                        else:
+                            st.error("❌ 아이디 또는 비밀번호가 잘못되었습니다.")
+                    except Exception as e:
+                        st.error(f"로그인 오류: {e}")
         st.stop()
 
     # 회원가입 화면
