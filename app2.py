@@ -213,6 +213,7 @@ if "user" not in st.session_state:
 
     # 로그인 UI
     if not st.session_state.signup_mode:
+        st.write("🧪 현재 signup_mode 상태:", st.session_state.signup_mode)
         st.subheader("🔐 로그인")
         login_name = st.text_input("닉네임", key="login_name")
         login_pw = st.text_input("비밀번호", type="password", key="login_pw")
