@@ -283,7 +283,15 @@ if menu == "악마 길드원 정보 등록":
             "withdraw_date": "탈퇴일"
             })
 
-        st.dataframe(df_display.reset_index(drop=True),use_container_width=True)
+        df_display["탈퇴 여부 ✅"] = df_display["탈퇴 여부"].apply(lambda x: "✅" if x else "")
+
+        # ✅ 탈퇴 여부 대신 표시용 컬럼으로 보여주기
+        st.dataframe(
+            df_display[[
+                "id", "닉네임", "직위", "활동 여부", "활동 재개일", "가입일", "비고", "길드명", "탈퇴 여부 ✅", "탈퇴일"
+            ]].reset_index(drop=True),
+            use_container_width=True
+        )
             # ✅ 다운로드 버튼 추가
         excel_data = convert_df_to_excel(df_display)
         st.download_button("📥 길드원 목록 다운로드", data=excel_data, file_name="길드원_목록.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
