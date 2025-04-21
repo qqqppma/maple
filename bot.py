@@ -25,7 +25,7 @@ last_known_data = {}
 # ✅ 작동 시간 확인 함수 (04:00 ~ 12:00 비활성)
 def is_active_time():
     hour = datetime.now().hour
-    return hour < 4 or hour >= 12
+    return hour <= 4 or hour < 12
 
 # ✅ 폴링 루프
 async def polling_loop():
@@ -61,7 +61,7 @@ async def polling_loop():
                 current_ids.add(row_id)
                 current_data[row_id] = row
 
-                # ✅ ✅ ✅ 바로 여기! 첫 실행 시에는 상태만 저장하고 알림 생략
+                # ✅ 첫 실행 시에는 상태만 저장하고 알림 생략
             if not last_known_ids:
                 last_known_ids = current_ids
                 last_known_data = current_data
