@@ -75,11 +75,11 @@ def get_mainmembers():
     return []
 
 def update_mainember(member_id, data):
-    res = requests.patch(f"{SUPABASE_URL}/rest/v1/MainMembers?sub_id=eq.{member_id}", headers=HEADERS, json=data)
+    res = requests.patch(f"{SUPABASE_URL}/rest/v1/MainMembers?id=eq.{member_id}", headers=HEADERS, json=data)
     return res.status_code == 204
 
 def delete_mainmember(member_id):
-    res = requests.delete(f"{SUPABASE_URL}/rest/v1/MainMembers?sub_id=eq.{member_id}", headers=HEADERS)
+    res = requests.delete(f"{SUPABASE_URL}/rest/v1/MainMembers?id=eq.{member_id}", headers=HEADERS)
     return res.status_code == 204
 
 # ✅ Supabase 부캐 테이블 관련 함수
