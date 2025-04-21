@@ -203,7 +203,7 @@ def authenticate_user(user_id, password):
     
 # =====================================================================================#
 # ✅ 자동 로그인 처리: 쿼리 파라미터 기반
-query_params = st.query_params()
+query_params = st.query_params
 query_nickname = query_params.get("nickname", [None])[0]
 query_key = query_params.get("key", [None])[0]
 
