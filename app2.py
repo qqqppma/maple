@@ -47,7 +47,13 @@ def insert_member(data):
     return res.status_code == 201
 
 def update_member(member_id, data):
+    url = f"{SUPABASE_URL}/rest/v1/Members?id=eq.{member_id}" #디버깅코드
     res = requests.patch(f"{SUPABASE_URL}/rest/v1/Members?id=eq.{member_id}", headers=HEADERS, json=data)
+    # 디버깅코드
+    st.write("📤 PATCH 요청:", url)
+    st.write("📦 데이터:", data)
+    st.write("📥 응답코드:", res.status_code)
+    st.write("📥 응답본문:", res.text)
     return res.status_code == 204
 
 def delete_member(member_id):
