@@ -849,7 +849,7 @@ elif menu == "드메템 대여 관리":
     for i, (day, label) in enumerate(zip(weekday_labels, date_labels)):
         with cols[i + 1]:
             st.markdown(f"#### {day}<br/>{label}", unsafe_allow_html=True)
-            day_selected[i] = st.checkbox("전체", key=f"drop_day_select_{i}")
+            # day_selected[i] = st.checkbox("전체", key=f"drop_day_select_{i}")
 
     # ✅ 시간 선택은 24시간 단위 (0~24)
     time_slots = ["00:00~24:00"]
