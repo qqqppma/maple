@@ -75,7 +75,7 @@ async def polling_loop():
                 data = current_data[new_id]
                 borrower = data.get("borrower", "알 수 없음")
                 weapon_name = data.get("weapon_name", "무기 이름 없음")
-                msg = f"📥 {borrower}님이 {weapon_name} 을 대여 요청하였습니다."
+                msg = f"📥 {borrower} 님이 {weapon_name} 을 대여 요청하였습니다."
                 await channel.send(msg)
                 print(f"[등록] {msg}")
 
@@ -86,7 +86,7 @@ async def polling_loop():
                 borrower = removed_data.get("borrower", "알 수 없음")
                 weapon_name = removed_data.get("weapon_name", "무기 이름 없음")
                 now = (datetime.now(timezone.utc) + timedelta(hours=9)).strftime("%y-%m-%d %H:%M")  # 🔧 KST 반영
-                msg = f"🗑 {borrower}님이 대여한 {weapon_name} 이/가 {now} 부로 반납완료 되었습니다."
+                msg = f"🗑 {borrower} 님이 대여한 {weapon_name} 이/가 {now} 부로 반납완료 되었습니다."
                 await channel.send(msg)
                 print(f"[반납] {msg}")
 
@@ -107,7 +107,7 @@ async def on_ready():
     await client.change_presence(
         activity=discord.Game(name="KST 기준 04~12는 쉬는시간입니다. 2분마다 작동합니다.")
     )
-    
+
     # ✅ 현재 시각 확인용 로그
     now_utc = datetime.utcnow()
     now_local = datetime.now()
