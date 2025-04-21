@@ -3,7 +3,7 @@ import time
 import discord
 import asyncio
 from supabase import create_client, Client
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 # ✅ 환경 변수 불러오기
 SUPABASE_URL = os.getenv("SUPABASE_URL")
@@ -24,7 +24,10 @@ last_known_data = {}
 
 # ✅ 작동 시간 확인 함수 (04:00 ~ 12:00 비활성)
 def is_active_time():
-    hour = datetime.now().hour
+    utc_now = datetime.now(timezone.utc)
+    kst_now = utc_now + timedelta(hours=9)
+    hour = kst_now.hour
+    print(f"🕒 [DEBUG] 현재 한국 시간 (KST 기준): {kst_now.strftime('%Y-%m-%d %H:%M:%S')} / 작동여부: {not (4 <= hour < 12)}")
     return not (4 <= hour < 12)
 
 # ✅ 폴링 루프
@@ -61,7 +64,7 @@ async def polling_loop():
                 current_ids.add(row_id)
                 current_data[row_id] = row
 
-                # ✅ 첫 실행 시에는 상태만 저장하고 알림 생략
+            # ✅ 첫 실행 시 상태만 저장
             if not last_known_ids:
                 last_known_ids = current_ids
                 last_known_data = current_data
@@ -97,7 +100,7 @@ async def polling_loop():
         except Exception as e:
             print(f"❌ 폴링 중 오류 발생: {e}")
 
-        await asyncio.sleep(120)  # 2분 간격
+        await asyncio.sleep(120)
 
 @client.event
 async def on_ready():
