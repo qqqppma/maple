@@ -729,13 +729,14 @@ elif menu == "보조대여 관리":
         with col2:
             end_date = st.date_input("종료일", value=date.today())
 
-        # ✅ 대여 등록 버튼
+        # 등록 버튼
         if st.button("📥 대여 등록"):
             if not selected_time_slots:
                 st.warning("❗ 최소 1개 이상의 시간을 선택해주세요.")
-            elif len(selected_days) > 7:
+            elif len(selected_days) > 7:  # ✅ 여기 추가!
                 st.warning("❗ 대여 기간은 최대 7일까지만 선택할 수 있습니다.")
             else:
+                # ✅ 등록 실행
                 weapon_name = selected_job + " 보조무기"
                 rental_data = {
                     "borrower": nickname,
@@ -745,41 +746,37 @@ elif menu == "보조대여 관리":
                     "end_date": str(end_date),
                     "time_slots": ", ".join(selected_time_slots)
                 }
-                response = requests.post(
-                    f"{SUPABASE_URL}/rest/v1/Weapon_Rentals",
-                    headers=HEADERS,
-                    json=rental_data
-                )
+                response = requests.post(f"{SUPABASE_URL}/rest/v1/Weapon_Rentals", headers=HEADERS, json=rental_data)
                 if response.status_code == 201:
                     st.success("✅ 대여 등록이 완료되었습니다!")
                 else:
                     st.error(f"❌ 등록 실패: {response.status_code}")
 
-                # 📊 대여 현황 테이블 표시
-                weapon_data = fetch_weapon_rentals()
-                if weapon_data:
-                    df = pd.DataFrame(weapon_data).sort_values(by="id").reset_index(drop=True)
-                    df["ID"] = df.index + 1
-                    df["대여기간"] = df.apply(
-                        lambda row: f"{row['start_date']} ~ {row['end_date']}", axis=1
-                    )
+        # 📊 대여 현황 테이블 표시
+        weapon_data = fetch_weapon_rentals()
+        if weapon_data:
+            df = pd.DataFrame(weapon_data).sort_values(by="id").reset_index(drop=True)
+            df["ID"] = df.index + 1
+            df["대여기간"] = df.apply(
+                lambda row: f"{row['start_date']} ~ {row['end_date']}", axis=1
+            )
 
-                    st.markdown("### 📄 보조무기 대여 현황")
-                    st.dataframe(df[["ID", "borrower", "weapon_name", "owner", "대여기간"]], use_container_width=True)
+            st.markdown("### 📄 보조무기 대여 현황")
+            st.dataframe(df[["ID", "borrower", "weapon_name", "owner", "대여기간"]], use_container_width=True)
 
-                    # 🔁 반납 가능한 항목 필터링
-                    for _, row in df.iterrows():
-                        if row["owner"] == nickname:
-                            with st.expander(f"🛡️ '{row['weapon_name']}' - 대여자: {row['borrower']}"):
-                                st.markdown(f"**대여기간:** `{row['start_date']} ~ {row['end_date']}`")
-                                st.markdown(f"**소유자:** `{row['owner']}`")
+            # 🔁 반납 가능한 항목 필터링
+            for _, row in df.iterrows():
+                if row["owner"] == nickname:
+                    with st.expander(f"🛡️ '{row['weapon_name']}' - 대여자: {row['borrower']}"):
+                        st.markdown(f"**대여기간:** `{row['start_date']} ~ {row['end_date']}`")
+                        st.markdown(f"**소유자:** `{row['owner']}`")
 
-                                if st.button("🗑 반납 완료", key=f"return_{row['id']}"):
-                                    if delete_weapon_rental(row["id"]):
-                                        st.success("✅ 반납 완료되었습니다!")
-                                        st.rerun()
-                                    else:
-                                        st.error("❌ 반납 실패! 다시 시도해주세요.")
+                        if st.button("🗑 반납 완료", key=f"return_{row['id']}"):
+                            if delete_weapon_rental(row["id"]):
+                                st.success("✅ 반납 완료되었습니다!")
+                                st.rerun()
+                            else:
+                                st.error("❌ 반납 실패! 다시 시도해주세요.")
     else:
         st.warning("📸 보유 중인 보조무기가 없습니다.")
 
