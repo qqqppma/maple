@@ -308,7 +308,7 @@ if menu == "악마 길드원 정보 등록":
                 join_date_edit = st.date_input("가입일", value=pd.to_datetime(selected_row["join_date"]).date() if selected_row["join_date"] else None)
                 note_edit = st.text_input("비고", selected_row["note"])
                 guild_name_edit = st.text_input("길드명", selected_row["guild_name"])
-                withdrawn_edit_display = st.selectbox("탈퇴 여부", ["탈퇴함", "여기만한 길드 없다"], index=1 if selected_row["withdrawn"] else 0)
+                withdrawn_edit_display = st.selectbox("탈퇴 여부", ["탈퇴함", "여기만한 길드 없다"], index=0 if selected_row["withdrawn"] else 1)
                 withdrawn_edit = True if withdrawn_edit_display == "탈퇴함" else False
                 withdraw_date_edit = st.date_input("탈퇴일", value=pd.to_datetime(selected_row["withdraw_date"]).date() if selected_row["withdraw_date"] else None)
 
