@@ -665,7 +665,7 @@ elif menu == "보조대여 관리":
     # ✅ 대여자 선택 드롭다운
     st.markdown("#### 👤 대여자 선택")
     nickname_options = get_all_character_names(nickname)
-    selected_borrower = st.selectbox("보조무기 대여자로 등록할 클릭터는?", nickname_options)
+    selected_borrower = st.selectbox("보조무기 대여자", nickname_options)
 
     # 직업군 및 주스탯 선택
     job_group = st.selectbox("🧩 직업군을 선택하세요", ["전사", "궁수", "법사", "도적", "해적", "특수직업"])
