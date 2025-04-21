@@ -202,23 +202,18 @@ def authenticate_user(user_id, password):
         return None
     
 # =====================================================================================#
-# ✅ 자동 로그인 처리: 쿼리 파라미터 기반
-query_params = st.query_params
-query_nickname = query_params.get("nickname", [None])[0]
-query_key = query_params.get("key", [None])[0]
+# ✅ 자동 로그인 처리: 쿼리 파라미터 기반 (확실한 위치, rerun 정상 반영)
+if "user" not in st.session_state:
+    query_nickname = st.query_params.get("nickname", [None])[0]
+    query_key = st.query_params.get("key", [None])[0]
 
-if (
-    "user" not in st.session_state
-    and query_nickname
-    and query_key
-):
-    user_info = authenticate_user(query_nickname.strip(), query_key.strip())
-    if user_info:
-        st.session_state["user"] = user_info["user_id"]
-        st.session_state["nickname"] = user_info["nickname"]
-        st.session_state["is_admin"] = user_info["nickname"] in ADMIN_USERS
-        # ✅ rerun 바로 해줘야 session_state가 반영됨
-        st.rerun()
+    if query_nickname and query_key:
+        user_info = authenticate_user(query_nickname.strip(), query_key.strip())
+        if user_info:
+            st.session_state["user"] = user_info["user_id"]
+            st.session_state["nickname"] = user_info["nickname"]
+            st.session_state["is_admin"] = user_info["nickname"] in ADMIN_USERS
+            st.experimental_rerun()
 
 # ✅ 로그인 상태 아닐 때만 로그인/회원가입 UI 노출
 if "user" not in st.session_state:
