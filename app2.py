@@ -20,6 +20,18 @@ HEADERS = {
 
 ADMIN_USERS = ["자리스틸의왕", "나영진", "죤냇", "o차월o"]
 
+# ✅ 모든 캐릭터 닉네임 불러오기 함수 (Main + Sub)
+def get_all_character_names(nickname):
+    # MainMembers에서 본캐릭터 불러오기
+    main_res = supabase.table("MainMembers").select("nickname").eq("user", nickname).execute()
+    main_names = [row["nickname"] for row in main_res.data] if main_res.data else []
+
+    # SubMembers에서 부캐릭터 불러오기
+    sub_res = supabase.table("SubMembers").select("sub_name").eq("main_name", nickname).execute()
+    sub_names = [row["sub_name"] for row in sub_res.data] if sub_res.data else []
+
+    return main_names + sub_names
+
 # ✅ Supabase 함수
 def get_members():
     res = requests.get(f"{SUPABASE_URL}/rest/v1/Members?select=*&order=position.desc", headers=HEADERS)
@@ -647,6 +659,11 @@ elif menu == "보조대여 관리":
 
     # UI 시작
     st.header("🔷 보조무기 대여 시스템")
+    
+    # ✅ 대여자 선택 드롭다운
+    st.markdown("#### 👤 대여자 선택")
+    nickname_options = get_all_character_names(nickname)
+    selected_borrower = st.selectbox("보조무기 대여자로 등록할 클릭터는?", nickname_options)
 
     # 직업군 및 주스탯 선택
     job_group = st.selectbox("🧩 직업군을 선택하세요", ["전사", "궁수", "법사", "도적", "해적", "특수직업"])
@@ -739,7 +756,7 @@ elif menu == "보조대여 관리":
                 # ✅ 등록 실행
                 weapon_name = selected_job + " 보조무기"
                 rental_data = {
-                    "borrower": nickname,
+                    "borrower": selected_borrower,
                     "weapon_name": weapon_name,
                     "owner": owner,
                     "start_date": str(start_date),
