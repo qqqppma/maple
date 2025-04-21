@@ -3,7 +3,7 @@ import time
 import discord
 import asyncio
 from supabase import create_client, Client
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone  # 🔧 추가
 
 # ✅ 환경 변수 불러오기
 SUPABASE_URL = os.getenv("SUPABASE_URL")
@@ -22,12 +22,11 @@ client = discord.Client(intents=intents)
 last_known_ids = set()
 last_known_data = {}
 
-# ✅ 작동 시간 확인 함수 (04:00 ~ 12:00 비활성)
+# ✅ 작동 시간 확인 함수 (04:00 ~ 12:00 비활성, KST 기준)
 def is_active_time():
-    utc_now = datetime.now(timezone.utc)
-    kst_now = utc_now + timedelta(hours=9)
+    kst_now = datetime.now(timezone.utc) + timedelta(hours=9)  # 🔧 한국 시간 변환
     hour = kst_now.hour
-    print(f"🕒 [DEBUG] 현재 한국 시간 (KST 기준): {kst_now.strftime('%Y-%m-%d %H:%M:%S')} / 작동여부: {not (4 <= hour < 12)}")
+    print(f"🕒 [DEBUG] 현재 한국 시간: {kst_now.strftime('%Y-%m-%d %H:%M:%S')} / 작동여부: {not (4 <= hour < 12)}")
     return not (4 <= hour < 12)
 
 # ✅ 폴링 루프
@@ -49,7 +48,6 @@ async def polling_loop():
             continue
 
         try:
-            # 최신 20건 불러오기 (등록/삭제 추적용)
             response = supabase.table("Weapon_Rentals")\
                 .select("*")\
                 .order("id", desc=True)\
@@ -64,7 +62,6 @@ async def polling_loop():
                 current_ids.add(row_id)
                 current_data[row_id] = row
 
-            # ✅ 첫 실행 시 상태만 저장
             if not last_known_ids:
                 last_known_ids = current_ids
                 last_known_data = current_data
@@ -78,7 +75,7 @@ async def polling_loop():
                 data = current_data[new_id]
                 borrower = data.get("borrower", "알 수 없음")
                 weapon_name = data.get("weapon_name", "무기 이름 없음")
-                msg = f"📥 `{borrower}`님이 `{weapon_name}` 을 대여 요청하였습니다."
+                msg = f"📥 {borrower}님이 {weapon_name} 을 대여 요청하였습니다."
                 await channel.send(msg)
                 print(f"[등록] {msg}")
 
@@ -88,8 +85,8 @@ async def polling_loop():
                 removed_data = last_known_data.get(removed_id, {})
                 borrower = removed_data.get("borrower", "알 수 없음")
                 weapon_name = removed_data.get("weapon_name", "무기 이름 없음")
-                now = datetime.now().strftime("%y-%m-%d %H:%M")
-                msg = f"🗑 `{borrower}`님이 대여한 `{weapon_name}` 이/가 {now} 부로 반납완료 되었습니다."
+                now = (datetime.now(timezone.utc) + timedelta(hours=9)).strftime("%y-%m-%d %H:%M")  # 🔧 KST 반영
+                msg = f"🗑 {borrower}님이 대여한 {weapon_name} 이/가 {now} 부로 반납완료 되었습니다."
                 await channel.send(msg)
                 print(f"[반납] {msg}")
 
