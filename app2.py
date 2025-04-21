@@ -230,7 +230,6 @@ if "user" not in st.session_state:
                             st.session_state["user"] = user_info["user_id"]
                             st.session_state["nickname"] = user_info["nickname"]
                             st.session_state["is_admin"] = user_info["nickname"] in ADMIN_USERS
-                            st.query_params.update(nickname=user_info["nickname"], key=login_pw)
                             st.rerun()
                         else:
                             st.error("❌ 아이디 또는 비밀번호가 잘못되었습니다.")
@@ -460,16 +459,17 @@ elif menu == "악마길드 길컨관리":
         st.markdown("### ➕ 메인 캐릭터 등록")
 
         nickname_input = st.selectbox("닉네임", member_nicknames, key="nickname_input")
-        # ✅ 직위를 MainMembers → Members 순서로 우선 가져오기
+
+        # ✅ strip 적용하여 정확하게 매칭
         df_members = pd.DataFrame(members)
         df_mainmembers = pd.DataFrame(mainmembers)
 
-        main_row = df_mainmembers[df_mainmembers["nickname"] == nickname_input]
-        if not main_row.empty:
-            position_value = main_row.iloc[0]["position"]  # ✅ 우선 MainMembers에서 찾음
+        main_row = df_mainmembers[df_mainmembers["nickname"].str.strip() == nickname_input.strip()]
+        if not main_row.empty and "position" in main_row.columns:
+            position_value = main_row.iloc[0]["position"]
         else:
-            row = df_members[df_members["nickname"] == nickname_input]
-            if not row.empty:
+            row = df_members[df_members["nickname"].str.strip() == nickname_input.strip()]
+            if not row.empty and "position" in row.columns:
                 position_value = row.iloc[0]["position"]
             else:
                 position_value = "직위 정보 없음"
