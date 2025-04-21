@@ -25,7 +25,7 @@ last_known_data = {}
 # ✅ 작동 시간 확인 함수 (04:00 ~ 12:00 비활성)
 def is_active_time():
     hour = datetime.now().hour
-    return hour <= 4 or hour < 12
+    return not (4 <= hour < 12)
 
 # ✅ 폴링 루프
 async def polling_loop():
