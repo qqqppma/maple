@@ -885,7 +885,7 @@ elif menu == "보조대여 신청":
     r for r in (weapon_data or [])
     if isinstance(r, dict)
     and isinstance(r.get("weapon_name"), str)  # weapon_name이 문자열인지 확인
-    and selected_job in r.get("weapon_name")
+    and selected_job in r.get("대여 아이템")
     and "time_slots" in r]
     if filtered:
         df = pd.DataFrame(filtered).sort_values(by="id").reset_index(drop=True)
