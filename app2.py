@@ -918,6 +918,11 @@ elif menu == "드메템 대여 신청":
     owners = ["자리스틸의왕", "새훨", "죤냇", "나영진","o차월o"]
 
     # ✅ 대여자 선택 드롭다운
+    nickname = st.session_state["nickname"]
+    st.write("✅ 현재 로그인된 닉네임:", nickname)
+
+    nickname_options = get_all_character_names(nickname)
+    st.write("✅ get_all_character_names 결과:", nickname_options)
     st.markdown("#### 👤 대여자 선택")
     nickname_options = get_all_character_names(nickname)
     st.write("🔎 로그인 닉네임:", nickname)
