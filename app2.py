@@ -1015,25 +1015,37 @@ elif menu == "드메템 대여 신청":
 
     # 📊 대여 현황 테이블 표시
     if drop_data:
+        # ✅ 필터링
         filtered = [r for r in drop_data if r.get("dropitem_name") == selected_item]
-        df = pd.DataFrame(filtered)
 
-        if "id" in df.columns:
-            df = df.sort_values(by="id").reset_index(drop=True)
+        # ✅ 예외처리 및 안전한 DataFrame 생성
+        if filtered and all("time_slots" in r for r in filtered):
+            df = pd.DataFrame(filtered)
+            if "id" in df.columns:
+                df = df.sort_values(by="id").reset_index(drop=True)
+            else:
+                df = df.reset_index(drop=True)
+                
+            df["ID"] = df.index + 1
+
+            # ✅ 대여기간 파싱 함수 적용
+            df["대여기간"] = df["time_slots"].apply(get_drop_range)
+
+            # ✅ 대표소유자 파싱
+            df["대표소유자"] = df["drop_owner"].apply(
+                lambda x: json.loads(x)[0] if isinstance(x, str) and x.startswith("[") else x
+            )
+
+            # ✅ 출력
+            st.markdown("### 📄 드메템 대여 현황")
+            st.dataframe(df[["ID", "drop_borrower", "dropitem_name", "대표소유자", "대여기간"]], use_container_width=True)
+
+            # ✅ 다운로드 버튼
+            excel_data = convert_df_to_excel(df[["drop_borrower", "dropitem_name", "drop_owner", "time_slots"]])
+            st.download_button("📥 드메템 대여 현황 다운로드", data=excel_data, file_name="드메템_대여현황.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
         else:
-            df = df.reset_index(drop=True)
-
-        df["ID"] = df.index + 1
-        df["대여기간"] = df["time_slots"].apply(get_drop_range)
-        df["대표소유자"] = df["drop_owner"].apply(lambda x: json.loads(x)[0] if isinstance(x, str) and x.startswith("[") else x)
-
-        st.markdown("### 📄 드메템 대여 현황")
-        st.dataframe(df[["ID", "drop_borrower", "dropitem_name", "대표소유자", "대여기간"]], use_container_width=True)
-
-        # ✅ 다운로드 버튼
-        excel_data = convert_df_to_excel(df[["drop_borrower", "dropitem_name", "drop_owner", "time_slots"]])
-        st.download_button("📥 드메템 대여 현황 다운로드", data=excel_data, file_name="드메템_대여현황.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-
+            st.warning("❗ 'dropitem_name'이 선택된 항목과 일치하는 데이터가 없거나 'time_slots' 컬럼이 존재하지 않습니다.")
         # 🔁 반납 처리 버튼
     for _, row in df.iterrows():
         owners_list = json.loads(row["drop_owner"]) if isinstance(row["drop_owner"], str) and row["drop_owner"].startswith("[") else [row["drop_owner"]]
