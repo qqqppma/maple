@@ -1018,17 +1018,18 @@ elif menu == "드메템 대여 신청":
         # ✅ 필터링
         filtered = [r for r in drop_data if r.get("dropitem_name") == selected_item]
 
-        # 대여 기록이 있는 경우만 처리
+        # ✅ drop_data가 있고, 'dropitem_name' & 'time_slots' 조건을 만족할 때만 필터링
         if drop_data:
-            # 선택한 아이템에 해당하는 기록만 필터링
-            filtered = [r for r in drop_data if r.get("dropitem_name") == selected_item and "time_slots" in r]
+            filtered = [
+                r for r in drop_data
+                if r.get("dropitem_name") == selected_item and "time_slots" in r
+            ]
 
-            # 필터링된 데이터가 있을 때만 DataFrame 생성 및 출력
             if filtered:
+                # ✅ 이후 DataFrame 처리
                 df = pd.DataFrame(filtered).sort_values(by="id").reset_index(drop=True)
                 df["ID"] = df.index + 1
 
-                # 대여기간 가공 함수
                 def get_drop_range(slots):
                     try:
                         times = sorted(set([s.split()[0] for s in slots.split(",")]))
@@ -1045,25 +1046,25 @@ elif menu == "드메템 대여 신청":
                 # 다운로드 버튼
                 excel_data = convert_df_to_excel(df[["drop_borrower", "dropitem_name", "drop_owner", "time_slots"]])
                 st.download_button("📥 드메템 대여 현황 다운로드", data=excel_data, file_name="드메템_대여현황.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-            # ✅ 반납 처리 UI
-            for _, row in df.iterrows():
-                owners_list = json.loads(row["drop_owner"]) if isinstance(row["drop_owner"], str) and row["drop_owner"].startswith("[") else [row["drop_owner"]]
-                borrower_name = row.get("drop_borrower", "(이름 없음)")
-                if not borrower_name or str(borrower_name).lower() == "nan":
-                    borrower_name = "(이름 없음)"
+                # ✅ 반납 처리 UI
+                for _, row in df.iterrows():
+                    owners_list = json.loads(row["drop_owner"]) if isinstance(row["drop_owner"], str) and row["drop_owner"].startswith("[") else [row["drop_owner"]]
+                    borrower_name = row.get("drop_borrower", "(이름 없음)")
+                    if not borrower_name or str(borrower_name).lower() == "nan":
+                        borrower_name = "(이름 없음)"
 
-                if nickname in owners_list:
-                    with st.expander(f"🛡️ '{row['dropitem_name']}' - 대여자: {borrower_name}"):
-                        st.markdown(f"**📅 대여기간:** `{row['time_slots']}`")
-                        st.markdown(f"**소유자:** `{', '.join(owners_list)}`")
-                        if st.button("🗑 반납 완료", key=f"drop_return_{row['id']}"):
-                            if delete_dropitem_rental(row["id"]):
-                                st.success("✅ 반납 완료되었습니다!")
-                                st.rerun()
-                            else:
-                                st.error("❌ 반납 실패! 다시 시도해주세요.")
-        else:
-            st.warning("❗ 'dropitem_name'이 선택된 항목과 일치하는 데이터가 없거나 'time_slots' 컬럼이 존재하지 않습니다.")
+                    if nickname in owners_list:
+                        with st.expander(f"🛡️ '{row['dropitem_name']}' - 대여자: {borrower_name}"):
+                            st.markdown(f"**📅 대여기간:** `{row['time_slots']}`")
+                            st.markdown(f"**소유자:** `{', '.join(owners_list)}`")
+                            if st.button("🗑 반납 완료", key=f"drop_return_{row['id']}"):
+                                if delete_dropitem_rental(row["id"]):
+                                    st.success("✅ 반납 완료되었습니다!")
+                                    st.rerun()
+                                else:
+                                    st.error("❌ 반납 실패! 다시 시도해주세요.")
+            else:
+                pass
             
         # 🔁 반납 처리 버튼
     for _, row in df.iterrows():
