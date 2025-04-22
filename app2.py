@@ -175,11 +175,13 @@ def insert_dropitem_rental(drop_borrower, dropitem_name, drop_owner, start_date,
 
 #✅ 드메템 대여 계산함수
 def get_drop_range(slots):
-            try:
-                times = sorted(set([s.split()[0] for s in slots.split(",")]))
-                return f"{times[0]} ~ {times[-1]}" if times else ""
-            except:
-                return ""
+    try:
+        if not slots:
+            return ""
+        times = sorted(set([s.split()[0] for s in slots.split(",") if s.strip()]))
+        return f"{times[0]} ~ {times[-1]}" if times else ""
+    except:
+        return ""
     
 # ✅ 데이터 수정
 def update_dropitem_rental(row_id, data):
