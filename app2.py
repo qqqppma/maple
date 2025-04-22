@@ -324,7 +324,16 @@ if "user" in st.session_state:
         st.query_params.clear()
         st.rerun()
         
-menu = st.sidebar.radio("메뉴", ["악마 길드원 정보 등록", "악마길드 길컨관리", "부캐릭터 관리","보조대여 신청","드메템 대여 신청"])
+menu_options = []
+
+if st.session_state.get("is_admin"):
+    menu_options.extend(["악마 길드원 정보 등록", "악마길드 길컨관리", "부캐릭터 관리"])
+
+# 모든 사용자에게 보이는 메뉴
+menu_options.extend(["보조대여 신청", "드메템 대여 신청"])
+
+menu = st.sidebar.radio("메뉴", menu_options)
+
 
 if menu == "악마 길드원 정보 등록":
     st.subheader("👥 길드원 정보 등록")
