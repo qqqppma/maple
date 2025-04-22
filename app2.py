@@ -811,136 +811,138 @@ elif menu == "보조대여 신청":
         st.image(resized_image, caption=f"{selected_job}의 보조무기")
     else:
         st.warning("⚠️ 보유중인 보조무기가 없어 대여가 불가능합니다.")
+    
+    # ✅ 이미지가 있을 경우에만 나머지 대여 선택 UI 렌더링
+        if image_available:
+        today = date.today()
+        dates = [today + timedelta(days=i) for i in range(7)]
+        date_labels = [d.strftime("%m/%d") for d in dates]
+        day_names = ["월", "화", "수", "목", "금", "토", "일"]
+        weekday_labels = [day_names[d.weekday()] for d in dates]
+        time_slots = [f"{h:02d}:00~{(h+2)%24:02d}:00" for h in range(0, 24, 2)]
 
-    today = date.today()
-    dates = [today + timedelta(days=i) for i in range(7)]
-    date_labels = [d.strftime("%m/%d") for d in dates]
-    day_names = ["월", "화", "수", "목", "금", "토", "일"]
-    weekday_labels = [day_names[d.weekday()] for d in dates]
-    time_slots = [f"{h:02d}:00~{(h+2)%24:02d}:00" for h in range(0, 24, 2)]
+        # ✅ 예약 슬롯 미리 준비
+        weapon_data = fetch_weapon_rentals()
+        reserved_slots = {
+            slot.strip(): row["borrower"]
+            for row in weapon_data
+            for slot in row.get("time_slots", "").split(",")
+            if slot.strip()
+        }
 
-    # ✅ 예약 슬롯 미리 준비
-    weapon_data = fetch_weapon_rentals()
-    reserved_slots = {
-        slot.strip(): row["borrower"]
-        for row in weapon_data
-        for slot in row.get("time_slots", "").split(",")
-        if slot.strip()
-    }
+        st.markdown(f"### ⏰ `{selected_job}`")
+        day_selected = {}
+        cols = st.columns(len(dates) + 1)
+        cols[0].markdown("#### ")
+        day_selected = {}
+        for i, (day, label) in enumerate(zip(weekday_labels, date_labels)):
+            # 해당 날짜의 슬롯 중 이미 예약된 개수를 셈
+            date_str = str(dates[i])
+            reserved_count = sum(1 for t in time_slots if f"{date_str} {t}" in reserved_slots)
 
-    st.markdown(f"### ⏰ `{selected_job}`")
-    day_selected = {}
-    cols = st.columns(len(dates) + 1)
-    cols[0].markdown("#### ")
-    day_selected = {}
-    for i, (day, label) in enumerate(zip(weekday_labels, date_labels)):
-        # 해당 날짜의 슬롯 중 이미 예약된 개수를 셈
-        date_str = str(dates[i])
-        reserved_count = sum(1 for t in time_slots if f"{date_str} {t}" in reserved_slots)
+            # 전체 선택 비활성화 조건: 모든 슬롯이 이미 예약됨
+            disable_day_checkbox = reserved_count == len(time_slots)
 
-        # 전체 선택 비활성화 조건: 모든 슬롯이 이미 예약됨
-        disable_day_checkbox = reserved_count == len(time_slots)
+            with cols[i + 1]:
+                st.markdown(f"#### {day}", unsafe_allow_html=True)
+                st.markdown(f"{label}")
+                day_selected[i] = st.checkbox("전체", key=f"day_select_{i}", disabled=disable_day_checkbox)
+        # 예약 데이터 불러오기
+        weapon_data = fetch_weapon_rentals()
+        existing_slots = {}
 
-        with cols[i + 1]:
-            st.markdown(f"#### {day}", unsafe_allow_html=True)
-            st.markdown(f"{label}")
-            day_selected[i] = st.checkbox("전체", key=f"day_select_{i}", disabled=disable_day_checkbox)
-    # 예약 데이터 불러오기
-    weapon_data = fetch_weapon_rentals()
-    existing_slots = {}
+        for row in weapon_data:
+            slots = row.get("time_slots")
+            if isinstance(slots, str):
+                for slot in slots.split(","):
+                    slot = slot.strip()
+                    if slot:
+                        existing_slots[slot] = row["borrower"]
 
-    for row in weapon_data:
-        slots = row.get("time_slots")
-        if isinstance(slots, str):
-            for slot in slots.split(","):
-                slot = slot.strip()
-                if slot:
-                    existing_slots[slot] = row["borrower"]
+        selection = {}
+        for time in time_slots:
+            row = st.columns(len(dates) + 1)
+            row[0].markdown(f"**{time}**")
+            for j, d in enumerate(dates):
+                key = f"{d} {time}"
+                borrower = existing_slots.get(key)
+                if borrower:
+                    row[j + 1].checkbox(borrower, value=True, key=key, disabled=True)
+                else:
+                    value = day_selected[j]
+                    selection[key] = row[j + 1].checkbox("", value=value, key=key)
 
-    selection = {}
-    for time in time_slots:
-        row = st.columns(len(dates) + 1)
-        row[0].markdown(f"**{time}**")
-        for j, d in enumerate(dates):
-            key = f"{d} {time}"
-            borrower = existing_slots.get(key)
-            if borrower:
-                row[j + 1].checkbox(borrower, value=True, key=key, disabled=True)
-            else:
-                value = day_selected[j]
-                selection[key] = row[j + 1].checkbox("", value=value, key=key)
+        selected_time_slots = [k for k, v in selection.items() if v]
+        selected_dates = sorted({datetime.strptime(k.split()[0], "%Y-%m-%d").date() for k in selected_time_slots})
 
-    selected_time_slots = [k for k, v in selection.items() if v]
-    selected_dates = sorted({datetime.strptime(k.split()[0], "%Y-%m-%d").date() for k in selected_time_slots})
-
-    if len(selected_dates) > 7:
-        st.warning("❗ 대여 기간은 최대 7일까지만 선택할 수 있습니다.")
-
-    if st.button("📥 대여 등록"):
-        if not selected_time_slots:
-            st.warning("❗ 최소 1개 이상의 시간을 선택해주세요.")
-        elif len(selected_dates) > 7:
+        if len(selected_dates) > 7:
             st.warning("❗ 대여 기간은 최대 7일까지만 선택할 수 있습니다.")
-        else:
-            weapon_name = selected_job + " 보조무기"
-            rental_data = {
-                "borrower": selected_borrower,
-                "weapon_name": weapon_name,
-                "owner": json.dumps(owner),
-                "time_slots": ", ".join(selected_time_slots)
-            }
-            response = requests.post(f"{SUPABASE_URL}/rest/v1/Weapon_Rentals", headers=HEADERS, json=rental_data)
-            if response.status_code == 201:
-                st.success("✅ 대여 등록이 완료되었습니다!")
-                weapon_data = fetch_weapon_rentals()
+
+        if st.button("📥 대여 등록"):
+            if not selected_time_slots:
+                st.warning("❗ 최소 1개 이상의 시간을 선택해주세요.")
+            elif len(selected_dates) > 7:
+                st.warning("❗ 대여 기간은 최대 7일까지만 선택할 수 있습니다.")
             else:
-                st.error(f"❌ 등록 실패: {response.status_code}")
+                weapon_name = selected_job + " 보조무기"
+                rental_data = {
+                    "borrower": selected_borrower,
+                    "weapon_name": weapon_name,
+                    "owner": json.dumps(owner),
+                    "time_slots": ", ".join(selected_time_slots)
+                }
+                response = requests.post(f"{SUPABASE_URL}/rest/v1/Weapon_Rentals", headers=HEADERS, json=rental_data)
+                if response.status_code == 201:
+                    st.success("✅ 대여 등록이 완료되었습니다!")
+                    weapon_data = fetch_weapon_rentals()
+                else:
+                    st.error(f"❌ 등록 실패: {response.status_code}")
 
-    if weapon_data:
-        # 무기 필터링
-        filtered = [
-            r for r in weapon_data
-            if selected_job in r.get("weapon_name", "") and "time_slots" in r
-        ]
+        if weapon_data:
+            # 무기 필터링
+            filtered = [
+                r for r in weapon_data
+                if selected_job in r.get("weapon_name", "") and "time_slots" in r
+            ]
 
-        if filtered:
-            df = pd.DataFrame(filtered).sort_values(by="id").reset_index(drop=True)
-            df["ID"] = df.index + 1
+            if filtered:
+                df = pd.DataFrame(filtered).sort_values(by="id").reset_index(drop=True)
+                df["ID"] = df.index + 1
 
-            # ✅ 대여기간 요약 (가장 빠른 ~ 가장 늦은)
-            df["대여기간"] = df["time_slots"].apply(get_weapon_range)
+                # ✅ 대여기간 요약 (가장 빠른 ~ 가장 늦은)
+                df["대여기간"] = df["time_slots"].apply(get_weapon_range)
 
-            df["대표소유자"] = df["owner"].apply(
-                lambda x: json.loads(x)[0] if isinstance(x, str) and x.startswith("[") else x
-            )
+                df["대표소유자"] = df["owner"].apply(
+                    lambda x: json.loads(x)[0] if isinstance(x, str) and x.startswith("[") else x
+                )
 
-            st.markdown("### 📄 보조무기 대여 현황")
-            st.dataframe(df[["ID", "borrower", "weapon_name", "대표소유자", "대여기간"]], use_container_width=True)
+                st.markdown("### 📄 보조무기 대여 현황")
+                st.dataframe(df[["ID", "borrower", "weapon_name", "대표소유자", "대여기간"]], use_container_width=True)
 
-            excel_data = convert_df_to_excel(df[["borrower", "weapon_name", "owner", "time_slots"]])
-            st.download_button(
-                "📅 보조무기 대여 현황 다운로드",
-                data=excel_data,
-                file_name="보조무기_대여현황.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            )
+                excel_data = convert_df_to_excel(df[["borrower", "weapon_name", "owner", "time_slots"]])
+                st.download_button(
+                    "📅 보조무기 대여 현황 다운로드",
+                    data=excel_data,
+                    file_name="보조무기_대여현황.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
 
-            for _, row in df.iterrows():
-                owners_list = json.loads(row["owner"]) if isinstance(row["owner"], str) and row["owner"].startswith("[") else [row["owner"]]
-                borrower_name = row.get("borrower", "(이름 없음)")
-                if not borrower_name or str(borrower_name).lower() == "nan":
-                    borrower_name = "(이름 없음)"
+                for _, row in df.iterrows():
+                    owners_list = json.loads(row["owner"]) if isinstance(row["owner"], str) and row["owner"].startswith("[") else [row["owner"]]
+                    borrower_name = row.get("borrower", "(이름 없음)")
+                    if not borrower_name or str(borrower_name).lower() == "nan":
+                        borrower_name = "(이름 없음)"
 
-                if nickname in owners_list:
-                    with st.expander(f"🛡️ '{row['weapon_name']}' - 대여자: {borrower_name}"):
-                        st.markdown(f"**📅 대여기간:** `{row['대여기간']}`")  # ✅ 여기서도 get_weapon_range 결과 사용
-                        st.markdown(f"**소유자:** `{', '.join(owners_list)}`")
-                        if st.button("🗑 반납 완료", key=f"weapon_return_{row['id']}"):
-                            if delete_weapon_rental(row["id"]):
-                                st.success("✅ 반납 완료되었습니다!")
-                                st.rerun()
-                            else:
-                                st.error("❌ 반납 실패! 다시 시도해주세요.")
+                    if nickname in owners_list:
+                        with st.expander(f"🛡️ '{row['weapon_name']}' - 대여자: {borrower_name}"):
+                            st.markdown(f"**📅 대여기간:** `{row['대여기간']}`")  # ✅ 여기서도 get_weapon_range 결과 사용
+                            st.markdown(f"**소유자:** `{', '.join(owners_list)}`")
+                            if st.button("🗑 반납 완료", key=f"weapon_return_{row['id']}"):
+                                if delete_weapon_rental(row["id"]):
+                                    st.success("✅ 반납 완료되었습니다!")
+                                    st.rerun()
+                                else:
+                                    st.error("❌ 반납 실패! 다시 시도해주세요.")
     else:
         pass
 
