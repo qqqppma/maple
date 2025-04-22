@@ -207,6 +207,12 @@ def authenticate_user(user_id, password):
 query_nickname = st.query_params.get("nickname", [None])[0]
 query_key = st.query_params.get("key", [None])[0]
 
+# 디버깅용 출력
+st.write("query_nickname:", query_nickname)
+st.write("query_key:", query_key)
+st.write("session_state before login:", dict(st.session_state)
+
+
 if query_nickname and query_key and "login_checked" not in st.session_state:
     user_info = authenticate_user(query_nickname.strip(), query_key.strip())
     if user_info:
@@ -215,6 +221,8 @@ if query_nickname and query_key and "login_checked" not in st.session_state:
         st.session_state["is_admin"] = user_info["nickname"] in ADMIN_USERS
         st.session_state["login_checked"] = True  # 플래그
         st.experimental_rerun()
+
+st.write("session_state:", dict(st.session_state))
 
 # ✅ 로그인 상태 아닐 때만 로그인/회원가입 UI 노출
 if "user" not in st.session_state:
