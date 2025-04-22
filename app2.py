@@ -202,6 +202,14 @@ def authenticate_user(user_id, password):
     else:
         return None
     
+# ✅ 회원가입시 길드원인지 닉네임 확인 
+@st.cache_data
+def load_guild_user_nicknames():
+    df = pd.read_csv("guild_user.csv")  # 파일 경로에 맞게 수정
+    return df["닉네임"].astype(str).str.strip().tolist()
+
+ALLOWED_NICKNAMES = load_guild_user_nicknames()
+    
 # =====================================================================================#
 # ✅ 자동 로그인 시도
 query_user_id = st.query_params.get("user_id")
@@ -283,22 +291,20 @@ if "user" not in st.session_state:
                 exist = supabase.table("Users").select("user_id").eq("user_id", new_id.strip()).execute()
                 if exist.data:
                     st.warning("⚠️ 이미 존재하는 아이디입니다.")
+                elif new_nick.strip() not in ALLOWED_NICKNAMES:
+                    st.warning("⚠️ 해당 닉네임은 길드에 등록되어 있지 않습니다.")
                 else:
-                    guild_check = supabase.table("Members").select("nickname").eq("nickname", new_nick.strip()).execute()
-                    if not guild_check.data:
-                        st.warning("⚠️ 해당 닉네임은 길드에 등록되어 있지 않습니다.")
+                    res = supabase.table("Users").insert({
+                        "user_id": new_id.strip(),
+                        "password": new_pw.strip(),
+                        "nickname": new_nick.strip()
+                    }).execute()
+                    if res.data:
+                        st.success("✅ 회원가입 완료! 로그인으로 이동합니다.")
+                        st.session_state.signup_mode = False
+                        st.rerun()
                     else:
-                        res = supabase.table("Users").insert({
-                            "user_id": new_id.strip(),
-                            "password": new_pw.strip(),
-                            "nickname": new_nick.strip()
-                        }).execute()
-                        if res.data:
-                            st.success("✅ 회원가입 완료! 로그인으로 이동합니다.")
-                            st.session_state.signup_mode = False
-                            st.rerun()
-                        else:
-                            st.error("🚫 회원가입 실패")
+                        st.error("🚫 회원가입 실패")
 
         with col2:
             if st.button("↩️ 돌아가기"):
