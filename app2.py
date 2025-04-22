@@ -1026,23 +1026,21 @@ elif menu == "드메템 대여 신청":
         st.download_button("📥 드메템 대여 현황 다운로드", data=excel_data, file_name="드메템_대여현황.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
         # 🔁 반납 처리 버튼
-        for _, row in df.iterrows():
-            owners_list = json.loads(row["drop_owner"]) if isinstance(row["drop_owner"], str) and row["drop_owner"].startswith("[") else [row["drop_owner"]]
-
-            # 대여자 이름 안전하게 가져오기
-            borrower_name = row.get("drop_borrower", "")
+    for _, row in df.iterrows():
+        owners_list = json.loads(row["drop_owner"]) if isinstance(row["drop_owner"], str) and row["drop_owner"].startswith("[") else [row["drop_owner"]]
+        borrower_name = row.get("drop_borrower", "")
         if not borrower_name or str(borrower_name).lower() == "nan":
             borrower_name = "(이름 없음)"
-            if nickname in owners_list:  # 로그인 유저가 소유자일 때만 반납 가능
-                with st.expander(f"🛡️ '{row['dropitem_name']}' - 대여자: {borrower_name}"):
-                    # ✅ 대여 정보 출력
-                    st.markdown(f"**📅 대여기간:** `{row['time_slots']}`") 
-                    st.markdown(f"**소유자:** `{', '.join(owners_list)}`")
 
-                    # ✅ 반납 버튼
-                    if st.button("🗑 반납 완료", key=f"drop_return_{row['id']}"):
-                        if delete_dropitem_rental(row["id"]):  # 실제 DB 삭제 함수
-                            st.success("✅ 반납 완료되었습니다!")
-                            st.rerun()
-                        else:
-                            st.error("❌ 반납 실패! 다시 시도해주세요.")
+        # ✅ 조건: 현재 로그인 닉네임이 소유자 중 하나일 경우만 반납 UI 표시
+        if nickname in owners_list:
+            with st.expander(f"🛡️ '{row['dropitem_name']}' - 대여자: {borrower_name}"):
+                st.markdown(f"**📅 대여기간:** `{row['time_slots']}`")
+                st.markdown(f"**소유자:** `{', '.join(owners_list)}`")
+
+                if st.button("🗑 반납 완료", key=f"drop_return_{row['id']}"):
+                    if delete_dropitem_rental(row["id"]):
+                        st.success("✅ 반납 완료되었습니다!")
+                        st.rerun()
+                    else:
+                        st.error("❌ 반납 실패! 다시 시도해주세요.")
