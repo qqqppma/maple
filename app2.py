@@ -856,7 +856,7 @@ elif menu == "보조대여 신청":
                 st.error(f"❌ 등록 실패: {response.status_code}")
 
     if weapon_data:
-        filtered = [r for r in weapon_data if r.get("weapon_name") == selected_job, ""]
+        filtered = [r for r in weapon_data if selected_job in r.get("weapon_name", "")]
 
         if weapon_data:
             filtered = [
