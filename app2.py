@@ -820,6 +820,7 @@ elif menu == "보조대여 신청":
         reserved_slots = {
             slot.strip(): row["borrower"]
             for row in weapon_data
+            if selected_job in row.get("weapon_name", "")
             for slot in row.get("time_slots", "").split(",")
             if slot.strip()
         }
