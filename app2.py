@@ -992,7 +992,14 @@ elif menu == "드메템 대여 신청":
         filtered = [r for r in drop_data if r.get("dropitem_name") == selected_item]
         df = pd.DataFrame(filtered).sort_values(by="id").reset_index(drop=True)
         df["ID"] = df.index + 1
-        df["대여기간"] = df.apply(lambda row: f"{row['start_date']} ~ {row['end_date']}", axis=1)
+        def get_drop_range(slots):
+            try:
+                times = sorted(set([s.split()[0] for s in slots.split(",")]))
+                return f"{times[0]} ~ {times[-1]}" if times else ""
+            except:
+                return ""
+
+        df["대여기간"] = df["time_slots"].apply(get_drop_range)
         df["대표소유자"] = df["drop_owner"].apply(lambda x: json.loads(x)[0] if isinstance(x, str) and x.startswith("[") else x)
 
         st.markdown("### 📄 드메템 대여 현황")
