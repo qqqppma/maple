@@ -847,8 +847,6 @@ elif menu == "보조대여 신청":
                 st.markdown(f"#### {day}", unsafe_allow_html=True)
                 st.markdown(f"{label}")
                 day_selected[i] = st.checkbox("전체", key=f"day_select_{i}", disabled=disable_day_checkbox)
-        # 예약 데이터 불러오기
-        weapon_data = fetch_weapon_rentals()
         existing_slots = {}
 
         for row in weapon_data:
