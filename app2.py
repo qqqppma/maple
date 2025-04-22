@@ -883,11 +883,10 @@ elif menu == "보조대여 신청":
     # ✅ 대여 현황은 이미지와 관계 없이 항상 출력
     filtered = [
     r for r in (weapon_data or [])
-    if isinstance(r, dict)  # 먼저 딕셔너리인지 확인
-    and "weapon_name" in r  # key 존재 여부 확인 (선택적 안전장치)
-    and selected_job in r["weapon_name"]  # get 대신 dict 접근
-    and "time_slots" in r
-]
+    if isinstance(r, dict)
+    and isinstance(r.get("weapon_name", None), str)  # weapon_name이 문자열인지 확인
+    and selected_job in r.get("weapon_name", "")
+    and "time_slots" in r]
     if filtered:
         df = pd.DataFrame(filtered).sort_values(by="id").reset_index(drop=True)
         df["ID"] = df.index + 1
