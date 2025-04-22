@@ -1171,7 +1171,7 @@ elif menu == "드메템 대여 신청":
                         borrower_name = "(이름 없음)"
 
                     if nickname in owners_list:
-                        with st.expander(f"🛡️ '{row['대여 아이템']}' - 대여자: {borrower_name}"):
+                        with st.expander(f"\U0001F4FF '{row['대여 아이템']}' - 대여자: {borrower_name}"):
                             st.markdown(f"**📅 대여기간:** `{row['time_slots']}`")
                             st.markdown(f"**소유자:** `{', '.join(owners_list)}`")
                             if st.button("🗑 반납 완료", key=f"drop_return_{row['id']}"):

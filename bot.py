@@ -6,12 +6,16 @@ from supabase import create_client, Client
 from datetime import datetime, timedelta, timezone
 from discord.ext import commands
 from discord import app_commands
+import discord
+from discord.ext import commands
+import asyncio
+from datetime import datetime
 
 # ✅ 환경 변수 불러오기
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
-WEAPON_CHANNEL_ID = int(os.getenv("CHANNEL_ID"))  # 보조무기 채널 ID
+CHANNEL_ID = int(os.getenv("CHANNEL_ID"))  # 보조무기 채널 ID
 DROPITEM_CHANNEL_ID = int(os.getenv("DROPITEM_CHANNEL_ID"))  # 드메템 채널 ID
 
 # ✅ 멘션할 유저 ID 리스트
@@ -42,13 +46,24 @@ def is_active_time():
     print(f"[DEBUG] 현재 한국 시간: {kst_now.strftime('%Y-%m-%d %H:%M:%S')} / 작동여부: {not (4 <= hour < 12)}")
     return not (4 <= hour < 12)
 
+# ✅ ⏱ 자동 종료 함수
+async def auto_shutdown_during_sleep():
+    while True:
+        now_kst = (datetime.now(timezone.utc) + timedelta(hours=9)).hour
+        if 4 <= now_kst < 12:
+            print("⏱️ 현재는 작동 중지 시간 (04~12시)이므로 봇을 종료합니다.")
+            await client.close()
+            break
+        await asyncio.sleep(300)
+
+
 # ✅ 폴링 루프
 async def polling_loop():
     global last_weapon_ids, last_weapon_data
     global last_dropitem_ids, last_dropitem_data
 
     await client.wait_until_ready()
-    weapon_channel = client.get_channel(WEAPON_CHANNEL_ID)
+    weapon_channel = client.get_channel(CHANNEL_ID)
     dropitem_channel = client.get_channel(DROPITEM_CHANNEL_ID)
 
     if not weapon_channel or not dropitem_channel:
@@ -60,7 +75,7 @@ async def polling_loop():
     while not client.is_closed():
         if not is_active_time():
             print("⏰ 현재는 작동 시간이 아니므로 대기 중...")
-            await asyncio.sleep(120)
+            await asyncio.sleep(300)
             continue
 
         try:
@@ -133,49 +148,37 @@ async def polling_loop():
         except Exception as e:
             print(f"❌ 오류 발생: {e}")
 
-        await asyncio.sleep(120)
+        await asyncio.sleep(300)
 
-
-# ✅ 디스코드 봇 함수
 tree = app_commands.CommandTree(client)
 
+# ✅ 디스코드 봇 도움말 함수
 @tree.command(name="도움말", description="이 봇의 주요 명령어를 안내합니다.")
 async def help_command(interaction: discord.Interaction):
     await interaction.response.send_message(
         "🛠 사용 가능한 명령어 목록:\n"
         "/정보 - 봇의 정보 출력\n"
-        "/대여정보 - 대여 현황 요약 출력 \n"
-        "/이벤트 - 진행중인 이벤트 내용 출력",
+        "/대여정보 [조회할 내용]- ex) /대여정보 히어로 - 히어로 보조무기 대여정보 출력 \n",
+        #"/이벤트 - 진행중인 이벤트 내용 출력",
         ephemeral=True
     )
 
-@tree.command(name="대여정보", description="현재 대여 중인 아이템을 확인합니다.")
-async def rental_info(interaction: discord.Interaction):
-    channel_id = interaction.channel_id
-
-    if channel_id == WEAPON_CHANNEL_ID:
-        await interaction.response.send_message("🛡 보조무기 대여 현황을 불러오는 중입니다...")
-        # 🔄 여기에 Supabase에서 보조무기 요약 불러오는 코드 추가
-    elif channel_id == DROPITEM_CHANNEL_ID:
-        await interaction.response.send_message("🎁 드메템 대여 현황을 불러오는 중입니다...")
-        # 🔄 여기에 드메템 요약 불러오는 코드 추가
-    else:
-        await interaction.response.send_message("⚠️ 이 채널에서는 대여 정보를 볼 수 없습니다.")
-
-@tree.command(name="대여정보", description="특정 장비/세트의 대여 정보를 확인합니다.")
-@app_commands.describe(item="직업 이름 또는 드메템 세트명")
+# ✅ 대여정보 열람 함수
+@tree.command(name="대여정보", description="장비명으로 현재 대여 상태를 확인합니다.")
+@app_commands.describe(item="장비 이름 또는 드메템 세트 이름")
 async def rental_info(interaction: discord.Interaction, item: str):
     channel_id = interaction.channel_id
     item = item.strip()
 
-    if channel_id == WEAPON_CHANNEL_ID:
+    # 💬 Supabase에서 데이터 조회
+    if channel_id == CHANNEL_ID:
         res = supabase.table("Weapon_Rentals").select("*").execute()
         filtered = [r for r in res.data if item in r.get("weapon_name", "")]
     elif channel_id == DROPITEM_CHANNEL_ID:
         res = supabase.table("DropItem_Rentals").select("*").execute()
         filtered = [r for r in res.data if item in r.get("dropitem_name", "")]
     else:
-        await interaction.response.send_message("⚠️ 이 채널에서는 대여정보를 조회할 수 없습니다.")
+        await interaction.response.send_message("⚠️ 이 채널에서는 대여 정보를 조회할 수 없습니다.")
         return
 
     if not filtered:
@@ -188,18 +191,20 @@ async def rental_info(interaction: discord.Interaction, item: str):
     dates = sorted({s.split()[0] for s in time_slots if s.strip()})
     date_range = f"{dates[0]} ~ {dates[-1]}" if dates else "기간 정보 없음"
 
-    label = "🛡️" if channel_id == WEAPON_CHANNEL_ID else "📿"
-    name = target.get("weapon_name") or target.get("dropitem_name")
+    name = target.get("weapon_name") or target.get("dropitem_name", item)
+    label = "🛡️" if channel_id == CHANNEL_ID else "\U0001F4FF"
 
     await interaction.response.send_message(
-        f"{label} **{name}**\n• 대여자: `{borrower}`\n• 기간: `{date_range}`"
+        f"{label} **{name}**\n대여자: `{borrower}`\n기간: `{date_range}`"
     )
 
+# ✅ 봇 실행시 정상작동 확인 함수
 @client.event
 async def on_ready():
     print(f"🤖 디스코드 봇 로그인됨: {client.user}")
     await tree.sync()
     client.loop.create_task(polling_loop())
+    client.loop.create_task(auto_shutdown_during_sleep())
 
 if __name__ == "__main__":
     client.run(DISCORD_TOKEN)
