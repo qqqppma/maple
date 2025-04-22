@@ -182,6 +182,19 @@ def get_drop_range(slots):
         return f"{times[0]} ~ {times[-1]}" if times else ""
     except:
         return ""
+
+#✅ 보조무기 대여 계산함수
+def get_weapon_range(slots):
+    try:
+        # 날짜+시간으로 정렬
+        sorted_slots = sorted(
+            [s.strip() for s in slots.split(",") if s.strip()],
+            key=lambda x: datetime.strptime(x.split()[0] + " " + x.split()[1].split("~")[0], "%Y-%m-%d %H:%M")
+        )
+        return ", ".join(sorted_slots)
+    except Exception as e:
+        print(f"[정렬 오류] {e}")
+        return slots
     
 # ✅ 데이터 수정
 def update_dropitem_rental(row_id, data):
@@ -865,21 +878,16 @@ elif menu == "보조대여 신청":
         if filtered:
             df = pd.DataFrame(filtered).sort_values(by="id").reset_index(drop=True)
             df["ID"] = df.index + 1
+            # ✅ 시간 정렬 함수 적용
+            df["대여기간"] = df["time_slots"].apply(get_weapon_range)
 
-            def get_weapon_range(slots):
-                try:
-                    times = sorted(set([s.split()[0] for s in slots.split(",")]))
-                    return f"{times[0]} ~ {times[-1]}" if times else ""
-                except:
-                    return ""
-
-            df["\ub300\uc5ec\uae30\uac04"] = df["time_slots"].apply(get_weapon_range)
-            df["\ub300\ud45c\uc18c유자"] = df["owner"].apply(
+            # ✅ 대표 소유자 추출
+            df["대표소유자"] = df["owner"].apply(
                 lambda x: json.loads(x)[0] if isinstance(x, str) and x.startswith("[") else x
             )
 
             st.markdown("### 📄 보조무기 대여 현황")
-            st.dataframe(df[["ID", "borrower", "weapon_name", "\ub300\ud45c\uc18c유자", "\ub300\uc5ec\uae30\uac04"]], use_container_width=True)
+            st.dataframe(df[["ID", "borrower", "weapon_name", "대표소유자", "대여기간"]], use_container_width=True)
 
             excel_data = convert_df_to_excel(df[["borrower", "weapon_name", "owner", "time_slots"]])
             st.download_button(
