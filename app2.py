@@ -813,7 +813,7 @@ elif menu == "보조대여 신청":
         st.warning("⚠️ 보유중인 보조무기가 없어 대여가 불가능합니다.")
     
     # ✅ 이미지가 있을 경우에만 나머지 대여 선택 UI 렌더링
-        if image_available:
+    if image_available:
         today = date.today()
         dates = [today + timedelta(days=i) for i in range(7)]
         date_labels = [d.strftime("%m/%d") for d in dates]
