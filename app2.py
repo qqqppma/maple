@@ -260,7 +260,7 @@ if "user" not in st.session_state:
 
                             # ✅ 쿼리 파라미터에 로그인 정보 추가 (자동 로그인용)
                             st.query_params.update(nickname=user_info["nickname"], key=login_token)
-                            st.experimental_rerun()
+                            st.rerun()
                         else:
                             st.error("❌ 아이디 또는 비밀번호가 잘못되었습니다.")
                     except Exception as e:
