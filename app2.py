@@ -851,11 +851,12 @@ elif menu == "보조대여 신청":
             response = requests.post(f"{SUPABASE_URL}/rest/v1/Weapon_Rentals", headers=HEADERS, json=rental_data)
             if response.status_code == 201:
                 st.success("✅ 대여 등록이 완료되었습니다!")
+                weapon_data = fetch_weapon_rentals()
             else:
                 st.error(f"❌ 등록 실패: {response.status_code}")
 
     if weapon_data:
-        filtered = [r for r in weapon_data if r.get("weapon_name") == selected_job]
+        filtered = [r for r in weapon_data if r.get("weapon_name") == selected_job, ""]
 
         if weapon_data:
             filtered = [
