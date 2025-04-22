@@ -917,9 +917,7 @@ elif menu == "보조대여 신청":
                 )
                 df.rename(columns={
                     "borrower": "대여자",
-                    "weapon_name": "대여 아이템",
-                    "owner": "대표소유자",
-                    "time_slots": "대여기간"
+                    "weapon_name": "대여 아이템"
                 }, inplace=True)
 
                 st.markdown("### 📄 보조무기 대여 현황")
@@ -1067,9 +1065,7 @@ elif menu == "드메템 대여 신청":
                 df["대표소유자"] = df["drop_owner"].apply(lambda x: json.loads(x)[0] if isinstance(x, str) and x.startswith("[") else x)
                 df.rename(columns={
                     "drop_borrower": "대여자",
-                    "dropitem_name": "대여 아이템",
-                    "drop_owner": "대표소유자",
-                    "time_slots": "대여기간"
+                    "dropitem_name": "대여 아이템"
                 }, inplace=True)
 
                 st.markdown("### 📄 드메템 대여 현황")
