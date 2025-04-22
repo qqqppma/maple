@@ -815,6 +815,15 @@ elif menu == "보조대여 신청":
     weekday_labels = [day_names[d.weekday()] for d in dates]
     time_slots = [f"{h:02d}:00~{(h+2)%24:02d}:00" for h in range(0, 24, 2)]
 
+    # ✅ 예약 슬롯 미리 준비
+    weapon_data = fetch_weapon_rentals()
+    reserved_slots = {
+        slot.strip(): row["borrower"]
+        for row in weapon_data
+        for slot in row.get("time_slots", "").split(",")
+        if slot.strip()
+    }
+
     st.markdown(f"### ⏰ `{selected_job}`")
     day_selected = {}
     cols = st.columns(len(dates) + 1)
