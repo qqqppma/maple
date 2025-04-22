@@ -197,8 +197,8 @@ async def rental_info(interaction: discord.Interaction, item: str):
     target = filtered[0]
     borrower = target.get("borrower") or target.get("drop_borrower", "?")
     time_slots = target.get("time_slots", "").split(",")
-    dates = sorted({s.split()[0] for s in time_slots if s.strip()})
-    date_range = f"{dates[0]} ~ {dates[-1]}" if dates else "기간 정보 없음"
+    dates = sorted({datetime.strptime(s, "%Y-%m-%d %H:%M~%H:%M") for s in time_slots if s.strip()})
+    date_range = f"{dates[0].strftime('%Y-%m-%d %H:%M')} ~ {dates[-1].strftime('%Y-%m-%d %H:%M')}" if dates else "기간 정보 없음"
 
     name = target.get("weapon_name") or target.get("dropitem_name", item)
     label = "🛡️" if channel_id == CHANNEL_ID else "\U0001F4FF"
