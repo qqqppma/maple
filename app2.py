@@ -976,7 +976,7 @@ elif menu == "보조대여 신청":
 
 
 elif menu == "드메템 대여 신청":
-    st.header("U+1F4FF 드메템 대여 시스템")
+    st.header("\U0001F4FF 드메템 대여 시스템")
     nickname = st.session_state["nickname"]
     owners = ["자리스틸의왕", "새훨", "죤냇", "나영진", "o차월o"]
 
