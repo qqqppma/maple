@@ -451,13 +451,13 @@ if menu == "악마 길드원 정보 등록":
                         "join_date": join_date_edit.isoformat() if join_date_edit else None,
                         "withdraw_date": withdraw_date_edit.isoformat() if withdraw_date_edit else None
                     }
-                    if update_member(selected_row["ID"], updated_data):
+                    if update_member(selected_row["id"], updated_data):
                         st.success("수정 완료!")
                         st.rerun()
                     else:
                         st.error("수정 실패!")
                 elif delete_btn:
-                    if delete_member(selected_row["ID"]):
+                    if delete_member(selected_row["id"]):
                         st.success("삭제 완료!")
                         st.rerun()
                     else:
