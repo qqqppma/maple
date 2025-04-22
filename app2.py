@@ -210,7 +210,7 @@ query_key = st.query_params.get("key", [None])[0]
 # 디버깅용 출력
 st.write("query_nickname:", query_nickname)
 st.write("query_key:", query_key)
-st.write("session_state before login:", dict(st.session_state)
+st.write("session_state before login:", dict(st.session_state))
 
 
 if query_nickname and query_key and "login_checked" not in st.session_state:
