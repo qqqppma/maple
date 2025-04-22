@@ -172,6 +172,14 @@ def insert_dropitem_rental(drop_borrower, dropitem_name, drop_owner, start_date,
         st.code(f"Status Code: {res.status_code}\nResponse: {res.text}")
     
     return res.status_code == 201
+
+#✅ 드메템 대여 계산함수
+def get_drop_range(slots):
+            try:
+                times = sorted(set([s.split()[0] for s in slots.split(",")]))
+                return f"{times[0]} ~ {times[-1]}" if times else ""
+            except:
+                return ""
     
 # ✅ 데이터 수정
 def update_dropitem_rental(row_id, data):
@@ -1006,15 +1014,14 @@ elif menu == "드메템 대여 신청":
     # 📊 대여 현황 테이블 표시
     if drop_data:
         filtered = [r for r in drop_data if r.get("dropitem_name") == selected_item]
-        df = pd.DataFrame(filtered).sort_values(by="id").reset_index(drop=True)
-        df["ID"] = df.index + 1
-        def get_drop_range(slots):
-            try:
-                times = sorted(set([s.split()[0] for s in slots.split(",")]))
-                return f"{times[0]} ~ {times[-1]}" if times else ""
-            except:
-                return ""
+        df = pd.DataFrame(filtered)
 
+        if "id" in df.columns:
+            df = df.sort_values(by="id").reset_index(drop=True)
+        else:
+            df = df.reset_index(drop=True)
+
+        df["ID"] = df.index + 1
         df["대여기간"] = df["time_slots"].apply(get_drop_range)
         df["대표소유자"] = df["drop_owner"].apply(lambda x: json.loads(x)[0] if isinstance(x, str) and x.startswith("[") else x)
 
