@@ -806,12 +806,15 @@ elif menu == "보조대여 신청":
 
     # 예약 데이터 불러오기
     weapon_data = fetch_weapon_rentals()
-    existing_slots = {
-        slot.strip(): row["borrower"]
-        for row in weapon_data
-        for slot in row.get("time_slots", "").split(",")
-        if slot.strip()
-    }
+    existing_slots = {}
+
+    for row in weapon_data:
+        slots = row.get("time_slots")
+        if isinstance(slots, str):
+            for slot in slots.split(","):
+                slot = slot.strip()
+                if slot:
+                    existing_slots[slot] = row["borrower"]
 
     selection = {}
     for time in time_slots:
