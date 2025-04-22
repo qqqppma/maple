@@ -222,7 +222,7 @@ if query_user_id and query_token and "user" not in st.session_state:
     else:
         st.warning("❌ 자동 로그인 실패")
 
-# ✅ 로그인 및 회원가입 UI
+# ✅ 로그인 & 회원가입 UI
 if "user" not in st.session_state:
     st.title("🛡️ 악마길드 관리 시스템")
 
@@ -231,16 +231,18 @@ if "user" not in st.session_state:
 
     if not st.session_state.signup_mode:
         st.subheader("🔐 로그인")
+
         with st.form("login_form"):
             login_id = st.text_input("아이디", key="login_id")
             login_pw = st.text_input("비밀번호", type="password", key="login_pw")
+
             col1, col2 = st.columns([1, 1])
             with col1:
-                submitted = st.form_submit_button("로그인")
+                login_btn = st.form_submit_button("로그인")
             with col2:
-                go_signup = st.form_submit_button("회원가입")
+                signup_btn = st.form_submit_button("회원가입")
 
-            if submitted:
+            if login_btn:
                 res = supabase.table("Users").select("*") \
                     .eq("user_id", login_id.strip()) \
                     .eq("password", login_pw.strip()) \
@@ -249,7 +251,6 @@ if "user" not in st.session_state:
                 if res.data:
                     user_info = res.data[0]
                     login_token = str(uuid.uuid4())
-
                     supabase.table("Users").update({"login_token": login_token}) \
                         .eq("user_id", login_id.strip()).execute()
 
@@ -263,7 +264,7 @@ if "user" not in st.session_state:
                 else:
                     st.error("❌ 아이디 또는 비밀번호가 올바르지 않습니다.")
 
-            if go_signup:
+            elif signup_btn:
                 st.session_state.signup_mode = True
                 st.rerun()
 
@@ -271,33 +272,26 @@ if "user" not in st.session_state:
 
     else:
         st.subheader("📝 회원가입")
-        with st.form("signup_form"):
-            new_id = st.text_input("사용할 아이디")
-            new_pw = st.text_input("비밀번호", type="password")
-            new_nick = st.text_input("본캐 닉네임")
-            col1, col2 = st.columns([1, 1])
-            with col1:
-                submitted = st.form_submit_button("가입하기")
-            with col2:
-                cancel = st.form_submit_button("↩️ 돌아가기")
+        new_id = st.text_input("아이디")
+        new_pw = st.text_input("비밀번호", type="password")
+        new_nick = st.text_input("본캐 닉네임")
 
-            if submitted:
-                exist = supabase.table("Users").select("user_id") \
-                    .eq("user_id", new_id.strip()).execute()
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("가입하기"):
+                exist = supabase.table("Users").select("user_id").eq("user_id", new_id.strip()).execute()
                 if exist.data:
                     st.warning("⚠️ 이미 존재하는 아이디입니다.")
                 else:
-                    guild_check = supabase.table("Members").select("nickname") \
-                        .eq("nickname", new_nick.strip()).execute()
+                    guild_check = supabase.table("Members").select("nickname").eq("nickname", new_nick.strip()).execute()
                     if not guild_check.data:
                         st.warning("⚠️ 해당 닉네임은 길드에 등록되어 있지 않습니다.")
                     else:
-                        user_data = {
+                        res = supabase.table("Users").insert({
                             "user_id": new_id.strip(),
                             "password": new_pw.strip(),
                             "nickname": new_nick.strip()
-                        }
-                        res = supabase.table("Users").insert(user_data).execute()
+                        }).execute()
                         if res.data:
                             st.success("✅ 회원가입 완료! 로그인으로 이동합니다.")
                             st.session_state.signup_mode = False
@@ -305,7 +299,8 @@ if "user" not in st.session_state:
                         else:
                             st.error("🚫 회원가입 실패")
 
-            if cancel:
+        with col2:
+            if st.button("↩️ 돌아가기"):
                 st.session_state.signup_mode = False
                 st.rerun()
 
@@ -327,7 +322,7 @@ if "user" in st.session_state:
         st.session_state.clear()
         st.query_params.clear()
         st.rerun()
-
+        
 menu = st.sidebar.radio("메뉴", ["악마 길드원 정보 등록", "악마길드 길컨관리", "부캐릭터 관리","보조대여 신청","드메템 대여 신청"])
 
 if menu == "악마 길드원 정보 등록":
