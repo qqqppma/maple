@@ -443,6 +443,127 @@ if menu == "악마 길드원 정보 등록":
                     st.rerun()
                 else:
                     st.error("🚫 등록에 실패했습니다. 데이터를 다시 확인해주세요.")
+                    
+elif menu == "악마길드 길컨관리":
+    st.subheader("👥악마길드 길드컨트롤 관리")
+
+    mainmembers = get_mainmembers()
+    members = get_members()
+
+    member_dict = {m['nickname']: m['position'] for m in members if m.get('nickname')}
+    member_nicknames = sorted(member_dict.keys())
+
+    if mainmembers:
+        df_main = pd.DataFrame(mainmembers)
+        df_main = df_main.sort_values(
+            by=["position", "nickname"],
+            key=lambda x: x.map(get_position_priority) if x.name == "position" else x.map(korean_first_sort)
+        ).reset_index(drop=True)
+        df_main["ID"] = df_main.index + 1
+        df_main_display = df_main.rename(columns={
+            "nickname": "닉네임",
+            "position": "직위",
+            "suro": "수로 참여 여부",
+            "suro_score": "수로 점수",
+            "flag": "플래그 참여 여부",
+            "flag_score": "플래그 점수",
+            "mission_point": "주간미션포인트",
+            "event_sum": "합산",
+        })
+        st.markdown("### 📋 현재 등록된 메인 캐릭터")
+        st.dataframe(
+            df_main_display[["ID", "닉네임", "직위", "수로 참여 여부", "수로 점수", "플래그 참여 여부", "플래그 점수", "주간미션포인트", "합산"]],
+            use_container_width=True)
+        excel_data = convert_df_to_excel(df_main_display)
+        st.download_button("📥 메인 캐릭터 다운로드", data=excel_data, file_name="메인캐릭터.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    else:
+        st.info("기록된 길드컨트롤 정보가 없습니다.")
+
+    with st.form("main_member_add_form"):
+        st.markdown("### ➕ 메인 캐릭터 등록")
+
+        nickname_input = st.selectbox("닉네임", member_nicknames, key="nickname_input")
+
+        suro_display = st.selectbox("수로 참여 여부", ["참여", "미참"], key="suro_input")
+        suro_input = True if suro_display == "참여" else False
+        suro_score_input = st.number_input("수로 점수", min_value=0, step=1, key="suro_score_input")
+
+        flag_display = st.selectbox("플래그 참여 여부", ["참여", "미참"], key="flag_input")
+        flag_input = True if flag_display == "참여" else False
+        flag_score_input = st.number_input("플래그 점수", min_value=0, step=1, key="flag_score_input")
+
+        mission_point_input = st.number_input("주간미션포인트", min_value=0, step=1, key="mission_point_input")
+        event_sum_input = st.number_input("합산", min_value=0, step=1, key="event_sum_input")
+
+        submitted = st.form_submit_button("등록")
+
+        if submitted:
+            df_main = pd.DataFrame(mainmembers)
+            if nickname_input in df_main["nickname"].values:
+                st.warning(f"⚠️ '{nickname_input}' 닉네임은 이미 메인 캐릭터로 등록되어 있습니다.")
+            else:
+                position_value = member_dict.get(nickname_input, "길드원")
+                new_data = {
+                    "nickname": nickname_input,
+                    "position": position_value,
+                    "suro": suro_input,
+                    "suro_score": suro_score_input,
+                    "flag": flag_input,
+                    "flag_score": flag_score_input,
+                    "mission_point": mission_point_input,
+                    "event_sum": event_sum_input
+                }
+                res = requests.post(f"{SUPABASE_URL}/rest/v1/MainMembers", headers=HEADERS, json=new_data)
+                if res.status_code == 201:
+                    st.success("✅ 메인 캐릭터가 등록되었습니다!")
+                    st.rerun()
+                else:
+                    st.error(f"❌ 등록 실패! 에러 코드: {res.status_code}")
+                    st.code(res.text)
+
+    if is_admin and mainmembers:
+        st.markdown("### ✏️ 메인 캐릭터 수정 및 삭제")
+
+        selected = st.selectbox("수정/삭제할 닉네임 선택", [m["nickname"] for m in mainmembers])
+        selected_row = [m for m in mainmembers if m["nickname"] == selected][0]
+
+        suro_input_display = st.selectbox("수로 참여 여부", ["참여", "미참"], index=0 if selected_row["suro"] else 1, key="suro_edit")
+        suro_input_edit = suro_input_display == "참여"
+        suro_score_edit = st.number_input("수로 점수", min_value=0, step=1, value=selected_row["suro_score"], key="suro_score_edit")
+
+        flag_input_display = st.selectbox("플래그 참여 여부", ["참여", "미참"], index=0 if selected_row["flag"] else 1, key="flag_edit")
+        flag_input_edit = flag_input_display == "참여"
+        flag_score_edit = st.number_input("플래그 점수", min_value=0, step=1, value=selected_row["flag_score"], key="flag_score_edit")
+
+        mission_point_edit = st.number_input("주간미션포인트", min_value=0, step=1, value=selected_row["mission_point"], key="mission_point_edit")
+        event_sum_edit = st.number_input("합산", min_value=0, step=1, value=selected_row["event_sum"], key="event_sum_edit")
+
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("✅ 수정", key="main_update_btn"):
+                updated = {
+                    "suro": suro_input_edit,
+                    "suro_score": suro_score_edit,
+                    "flag": flag_input_edit,
+                    "flag_score": flag_score_edit,
+                    "mission_point": mission_point_edit,
+                    "event_sum": event_sum_edit
+                }
+                if update_mainember(selected_row["id"], updated):
+                    st.success("✅ 수정 완료")
+                    st.rerun()
+                else:
+                    st.error("🚫 수정 실패")
+
+        with col2:
+            st.write("🧪 삭제 대상 ID 확인:", selected_row["id"])
+            if st.button("🗑 삭제", key="main_delete_btn"):
+                if delete_mainmember(selected_row["id"]):
+                    st.success("🗑 삭제 완료")
+                    st.rerun()
+                else:
+                    st.error("🚫 삭제 실패")
+
 
 elif menu == "부캐릭터 관리":
     st.subheader("👥 부캐릭터 등록 및 관리")
