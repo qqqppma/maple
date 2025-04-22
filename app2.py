@@ -341,6 +341,15 @@ if "user" not in st.session_state:
                         "nickname": new_nick.strip()
                     }).execute()
                     if res.data:
+                        # ✅ Members 테이블에도 자동 등록
+                        supabase.table("Members").insert({
+                            "nickname": new_nick.strip(),
+                            "position": "길드원",  # 기본 직책
+                            "active": True,
+                            "resume_date": None,
+                            "join_date": None,
+                            "note": "회원가입 자동등록"
+                        }).execute()
                         st.success("✅ 회원가입 완료! 로그인으로 이동합니다.")
                         st.session_state.signup_mode = False
                         st.rerun()
