@@ -11,6 +11,7 @@ from datetime import date, timedelta
 st.set_page_config(page_title="악마길드 관리 시스템", layout="wide")
 from supabase import create_client, Client
 import json
+import uuid
 
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
 SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
@@ -202,29 +203,24 @@ def authenticate_user(user_id, password):
         return None
     
 # =====================================================================================#
-# ✅ 자동 로그인: 단 1회만 실행
-
+# 🔐 자동 로그인 (단 1회만 시도)
 query_nickname = st.query_params.get("nickname", [None])[0]
-query_key = st.query_params.get("key", [None])[0]
+query_token = st.query_params.get("key", [None])[0]
 
-# 디버깅용 출력
-st.write("query_nickname:", query_nickname)
-st.write("query_key:", query_key)
-st.write("session_state before login:", dict(st.session_state))
+if query_nickname and query_token and "login_checked" not in st.session_state:
+    res = supabase.table("Users").select("*")\
+        .eq("nickname", query_nickname.strip())\
+        .eq("login_token", query_token.strip()).execute()
 
-
-if query_nickname and query_key and "login_checked" not in st.session_state:
-    user_info = authenticate_user(query_nickname.strip(), query_key.strip())
-    if user_info:
+    if res.data:
+        user_info = res.data[0]
         st.session_state["user"] = user_info["user_id"]
         st.session_state["nickname"] = user_info["nickname"]
         st.session_state["is_admin"] = user_info["nickname"] in ADMIN_USERS
-        st.session_state["login_checked"] = True  # 플래그
+        st.session_state["login_checked"] = True
         st.experimental_rerun()
 
-st.write("session_state:", dict(st.session_state))
-
-# ✅ 로그인 상태 아닐 때만 로그인/회원가입 UI 노출
+# 🔐 로그인 UI
 if "user" not in st.session_state:
     st.title("🛡️ 악마길드 관리 시스템")
 
@@ -243,18 +239,33 @@ if "user" not in st.session_state:
 
                 if submitted:
                     try:
-                        user_info = authenticate_user(login_id.strip(), login_pw.strip())
-                        if user_info:
+                        # 아이디+비밀번호로 유저 조회
+                        res = supabase.table("Users").select("*")\
+                            .eq("user_id", login_id.strip())\
+                            .eq("password", login_pw.strip()).execute()
+
+                        if res.data:
+                            user_info = res.data[0]
+
+                            # ✅ 토큰 생성 및 DB에 저장
+                            login_token = str(uuid.uuid4())
+                            supabase.table("Users").update({"login_token": login_token})\
+                                .eq("user_id", login_id.strip()).execute()
+
+                            # ✅ 세션 저장
                             st.session_state["user"] = user_info["user_id"]
                             st.session_state["nickname"] = user_info["nickname"]
                             st.session_state["is_admin"] = user_info["nickname"] in ADMIN_USERS
-                            st.query_params.update(nickname=user_info["nickname"], key=login_pw)
-                            st.rerun()
+                            st.session_state["login_checked"] = True
+
+                            # ✅ 쿼리 파라미터에 로그인 정보 추가 (자동 로그인용)
+                            st.query_params.update(nickname=user_info["nickname"], key=login_token)
+                            st.experimental_rerun()
                         else:
                             st.error("❌ 아이디 또는 비밀번호가 잘못되었습니다.")
                     except Exception as e:
                         st.error(f"로그인 오류: {e}")
-
+        
             btn1, btn2 = st.columns([1, 1])
             with btn2:
                 if st.button("회원가입", use_container_width=True):
