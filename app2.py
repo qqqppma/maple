@@ -796,10 +796,6 @@ elif menu == "보조대여 신청":
     IMAGE_FOLDER = "보조무기 사진"
     CYGNUS_SHARED = ["나이트워커", "스트라이커", "플레임위자드", "윈드브레이커", "소울마스터"]
 
-    st.markdown("#### 👤 대여자 선택")
-    nickname_options = get_all_character_names(nickname)
-    selected_borrower = st.selectbox("보조무기 대여자", nickname_options)
-
     job_data = {
     "전사": ["히어로", "팔라딘", "다크나이트", "소울마스터", "미하일", "아란", "카이저", "제로", "아델"],
     "궁수": ["보우마스터", "신궁", "패스파인더", "윈드브레이커", "메르세데스", "와일드헌터"],
@@ -809,21 +805,30 @@ elif menu == "보조대여 신청":
     "특수직업": ["데몬어벤져", "제논"]
     }
 
-    job_group = st.selectbox("🧩 직업군을 선택하세요", list(job_data.keys()))
-    selected_job = st.selectbox("🔍 직업을 선택하세요", job_data[job_group])
 
-    # 이미지 경로 설정 및 확인
-    image_path = os.path.join(IMAGE_FOLDER, "시그너스보조.jpg") if selected_job in CYGNUS_SHARED \
-                 else os.path.join(IMAGE_FOLDER, f"{selected_job}보조.jpg")
-    image_available = os.path.exists(image_path)
+    # 좌 1/3, 우 2/3 비율로 컬럼 나눔
+    col_left, col_right = st.columns([1, 2])
 
-    if image_available:
-        image = Image.open(image_path)
-        w_percent = 400 / float(image.size[0])
-        resized_image = image.resize((400, int(float(image.size[1]) * w_percent)))
-        st.image(resized_image, caption=f"{selected_job}의 보조무기")
-    else:
-        st.warning("⚠️ 보유중인 보조무기가 없어 대여가 불가능합니다.")
+    with col_left:
+        st.markdown("#### 👤 대여자 선택")
+        nickname_options = get_all_character_names(nickname)
+        selected_borrower = st.selectbox("보조무기 대여자", nickname_options)
+
+        job_group = st.selectbox("🧩 직업군을 선택하세요", list(job_data.keys()))
+        selected_job = st.selectbox("🔍 직업을 선택하세요", job_data[job_group])
+
+    with col_right:
+        image_path = os.path.join(IMAGE_FOLDER, "시그너스보조.jpg") if selected_job in CYGNUS_SHARED \
+                    else os.path.join(IMAGE_FOLDER, f"{selected_job}보조.jpg")
+        image_available = os.path.exists(image_path)
+
+        if image_available:
+            image = Image.open(image_path)
+            w_percent = 600 / float(image.size[0])  # 더 큰 이미지 표시
+            resized_image = image.resize((600, int(float(image.size[1]) * w_percent)))
+            st.image(resized_image, caption=f"{selected_job}의 보조무기")
+        else:
+            st.warning("⚠️ 보유중인 보조무기가 없어 대여가 불가능합니다.")
 
     # 무기 대여 데이터 로딩 (한 번만 호출)
     weapon_data = fetch_weapon_rentals()
@@ -985,23 +990,28 @@ elif menu == "드메템 대여 신청":
         "사냥 드메셋 II": "사냥 드메셋 II.jpg",
     }
 
-    st.markdown("#### \U0001F464 대여자 선택")
-    nickname_options = get_all_character_names(nickname)
-    selected_borrower = st.selectbox("드메템 대여자", nickname_options)
+    # 좌 1/3, 우 2/3 비율로 나누기
+    col_left, col_right = st.columns([1, 2])
 
-    item_options = ["보스 드드셋", "사냥 드메셋", "사냥 드메셋 II"]
-    selected_item = st.selectbox("대여할 드메템 세트를 선택하세요", item_options)
+    with col_left:
+        st.markdown("#### 👤 대여자 선택")
+        nickname_options = get_all_character_names(nickname)
+        selected_borrower = st.selectbox("드메템 대여자", nickname_options)
 
-    selected_image_name = dropitem_image_map.get(selected_item)
-    if selected_image_name:
-        image_path = os.path.join(DROP_IMAGE_FOLDER, selected_image_name)
-        if os.path.exists(image_path):
-            image = Image.open(image_path)
-            w_percent = 400 / float(image.size[0])
-            resized_image = image.resize((400, int(float(image.size[1]) * w_percent)))
-            st.image(resized_image, caption=f"{selected_item} 이미지")
-        else:
-            st.warning("⚠️ 해당 드메셋 이미지가 존재하지 않습니다.")
+        item_options = list(dropitem_image_map.keys())
+        selected_item = st.selectbox("대여할 드메템 세트를 선택하세요", item_options)
+
+    with col_right:
+        selected_image_name = dropitem_image_map.get(selected_item)
+        if selected_image_name:
+            image_path = os.path.join(DROP_IMAGE_FOLDER, selected_image_name)
+            if os.path.exists(image_path):
+                image = Image.open(image_path)
+                w_percent = 600 / float(image.size[0])  # 이미지 더 크게
+                resized_image = image.resize((600, int(float(image.size[1]) * w_percent)))
+                st.image(resized_image, caption=f"{selected_item} 이미지")
+            else:
+                st.warning("⚠️ 해당 드메셋 이미지가 존재하지 않습니다.")
 
     today = date.today()
     dates = [today + timedelta(days=i) for i in range(7)]
