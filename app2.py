@@ -443,6 +443,7 @@ if menu == "악마 길드원 정보 등록":
                     st.rerun()
                 else:
                     st.error("🚫 등록에 실패했습니다. 데이터를 다시 확인해주세요.")
+
 elif menu == "악마길드 길컨관리":
     st.subheader("👥악마길드 길드컨트롤 관리")
 
@@ -493,13 +494,14 @@ elif menu == "악마길드 길컨관리":
         df_members = pd.DataFrame(members)
         df_mainmembers = pd.DataFrame(mainmembers)
 
-        main_row = df_mainmembers[df_mainmembers["nickname"].str.strip() == nickname_input.strip()]
-        if not main_row.empty and "position" in main_row.columns:
-            position_value = main_row.iloc[0]["position"]
+        # Members 테이블에서 우선 조회 (가장 정확한 소스)
+        row = df_members[df_members["nickname"].str.strip() == nickname_input.strip()]
+        if not row.empty and "position" in row.columns:
+            position_value = row.iloc[0]["position"]
         else:
-            row = df_members[df_members["nickname"].str.strip() == nickname_input.strip()]
-            if not row.empty and "position" in row.columns:
-                position_value = row.iloc[0]["position"]
+            main_row = df_mainmembers[df_mainmembers["nickname"].str.strip() == nickname_input.strip()]
+            if not main_row.empty and "position" in main_row.columns:
+                position_value = main_row.iloc[0]["position"]
             else:
                 position_value = "직위 정보 없음"
 
