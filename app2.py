@@ -208,14 +208,14 @@ query_user_id = st.query_params.get("user_id")
 query_token = st.query_params.get("key")
 
 if query_user_id and query_token and "user" not in st.session_state:
-    st.write("🔐 자동 로그인 시도 중:", query_user_id, query_token)
+    # st.write("🔐 자동 로그인 시도 중:", query_user_id, query_token)
 
     res = supabase.table("Users").select("*") \
         .eq("user_id", query_user_id.strip()) \
         .eq("login_token", query_token.strip()) \
         .execute()
 
-    st.write("📦 Supabase 응답:", res.data)
+    # st.write("📦 Supabase 응답:", res.data)
 
     if res.data:
         user_info = res.data[0]
