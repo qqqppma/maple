@@ -841,16 +841,18 @@ elif menu == "보조대여 신청":
         existing_slots = {
             slot.strip(): row["borrower"]
             for row in weapon_data
+            if selected_job in row.get("weapon_name", "")  # ✅ 무기별 예약 필터
             for slot in row.get("time_slots", "").split(",")
             if slot.strip()
         }
+
 
         selection = {}
         for time in time_slots:
             row = st.columns(len(dates) + 1)
             row[0].markdown(f"**{time}**")
             for j, d in enumerate(dates):
-                key = f"{d} {time}"
+                key = f"{selected_job}_{d} {time}"
                 borrower = existing_slots.get(key)
                 if borrower:
                     row[j + 1].checkbox(borrower, value=True, key=key, disabled=True)
@@ -880,41 +882,57 @@ elif menu == "보조대여 신청":
                 else:
                     st.error(f"❌ 등록 실패: {response.status_code}")
 
-    # ✅ 대여 현황은 이미지와 관계 없이 항상 출력
+   # 1. 무기 대여 데이터 가져오기
+    weapon_data = fetch_weapon_rentals()
+
+    # 2. 현재 선택한 직업 기준으로 필터링 (로직은 원본 필드명 사용)
     filtered = [
-    r for r in (weapon_data or [])
-    if isinstance(r, dict)
-    and isinstance(r.get("대여 아이템"), str)  # weapon_name이 문자열인지 확인
-    and selected_job in r.get("대여 아이템")
-    and "time_slots" in r]
+        r for r in (weapon_data or [])
+        if isinstance(r.get("weapon_name"), str)
+        and selected_job in r["weapon_name"]
+        and "time_slots" in r
+    ]
+
     if filtered:
+        # 3. 원본 DataFrame 구성
         df = pd.DataFrame(filtered).sort_values(by="id").reset_index(drop=True)
-        df["ID"] = df.index + 1
-        df["대여기간"] = df["time_slots"].apply(get_weapon_range)
-        df["대표소유자"] = df["owner"].apply(lambda x: json.loads(x)[0] if isinstance(x, str) and x.startswith("[") else x)
-        df.rename(columns={"borrower": "대여자", "weapon_name": "대여 아이템"}, inplace=True)
 
+        # 4. 표시용 복사본 생성 + 컬럼명 변경
+        df_display = df.copy()
+        df_display["ID"] = df_display.index + 1
+        df_display["대여기간"] = df_display["time_slots"].apply(get_weapon_range)
+        df_display["대표소유자"] = df_display["owner"].apply(
+            lambda x: json.loads(x)[0] if isinstance(x, str) and x.startswith("[") else x
+        )
+        df_display.rename(columns={
+            "borrower": "대여자",
+            "weapon_name": "대여 아이템"  # 👈 사용자에겐 이걸 보여줌
+        }, inplace=True)
+
+        # 5. 현황 테이블 출력
         st.markdown("### 📄 보조무기 대여 현황")
-        st.dataframe(df[["ID", "대여자", "대여 아이템", "대표소유자", "대여기간"]], use_container_width=True)
+        st.dataframe(df_display[["ID", "대여자", "대여 아이템", "대표소유자", "대여기간"]], use_container_width=True)
 
-        excel_df = df[["대여자", "대여 아이템", "대표소유자", "대여기간"]].copy()
+        # 6. 다운로드용 Excel
+        excel_df = df_display[["대여자", "대여 아이템", "대표소유자", "대여기간"]].copy()
         excel_data = convert_df_to_excel(excel_df)
         st.download_button(
-            "📅 보조무기 대여 현황 다운로드",
+            label="📅 보조무기 대여 현황 다운로드",
             data=excel_data,
             file_name="보조무기_대여현황.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
 
-        for _, row in df.iterrows():
+        # 7. 반납 처리 영역
+        for _, row in df.iterrows():  # df를 써야 weapon_name, owner 원본 필드 있음
             owners_list = json.loads(row["owner"]) if isinstance(row["owner"], str) and row["owner"].startswith("[") else [row["owner"]]
-            borrower_name = row.get("대여자", "(이름 없음)")
+            borrower_name = row.get("borrower", "(이름 없음)")
             if not borrower_name or str(borrower_name).lower() == "nan":
                 borrower_name = "(이름 없음)"
 
             if nickname in owners_list:
-                with st.expander(f"🛡️ '{row['대여 아이템']}' - 대여자: {borrower_name}"):
-                    st.markdown(f"**📅 대여기간:** `{row['대여기간']}`")
+                with st.expander(f"🛡️ '{row['weapon_name']}' - 대여자: {borrower_name}"):
+                    st.markdown(f"**📅 대여기간:** `{get_weapon_range(row['time_slots'])}`")
                     st.markdown(f"**소유자:** `{', '.join(owners_list)}`")
                     if st.button("🗑 반납 완료", key=f"weapon_return_{row['id']}"):
                         if delete_weapon_rental(row["id"]):
