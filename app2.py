@@ -917,7 +917,7 @@ elif menu == "보조대여 신청":
                 )
 
                 st.markdown("### 📄 보조무기 대여 현황")
-                st.dataframe(df[["ID", "대여자", "대여 아이템", "대표소유자", "대여기간"]], use_container_width=True)
+                st.dataframe(df[["ID", "borrower", "weapon_name", "대표소유자", "대여기간"]], use_container_width=True)
 
                 # 엑셀용 DataFrame 준비
                 excel_df = df[["borrower", "weapon_name", "owner", "time_slots"]].copy()
@@ -1061,7 +1061,7 @@ elif menu == "드메템 대여 신청":
                 df["대표소유자"] = df["drop_owner"].apply(lambda x: json.loads(x)[0] if isinstance(x, str) and x.startswith("[") else x)
 
                 st.markdown("### 📄 드메템 대여 현황")
-                st.dataframe(df[["ID", "대여자", "대여 아이템", "대표소유자", "대여기간"]], use_container_width=True)
+                st.dataframe(df[["ID", "drop_borrower", "dropitem_name", "대표소유자", "대여기간"]], use_container_width=True)
 
                 # 엑셀용 DataFrame 준비
                 excel_df = df[["drop_borrower", "dropitem_name", "drop_owner", "time_slots"]].copy()
