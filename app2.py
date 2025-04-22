@@ -853,12 +853,17 @@ elif menu == "보조대여 신청":
             row = st.columns(len(dates) + 1)
             row[0].markdown(f"**{time}**")
             for j, d in enumerate(dates):
-                key = f"{selected_job}_{d} {time}"
-                borrower = existing_slots.get(key)
+                key = f"{selected_job}_{d} {time}"  # ✅ 무기별 고유 키
+                date_str = str(d)
+                full_key = f"{date_str} {time}"
+
+                borrower = existing_slots.get(full_key)
                 if borrower:
+                    # 🔒 이미 대여된 시간 → 이름 표시 + 체크박스 비활성화
                     row[j + 1].checkbox(borrower, value=True, key=key, disabled=True)
                 else:
-                    selection[key] = row[j + 1].checkbox("", value=day_selected[j], key=key)
+                    # ✅ 선택 가능
+                    selection[full_key] = row[j + 1].checkbox("", value=day_selected[j], key=key)
 
         selected_time_slots = [k for k, v in selection.items() if v]
         selected_dates = sorted({datetime.strptime(k.split()[0], "%Y-%m-%d").date() for k in selected_time_slots})
