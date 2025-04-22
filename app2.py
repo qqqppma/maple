@@ -1067,7 +1067,7 @@ elif menu == "드메템 대여 신청":
                 excel_df = df[["drop_borrower", "dropitem_name", "drop_owner", "time_slots"]].copy()
 
                 # ✅ owner 컬럼을 한글 문자열로 변환
-                excel_df["owner"] = excel_df["owner"].apply(
+                excel_df["drop_owner"] = excel_df["drop_owner"].apply(
                     lambda x: ", ".join(json.loads(x)) if isinstance(x, str) and x.startswith("[") else str(x)
                 )
 
