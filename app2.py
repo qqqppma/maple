@@ -881,8 +881,7 @@ elif menu == "보조대여 신청":
                     st.error(f"❌ 등록 실패: {response.status_code}")
 
     # ✅ 대여 현황은 이미지와 관계 없이 항상 출력
-    filtered = [r for r in (weapon_data or [])
-    if selected_job in r.get("weapon_name", "") and "time_slots" in r]
+    filtered = [r for r in (weapon_data or []) if isinstance(r, dict)and selected_job in r.get("weapon_name", "") and "time_slots" in r]
     if filtered:
         df = pd.DataFrame(filtered).sort_values(by="id").reset_index(drop=True)
         df["ID"] = df.index + 1
