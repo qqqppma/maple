@@ -731,7 +731,7 @@ elif menu == "부캐릭터 관리":
 elif menu == "보조대여 신청":
 
         # 로그인된 사용자 닉네임
-    nickname = st.session_state["user"]
+    nickname = st.session_state["nickname"]
     owner = ["자리스틸의왕","죤냇","새훨","나영진","o차월o"]
 
     # 보조무기 이미지 폴더 경로
