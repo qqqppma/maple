@@ -856,61 +856,58 @@ elif menu == "보조대여 신청":
                 st.error(f"❌ 등록 실패: {response.status_code}")
 
     if weapon_data:
-        filtered = [r for r in weapon_data if selected_job in r.get("weapon_name", "")]
+        # 필터링 (정확한 무기 이름 또는 포함 테스트)
+        filtered = [
+            r for r in weapon_data
+            if selected_job in r.get("weapon_name", "") and "time_slots" in r
+        ]
 
-        if weapon_data:
-            filtered = [
-                r for r in weapon_data
-                if r.get("weapon_name") == selected_job and "time_slots" in r
-            ]
+        if filtered:
+            df = pd.DataFrame(filtered).sort_values(by="id").reset_index(drop=True)
+            df["ID"] = df.index + 1
 
-            if filtered:
-                df = pd.DataFrame(filtered).sort_values(by="id").reset_index(drop=True)
-                df["ID"] = df.index + 1
+            def get_weapon_range(slots):
+                try:
+                    times = sorted(set([s.split()[0] for s in slots.split(",")]))
+                    return f"{times[0]} ~ {times[-1]}" if times else ""
+                except:
+                    return ""
 
-                def get_weapon_range(slots):
-                    try:
-                        times = sorted(set([s.split()[0] for s in slots.split(",")]))
-                        return f"{times[0]} ~ {times[-1]}" if times else ""
-                    except:
-                        return ""
+            df["\ub300\uc5ec\uae30\uac04"] = df["time_slots"].apply(get_weapon_range)
+            df["\ub300\ud45c\uc18c유자"] = df["owner"].apply(
+                lambda x: json.loads(x)[0] if isinstance(x, str) and x.startswith("[") else x
+            )
 
-                df["대여기간"] = df["time_slots"].apply(get_weapon_range)
-                df["대표소유자"] = df["owner"].apply(
-                    lambda x: json.loads(x)[0] if isinstance(x, str) and x.startswith("[") else x
-                )
+            st.markdown("### 📄 보조무기 대여 현황")
+            st.dataframe(df[["ID", "borrower", "weapon_name", "\ub300\ud45c\uc18c유자", "\ub300\uc5ec\uae30\uac04"]], use_container_width=True)
 
-                st.markdown("### 📄 보조무기 대여 현황")
-                st.dataframe(df[["ID", "borrower", "weapon_name", "대표소유자", "대여기간"]], use_container_width=True)
+            excel_data = convert_df_to_excel(df[["borrower", "weapon_name", "owner", "time_slots"]])
+            st.download_button(
+                "📅 보조무기 대여 현황 다운로드",
+                data=excel_data,
+                file_name="보조무기_대여현황.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
 
-                # 다운로드 버튼
-                excel_data = convert_df_to_excel(df[["borrower", "weapon_name", "owner", "time_slots"]])
-                st.download_button(
-                    "📥 보조무기 대여 현황 다운로드",
-                    data=excel_data,
-                    file_name="보조무기_대여현황.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )
+            for _, row in df.iterrows():
+                owners_list = json.loads(row["owner"]) if isinstance(row["owner"], str) and row["owner"].startswith("[") else [row["owner"]]
+                borrower_name = row.get("borrower", "(이름 없음)")
+                if not borrower_name or str(borrower_name).lower() == "nan":
+                    borrower_name = "(이름 없음)"
 
-                # ✅ 반납 처리 UI
-                for _, row in df.iterrows():
-                    owners_list = json.loads(row["owner"]) if isinstance(row["owner"], str) and row["owner"].startswith("[") else [row["owner"]]
-                    borrower_name = row.get("borrower", "(이름 없음)")
-                    if not borrower_name or str(borrower_name).lower() == "nan":
-                        borrower_name = "(이름 없음)"
-
-                    if nickname in owners_list:
-                        with st.expander(f"🛡️ '{row['weapon_name']}' - 대여자: {borrower_name}"):
-                            st.markdown(f"**📅 대여기간:** `{row['time_slots']}`")
-                            st.markdown(f"**소유자:** `{', '.join(owners_list)}`")
-                            if st.button("🗑 반납 완료", key=f"weapon_return_{row['id']}"):
-                                if delete_weapon_rental(row["id"]):
-                                    st.success("✅ 반납 완료되었습니다!")
-                                    st.rerun()
-                                else:
-                                    st.error("❌ 반납 실패! 다시 시도해주세요.")
+                if nickname in owners_list:
+                    with st.expander(f"🛡️ '{row['weapon_name']}' - 대여자: {borrower_name}"):
+                        st.markdown(f"**📅 대여기간:** `{row['time_slots']}`")
+                        st.markdown(f"**소유자:** `{', '.join(owners_list)}`")
+                        if st.button("🗑 반납 완료", key=f"weapon_return_{row['id']}"):
+                            if delete_weapon_rental(row["id"]):
+                                st.success("✅ 반납 완료되었습니다!")
+                                st.rerun()
+                            else:
+                                st.error("❌ 반납 실패! 다시 시도해주세요.")
     else:
         st.warning("📸 보유 중인 보조무기가 없습니다.")
+
 
 elif menu == "드메템 대여 신청":
     st.header("\U0001F6E1️ 드메템 대여 시스템")
