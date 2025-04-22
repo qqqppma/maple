@@ -396,7 +396,7 @@ if st.session_state.get("is_admin"):
     menu_options.extend(["악마 길드원 정보 등록", "악마길드 길컨관리", "부캐릭터 관리"])
 
 # 모든 사용자에게 보이는 메뉴
-menu_options.extend(["보조대여 신청", "드메템 대여 신청"])
+menu_options.extend(["부캐릭터 등록", "보조대여 신청", "드메템 대여 신청"])
 
 menu = st.sidebar.radio("메뉴", menu_options)
 
@@ -786,6 +786,50 @@ elif menu == "부캐릭터 관리":
                                 st.rerun()
                             else:
                                 st.error("삭제 실패")
+
+elif menu == "부캐릭터 등록":
+    st.subheader("➕ 부캐릭터 정보 등록")
+
+    nickname = st.session_state["nickname"]
+    members = get_members()
+    main_names = [m["nickname"] for m in members]
+    
+    if nickname not in main_names:
+        st.warning("⚠️ 본인의 닉네임이 길드원 목록에 없습니다. 관리자에게 문의해주세요.")
+        st.stop()
+
+    with st.form("simple_sub_register"):
+        sub_name = st.text_input("부캐릭터 닉네임")
+        guild_name1 = st.text_input("부캐릭터 길드")
+
+        submit_btn = st.form_submit_button("등록하기")
+        if submit_btn:
+            submembers = get_submembers()
+            df_sub = pd.DataFrame(submembers)
+            count = sum(df_sub['main_name'] == nickname) + 1 if not df_sub.empty else 1
+            sub_id = f"{nickname}_{count}"
+
+            if not df_sub[(df_sub["main_name"] == nickname) & (df_sub["sub_name"] == sub_name)].empty:
+                st.warning(f"⚠️ '{sub_name}'은 이미 등록된 부캐입니다.")
+            else:
+                new_sub_data = {
+                    "sub_id": sub_id,
+                    "sub_name": sub_name,
+                    "guild_name1": guild_name1,
+                    "main_name": nickname,
+                    "suro": False,
+                    "suro_score": 0,
+                    "flag": False,
+                    "flag_score": 0,
+                    "mission_point": 0,
+                    "created_by": nickname
+                }
+                if insert_submember(new_sub_data):
+                    st.success("✅ 부캐릭터가 등록되었습니다!")
+                    st.rerun()
+                else:
+                    st.error("❌ 등록 실패")
+
 
 elif menu == "보조대여 신청":
     st.header("\U0001F6E1️ 보조무기 대여 시스템")
