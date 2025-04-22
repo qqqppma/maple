@@ -202,16 +202,18 @@ def authenticate_user(user_id, password):
         return None
     
 # =====================================================================================#
-# ✅ 자동 로그인 처리: 쿼리 파라미터 기반 (확실한 위치, rerun 정상 반영)
+# ✅ 자동 로그인: 단 1회만 실행
+
 query_nickname = st.query_params.get("nickname", [None])[0]
 query_key = st.query_params.get("key", [None])[0]
 
-if query_nickname and query_key:
+if query_nickname and query_key and "login_checked" not in st.session_state:
     user_info = authenticate_user(query_nickname.strip(), query_key.strip())
     if user_info:
         st.session_state["user"] = user_info["user_id"]
         st.session_state["nickname"] = user_info["nickname"]
         st.session_state["is_admin"] = user_info["nickname"] in ADMIN_USERS
+        st.session_state["login_checked"] = True  # 플래그
         st.experimental_rerun()
 
 # ✅ 로그인 상태 아닐 때만 로그인/회원가입 UI 노출
