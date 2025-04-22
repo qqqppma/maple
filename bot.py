@@ -25,6 +25,7 @@ MENTION_USERS_DROP = [380952595293929473, 339743306802135041]    # 드메템 담
 # ✅ 멘션 메시지 생성 함수
 def get_mentions(user_ids):
     return " ".join([f"<@{uid}>" for uid in user_ids])
+    
 
 # ✅ Supabase 클라이언트 생성
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
@@ -161,6 +162,14 @@ async def help_command(interaction: discord.Interaction):
         "/대여정보 [조회할 내용]- ex) /대여정보 히어로 - 히어로 보조무기 대여정보 출력 \n",
         #"/이벤트 - 진행중인 이벤트 내용 출력",
         ephemeral=True
+    )
+
+@tree.command(name="정보", description="이 봇의 기본 정보를 확인합니다.")
+async def info_command(interaction: discord.Interaction):
+    await interaction.response.send_message(
+        "이 봇은 보조무기 및 드메템 대여 관리를 위한 자동화 도우미입니다.\n"
+        "KST 기준 04~12는 봇이 작동하지 않습니다.\n"
+        "대여신청과 반납완료는 등록부터 알림까지 5분가량 소요됩니다.", ephemeral=True
     )
 
 # ✅ 대여정보 열람 함수
