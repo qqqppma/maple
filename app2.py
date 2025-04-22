@@ -919,7 +919,16 @@ elif menu == "보조대여 신청":
                 st.markdown("### 📄 보조무기 대여 현황")
                 st.dataframe(df[["ID", "borrower", "weapon_name", "대표소유자", "대여기간"]], use_container_width=True)
 
-                excel_data = convert_df_to_excel(df[["borrower", "weapon_name", "owner", "time_slots"]])
+                # 엑셀용 DataFrame 준비
+                excel_df = df[["borrower", "weapon_name", "owner", "time_slots"]].copy()
+
+                # ✅ owner 컬럼을 한글 문자열로 변환
+                excel_df["owner"] = excel_df["owner"].apply(
+                    lambda x: ", ".join(json.loads(x)) if isinstance(x, str) and x.startswith("[") else str(x)
+                )
+
+                # 변환된 데이터로 엑셀 저장
+                excel_data = convert_df_to_excel(excel_df)
                 st.download_button(
                     "📅 보조무기 대여 현황 다운로드",
                     data=excel_data,
@@ -1054,8 +1063,16 @@ elif menu == "드메템 대여 신청":
                 st.markdown("### 📄 드메템 대여 현황")
                 st.dataframe(df[["ID", "drop_borrower", "dropitem_name", "대표소유자", "대여기간"]], use_container_width=True)
 
-                # 다운로드 버튼
-                excel_data = convert_df_to_excel(df[["drop_borrower", "dropitem_name", "drop_owner", "time_slots"]])
+                # 엑셀용 DataFrame 준비
+                excel_df = df[["drop_borrower", "dropitem_name", "drop_owner", "time_slots"]].copy()
+
+                # ✅ owner 컬럼을 한글 문자열로 변환
+                excel_df["owner"] = excel_df["owner"].apply(
+                    lambda x: ", ".join(json.loads(x)) if isinstance(x, str) and x.startswith("[") else str(x)
+                )
+
+                # 변환된 데이터로 엑셀 저장
+                excel_data = convert_df_to_excel(excel_df)
                 st.download_button("📥 드메템 대여 현황 다운로드", data=excel_data, file_name="드메템_대여현황.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
                 # ✅ 반납 처리 UI
                 for _, row in df.iterrows():
