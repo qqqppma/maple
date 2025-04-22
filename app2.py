@@ -938,7 +938,7 @@ elif menu == "보조대여 신청":
                             else:
                                 st.error("❌ 반납 실패! 다시 시도해주세요.")
     else:
-        st.warning("📸 보유 중인 보조무기가 없습니다.")
+        pass
 
 
 elif menu == "드메템 대여 신청":
