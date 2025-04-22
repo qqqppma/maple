@@ -992,25 +992,29 @@ elif menu == "드메템 대여 신청":
     selected_time_slots = [k for k, v in selection.items() if v]
     selected_dates = sorted({datetime.strptime(k.split()[0], "%Y-%m-%d").date() for k in selected_time_slots})
 
-    if len(selected_dates) > 7:
-        st.warning("❗ 대여 기간은 최대 7일까지만 선택할 수 있습니다.")
-
-    if st.button("\U0001F4E5 대여 등록"):
+    if st.button("📥 대여 등록"):
         if not selected_time_slots:
             st.warning("❗ 최소 1개 이상의 날짜를 선택해주세요.")
         elif len(selected_dates) > 7:
             st.warning("❗ 대여 기간은 최대 7일까지만 선택할 수 있습니다.")
+        else:
             rental_data = {
                 "drop_borrower": selected_borrower,
                 "dropitem_name": selected_item,
                 "drop_owner": json.dumps(owners),
                 "time_slots": ", ".join(selected_time_slots)
             }
-            response = requests.post(f"{SUPABASE_URL}/rest/v1/DropItem_Rentals", headers=HEADERS, json=rental_data)
+            response = requests.post(
+                f"{SUPABASE_URL}/rest/v1/DropItem_Rentals",
+                headers=HEADERS,
+                json=rental_data
+            )
             if response.status_code == 201:
                 st.success("✅ 대여 등록이 완료되었습니다!")
+                st.rerun()
             else:
                 st.error(f"❌ 등록 실패: {response.status_code}")
+                st.code(response.text)
 
 
     # 📊 대여 현황 테이블 표시
