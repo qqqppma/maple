@@ -926,11 +926,6 @@ elif menu == "보조대여 신청":
                 # 엑셀용 DataFrame 준비
                 excel_df = df[["대여자", "대여 아이템", "대표소유자", "대여기간"]].copy()
 
-                # ✅ owner 컬럼을 한글 문자열로 변환
-                excel_df["owner"] = excel_df["owner"].apply(
-                    lambda x: ", ".join(json.loads(x)) if isinstance(x, str) and x.startswith("[") else str(x)
-                )
-
                 # 변환된 데이터로 엑셀 저장
                 excel_data = convert_df_to_excel(excel_df)
                 st.download_button(
@@ -947,7 +942,7 @@ elif menu == "보조대여 신청":
                         borrower_name = "(이름 없음)"
 
                     if nickname in owners_list:
-                        with st.expander(f"🛡️ '{row['weapon_name']}' - 대여자: {borrower_name}"):
+                        with st.expander(f"🛡️ '{row['대여 아이템']}' - 대여자: {borrower_name}"):
                             st.markdown(f"**📅 대여기간:** `{row['대여기간']}`")  # ✅ 여기서도 get_weapon_range 결과 사용
                             st.markdown(f"**소유자:** `{', '.join(owners_list)}`")
                             if st.button("🗑 반납 완료", key=f"weapon_return_{row['id']}"):
@@ -1073,11 +1068,6 @@ elif menu == "드메템 대여 신청":
 
                 # 엑셀용 DataFrame 준비
                 excel_df = df[["대여자", "대여 아이템", "대표소유자", "대여기간"]].copy()
-
-                # ✅ owner 컬럼을 한글 문자열로 변환
-                excel_df["drop_owner"] = excel_df["drop_owner"].apply(
-                    lambda x: ", ".join(json.loads(x)) if isinstance(x, str) and x.startswith("[") else str(x)
-                )
 
                 # 변환된 데이터로 엑셀 저장
                 excel_data = convert_df_to_excel(excel_df)
