@@ -788,7 +788,7 @@ elif menu == "부캐릭터 관리":
                                 st.error("삭제 실패")
 
 elif menu == "부캐릭터 등록":
-    st.subheader("➕ 부캐릭터 정보 등록")
+    st.subheader("👥 부캐릭터 정보 등록")
 
     nickname = st.session_state["nickname"]
     members = get_members()
@@ -829,6 +829,7 @@ elif menu == "부캐릭터 등록":
                     st.rerun()
                 else:
                     st.error("❌ 등록 실패")
+    st.info("📌 광고 문의 받아요!!")
 
 
 elif menu == "보조대여 신청":
