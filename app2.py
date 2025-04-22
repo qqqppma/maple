@@ -348,7 +348,7 @@ if "user" not in st.session_state:
                             "active": True,
                             "resume_date": None,
                             "join_date": None,
-                            "note": "회원가입 자동등록"
+                            "note": None
                         }).execute()
                         st.success("✅ 회원가입 완료! 로그인으로 이동합니다.")
                         st.session_state.signup_mode = False
