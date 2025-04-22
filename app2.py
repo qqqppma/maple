@@ -204,8 +204,8 @@ def authenticate_user(user_id, password):
     
 # =====================================================================================#
 # ✅ 자동 로그인: user_id + login_token 기반
-query_user_id = st.query_params.get("user_id", [None])[0]
-query_token = st.query_params.get("key", [None])[0]
+query_user_id = st.query_params.get("user_id", None)
+query_token = st.query_params.get("key", None)
 
 st.write("🧪 자동 로그인 시도 중:", query_user_id, query_token)
 
