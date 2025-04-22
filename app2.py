@@ -321,7 +321,7 @@ if "user" in st.session_state:
     if st.sidebar.button("로그아웃"):
         user_id = st.session_state.get("user")
         nickname = st.session_state["nickname"]
-        is_admin = st.session_state["is_admin"]
+        is_admin = st.session_state.get["is_admin", False]
         if user_id:
             # ✅ 토큰 무효화
             supabase.table("Users").update({"login_token": None}).eq("user_id", user_id).execute()
