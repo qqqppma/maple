@@ -800,13 +800,17 @@ elif menu == "보조대여 신청":
     else:
         image_path = os.path.join(IMAGE_FOLDER, f"{selected_job}보조.jpg")
 
-    if os.path.exists(image_path):
+    image_available = os.path.exists(image_path)
+
+    if image_available:
         image = Image.open(image_path)
         base_width = 400
         w_percent = base_width / float(image.size[0])
         h_size = int((float(image.size[1]) * float(w_percent)))
         resized_image = image.resize((base_width, h_size))
         st.image(resized_image, caption=f"{selected_job}의 보조무기")
+    else:
+        st.warning("⚠️ 보유중인 보조무기가 없어 대여가 불가능합니다.")
 
     today = date.today()
     dates = [today + timedelta(days=i) for i in range(7)]
