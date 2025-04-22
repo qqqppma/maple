@@ -208,14 +208,10 @@ query_user_id = st.query_params.get("user_id")
 query_token = st.query_params.get("key")
 
 if query_user_id and query_token and "user" not in st.session_state:
-    # st.write("🔐 자동 로그인 시도 중:", query_user_id, query_token)
-
     res = supabase.table("Users").select("*") \
         .eq("user_id", query_user_id.strip()) \
         .eq("login_token", query_token.strip()) \
         .execute()
-
-    # st.write("📦 Supabase 응답:", res.data)
 
     if res.data:
         user_info = res.data[0]
@@ -226,40 +222,86 @@ if query_user_id and query_token and "user" not in st.session_state:
     else:
         st.warning("❌ 자동 로그인 실패")
 
-# ✅ 로그인 UI
+# ✅ 로그인 UI 또는 회원가입
 if "user" not in st.session_state:
     st.title("🛡️ 악마길드 관리 시스템")
-    st.subheader("🔐 로그인")
 
-    with st.form("login_form"):
-        login_id = st.text_input("아이디")
-        login_pw = st.text_input("비밀번호", type="password")
-        submitted = st.form_submit_button("로그인")
+    if "signup_mode" not in st.session_state:
+        st.session_state.signup_mode = False
 
-        if submitted:
-            res = supabase.table("Users").select("*") \
-                .eq("user_id", login_id.strip()) \
-                .eq("password", login_pw.strip()) \
-                .execute()
+    if not st.session_state.signup_mode:
+        st.subheader("🔐 로그인")
 
-            if res.data:
-                user_info = res.data[0]
-                login_token = str(uuid.uuid4())
+        with st.form("login_form"):
+            login_id = st.text_input("아이디")
+            login_pw = st.text_input("비밀번호", type="password")
+            submitted = st.form_submit_button("로그인")
 
-                supabase.table("Users").update({"login_token": login_token}) \
-                    .eq("user_id", login_id.strip()).execute()
+            if submitted:
+                res = supabase.table("Users").select("*") \
+                    .eq("user_id", login_id.strip()) \
+                    .eq("password", login_pw.strip()) \
+                    .execute()
 
-                st.session_state["user"] = user_info["user_id"]
-                st.session_state["nickname"] = user_info["nickname"]
-                st.session_state["is_admin"] = user_info["nickname"] in ADMIN_USERS
+                if res.data:
+                    user_info = res.data[0]
+                    login_token = str(uuid.uuid4())
 
-                st.query_params.clear()
-                st.query_params.update(user_id=login_id.strip(), key=login_token)
+                    supabase.table("Users").update({"login_token": login_token}) \
+                        .eq("user_id", login_id.strip()).execute()
+
+                    st.session_state["user"] = user_info["user_id"]
+                    st.session_state["nickname"] = user_info["nickname"]
+                    st.session_state["is_admin"] = user_info["nickname"] in ADMIN_USERS
+
+                    st.query_params.clear()
+                    st.query_params.update(user_id=login_id.strip(), key=login_token)
+                    st.rerun()
+                else:
+                    st.error("❌ 아이디 또는 비밀번호가 올바르지 않습니다.")
+
+        if st.button("회원가입"):
+            st.session_state.signup_mode = True
+            st.rerun()
+
+        st.stop()
+
+    else:
+        st.subheader("📝 회원가입")
+        new_id = st.text_input("사용할 아이디")
+        new_pw = st.text_input("비밀번호", type="password")
+        new_nick = st.text_input("본캐 닉네임")
+
+        c1, c2 = st.columns(2)
+        with c1:
+            if st.button("가입하기"):
+                exist = supabase.table("Users").select("user_id").eq("user_id", new_id.strip()).execute()
+                if exist.data:
+                    st.warning("⚠️ 이미 존재하는 아이디입니다.")
+                else:
+                    guild_check = supabase.table("Members").select("nickname").eq("nickname", new_nick.strip()).execute()
+                    if not guild_check.data:
+                        st.warning("⚠️ 해당 닉네임은 길드에 등록되어 있지 않습니다.")
+                    else:
+                        result = supabase.table("Users").insert({
+                            "user_id": new_id.strip(),
+                            "password": new_pw.strip(),
+                            "nickname": new_nick.strip()
+                        }).execute()
+
+                        if result.data:
+                            st.success("✅ 회원가입 완료! 로그인으로 이동합니다.")
+                            st.session_state.signup_mode = False
+                            st.rerun()
+                        else:
+                            st.error("🚫 회원가입 실패")
+
+        with c2:
+            if st.button("↩️ 돌아가기"):
+                st.session_state.signup_mode = False
                 st.rerun()
-            else:
-                st.error("❌ 아이디 또는 비밀번호가 올바르지 않습니다.")
 
-    st.stop()
+        st.stop()
 
 # ✅ 로그인 이후 사이드바
 if "user" in st.session_state:
