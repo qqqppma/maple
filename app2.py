@@ -326,6 +326,13 @@ if "user" not in st.session_state:
         new_pw = st.text_input("비밀번호", type="password")
         new_nick = st.text_input("본캐 닉네임")
 
+        st.markdown("###📢 회원가입 주의사항 ")
+        st.info('''
+        🔹 자주 사용하는 ID와 PW로 가입하지 마세요. 보안이 취약합니다.
+        🔹 ID와 PW를 까먹으면 개발자에게 연락하세요(o차월o)
+        🔹 개발자는 여러분들의 계정 정보를 볼 수 있습니다. 꼭 다른 사이트에서 사용하지 않는 PW로 가입하세요.
+        ''')
+
         col1, col2 = st.columns(2)
         with col1:
             if st.button("가입하기"):
