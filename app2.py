@@ -970,10 +970,20 @@ elif menu == "드메템 대여 신청":
         row[0].markdown(f"**{time}**")
         for j, d in enumerate(dates):
             key = f"{d} {time}"
-            if key in reserved_slots:
-                label = reserved_slots[key]
-                selection[key] = row[j + 1].checkbox(label, value=True, key=key, disabled=True)
+            reserved_by = reserved_slots.get(key)
+
+            if reserved_by:
+                # 체크박스 비활성화 + 예약자 이름 표시
+                label = reserved_by
+                is_mine = reserved_by == selected_borrower
+                selection[key] = row[j + 1].checkbox(
+                    label,
+                    value=True,
+                    key=key,
+                    disabled=True  # ✅ 무조건 비활성화
+                )
             else:
+                # 아직 예약 안 된 경우 선택 가능
                 value = day_selected[j]
                 selection[key] = row[j + 1].checkbox("", value=value, key=key)
 
