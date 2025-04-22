@@ -207,10 +207,14 @@ def authenticate_user(user_id, password):
 query_user_id = st.query_params.get("user_id", [None])[0]
 query_token = st.query_params.get("key", [None])[0]
 
+st.write("🧪 자동 로그인 시도 중:", query_user_id, query_token)
+
 if query_user_id and query_token and "login_checked" not in st.session_state:
     res = supabase.table("Users").select("*")\
         .eq("user_id", query_user_id.strip())\
         .eq("login_token", query_token.strip()).execute()
+
+    st.write("🧪 Supabase 응답:", res.data)
 
     if res.data:
         user_info = res.data[0]
