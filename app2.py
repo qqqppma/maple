@@ -186,15 +186,23 @@ def get_drop_range(slots):
 #✅ 보조무기 대여 계산함수
 def get_weapon_range(slots):
     try:
-        # 날짜+시간으로 정렬
+        from datetime import datetime
+
+        # 빈값 방지
+        slot_list = [s.strip() for s in slots.split(",") if s.strip()]
+        if not slot_list:
+            return ""
+
+        # 시작 시간 기준으로 정렬
         sorted_slots = sorted(
-            [s.strip() for s in slots.split(",") if s.strip()],
-            key=lambda x: datetime.strptime(x.split()[0] + " " + x.split()[1].split("~")[0], "%Y-%m-%d %H:%M")
+            slot_list,
+            key=lambda x: datetime.strptime(x.split("~")[0], "%Y-%m-%d %H:%M")
         )
-        return ", ".join(sorted_slots)
-    except Exception as e:
-        print(f"[정렬 오류] {e}")
-        return slots
+
+        # 가장 처음과 마지막만 반환
+        return f"{sorted_slots[0]} ~ {sorted_slots[-1]}"
+    except Exception:
+        return ""
     
 # ✅ 데이터 수정
 def update_dropitem_rental(row_id, data):
@@ -807,16 +815,23 @@ elif menu == "보조대여 신청":
     weekday_labels = [day_names[d.weekday()] for d in dates]
     time_slots = [f"{h:02d}:00~{(h+2)%24:02d}:00" for h in range(0, 24, 2)]
 
-    st.markdown(f"### ⏰ `{selected_job}` 시간 단위 대여")
+    st.markdown(f"### ⏰ `{selected_job}`")
     day_selected = {}
     cols = st.columns(len(dates) + 1)
     cols[0].markdown("#### ")
+    day_selected = {}
     for i, (day, label) in enumerate(zip(weekday_labels, date_labels)):
+        # 해당 날짜의 슬롯 중 이미 예약된 개수를 셈
+        date_str = str(dates[i])
+        reserved_count = sum(1 for t in time_slots if f"{date_str} {t}" in reserved_slots)
+
+        # 전체 선택 비활성화 조건: 모든 슬롯이 이미 예약됨
+        disable_day_checkbox = reserved_count == len(time_slots)
+
         with cols[i + 1]:
             st.markdown(f"#### {day}", unsafe_allow_html=True)
             st.markdown(f"{label}")
-            day_selected[i] = st.checkbox("전체", key=f"day_select_{i}")
-
+            day_selected[i] = st.checkbox("전체", key=f"day_select_{i}", disabled=disable_day_checkbox)
     # 예약 데이터 불러오기
     weapon_data = fetch_weapon_rentals()
     existing_slots = {}
@@ -880,8 +895,6 @@ elif menu == "보조대여 신청":
             df["ID"] = df.index + 1
             # ✅ 시간 정렬 함수 적용
             df["대여기간"] = df["time_slots"].apply(get_weapon_range)
-
-            # ✅ 대표 소유자 추출
             df["대표소유자"] = df["owner"].apply(
                 lambda x: json.loads(x)[0] if isinstance(x, str) and x.startswith("[") else x
             )
