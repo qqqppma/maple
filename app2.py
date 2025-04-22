@@ -218,7 +218,7 @@ if query_nickname and query_token and "login_checked" not in st.session_state:
         st.session_state["nickname"] = user_info["nickname"]
         st.session_state["is_admin"] = user_info["nickname"] in ADMIN_USERS
         st.session_state["login_checked"] = True
-        st.experimental_rerun()
+        st.rerun()
 
 # 🔐 로그인 UI
 if "user" not in st.session_state:
