@@ -203,7 +203,7 @@ def authenticate_user(user_id, password):
         return None
     
 # =====================================================================================#
-# ✅ 쿼리 파라미터 기반 자동 로그인 (1회만 시도)
+# ✅ 자동 로그인: user_id + login_token 기반
 query_user_id = st.query_params.get("user_id", [None])[0]
 query_token = st.query_params.get("key", [None])[0]
 
@@ -258,14 +258,15 @@ if "user" not in st.session_state:
                             st.session_state["is_admin"] = user_info["nickname"] in ADMIN_USERS
                             st.session_state["login_checked"] = True
 
-                            # ✅ URL에 로그인 정보 추가
+                            # ✅ URL 파라미터 정리 및 설정
+                            st.query_params.clear()
                             st.query_params.update(user_id=user_info["user_id"], key=login_token)
                             st.stop()
                         else:
                             st.error("❌ 아이디 또는 비밀번호가 올바르지 않습니다.")
                     except Exception as e:
                         st.error(f"로그인 오류: {e}")
-        
+
             btn1, btn2 = st.columns([1, 1])
             with btn2:
                 if st.button("회원가입", use_container_width=True):
@@ -276,7 +277,6 @@ if "user" not in st.session_state:
 
     else:
         st.subheader("📝 회원가입")
-
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
             new_id = st.text_input("사용할 아이디")
@@ -312,20 +312,14 @@ if "user" not in st.session_state:
         st.stop()
 
 # ✅ 로그인 이후 사이드바
-nickname = st.session_state["nickname"]
-is_admin = st.session_state["is_admin"]
-
-st.sidebar.write(f"👤 로그인: {nickname}")
-
 if "user" in st.session_state:
     st.sidebar.markdown(f"👤 로그인: {st.session_state['nickname']}")
     if st.sidebar.button("로그아웃"):
-        # ✅ Supabase에서 login_token 제거
         user_id = st.session_state.get("user")
         if user_id:
+            # ✅ 토큰 무효화
             supabase.table("Users").update({"login_token": None}).eq("user_id", user_id).execute()
 
-        # ✅ 세션/파라미터 정리
         st.session_state.clear()
         st.query_params.clear()
         st.rerun()
