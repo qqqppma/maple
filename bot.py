@@ -9,8 +9,16 @@ from datetime import datetime, timedelta, timezone
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
-WEAPON_CHANNEL_ID = int(os.getenv("CHANNEL_ID"))  # 보조무기
-DROPITEM_CHANNEL_ID = int(os.getenv("DROPITEM_CHANNEL_ID"))  # 드메템
+WEAPON_CHANNEL_ID = int(os.getenv("CHANNEL_ID"))  # 보조무기 채널 ID
+DROPITEM_CHANNEL_ID = int(os.getenv("DROPITEM_CHANNEL_ID"))  # 드메템 채널 ID
+
+# ✅ 멘션할 유저 ID 리스트
+MENTION_USERS_WEAPON = [380952595293929473, 339743306802135041]  # 보조무기 담당자
+MENTION_USERS_DROP = [380952595293929473, 339743306802135041]    # 드메템 담당자
+
+# ✅ 멘션 메시지 생성 함수
+def get_mentions(user_ids):
+    return " ".join([f"<@{uid}>" for uid in user_ids])
 
 # ✅ Supabase 클라이언트 생성
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
@@ -22,7 +30,6 @@ client = discord.Client(intents=intents)
 # ✅ 상태 저장용
 last_weapon_ids = set()
 last_weapon_data = {}
-
 last_dropitem_ids = set()
 last_dropitem_data = {}
 
@@ -56,9 +63,7 @@ async def polling_loop():
 
         try:
             # ✅ 보조무기 데이터 확인
-            weapon_res = supabase.table("Weapon_Rentals")\
-                .select("*").order("id", desc=True).limit(20).execute()
-
+            weapon_res = supabase.table("Weapon_Rentals").select("*").order("id", desc=True).limit(20).execute()
             current_weapon_ids = set()
             current_weapon_data = {}
 
@@ -75,7 +80,7 @@ async def polling_loop():
                 new_ids = current_weapon_ids - last_weapon_ids
                 for new_id in new_ids:
                     data = current_weapon_data[new_id]
-                    msg = f"📥 `{data['borrower']}`님이 `{data['weapon_name']}` 을 대여 요청하였습니다."
+                    msg = f"{get_mentions(MENTION_USERS_WEAPON)} 📥 `{data['borrower']}`님이 `{data['weapon_name']}` 을 대여 요청하였습니다."
                     await weapon_channel.send(msg)
                     print(f"[Weapon 등록] {msg}")
 
@@ -91,9 +96,7 @@ async def polling_loop():
                 last_weapon_data = current_weapon_data
 
             # ✅ 드메템 데이터 확인
-            drop_res = supabase.table("DropItem_Rentals")\
-                .select("*").order("id", desc=True).limit(20).execute()
-
+            drop_res = supabase.table("DropItem_Rentals").select("*").order("id", desc=True).limit(20).execute()
             current_drop_ids = set()
             current_drop_data = {}
 
@@ -110,7 +113,7 @@ async def polling_loop():
                 new_ids = current_drop_ids - last_dropitem_ids
                 for new_id in new_ids:
                     data = current_drop_data[new_id]
-                    msg = f"🎁 `{data['drop_borrower']}`님이 `{data['dropitem_name']}` 을 대여 요청하였습니다."
+                    msg = f"{get_mentions(MENTION_USERS_DROP)} 🎁 `{data['drop_borrower']}`님이 `{data['dropitem_name']}` 을 대여 요청하였습니다."
                     await dropitem_channel.send(msg)
                     print(f"[Drop 등록] {msg}")
 
