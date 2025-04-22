@@ -333,6 +333,7 @@ if "user" not in st.session_state:
         🔹 개발자는 여러분들의 계정 정보를 볼 수 있습니다. 꼭 다른 사이트에서 사용하지 않는 PW로 가입하세요. \n
         🔹 악마길드에 가입한 캐릭터 닉네임으로 가입하세요. \n
         🔹 부길드에 본캐로 가입한 분들은 따로 연락 바랍니다.
+        🔹 리팩토링 해주실분 환영합니다.
         ''')
 
         col1, col2 = st.columns(2)
@@ -974,12 +975,33 @@ elif menu == "드메템 대여 신청":
     nickname = st.session_state["nickname"]
     owners = ["자리스틸의왕", "새훨", "죤냇", "나영진", "o차월o"]
 
+    # 드메템 이미지 폴더 지정
+    DROP_IMAGE_FOLDER = "드메템 사진"
+
+    # 드메템 이미지 매핑 (파일명은 세트명 기준으로 미리 저장 필요)
+    dropitem_image_map = {
+        "보스 드드셋": "보스 드드셋.jpg",
+        "사냥 드메셋": "사냥 드메셋.jpg",
+        "사냥 드메셋 II": "사냥 드메셋 II.jpg",
+    }
+
     st.markdown("#### \U0001F464 대여자 선택")
     nickname_options = get_all_character_names(nickname)
     selected_borrower = st.selectbox("드메템 대여자", nickname_options)
 
-    item_options = ["보스드랍세트", "사냥드메세트1", "사냥드메세트2"]
+    item_options = ["보스 드드셋", "사냥 드메셋", "사냥 드메셋 II"]
     selected_item = st.selectbox("대여할 드메템 세트를 선택하세요", item_options)
+
+    selected_image_name = dropitem_image_map.get(selected_item)
+    if selected_image_name:
+        image_path = os.path.join(DROP_IMAGE_FOLDER, selected_image_name)
+        if os.path.exists(image_path):
+            image = Image.open(image_path)
+            w_percent = 400 / float(image.size[0])
+            resized_image = image.resize((400, int(float(image.size[1]) * w_percent)))
+            st.image(resized_image, caption=f"{selected_item} 이미지")
+        else:
+            st.warning("⚠️ 해당 드메셋 이미지가 존재하지 않습니다.")
 
     today = date.today()
     dates = [today + timedelta(days=i) for i in range(7)]
