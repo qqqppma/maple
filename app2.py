@@ -743,28 +743,30 @@ elif menu == "보조대여 신청":
     # ✅ 대여자 선택 드롭다운
     st.markdown("#### 👤 대여자 선택")
     nickname_options = get_all_character_names(nickname)
+    st.write("🔎 로그인 닉네임:", nickname)
+    nickname_options = get_all_character_names(nickname)
+    st.write("📋 대여자 목록:", nickname_options)
     selected_borrower = st.selectbox("보조무기 대여자", nickname_options)
 
     # 직업군 및 주스탯 선택
     job_group = st.selectbox("🧩 직업군을 선택하세요", ["전사", "궁수", "법사", "도적", "해적", "특수직업"])
-    main_stat = st.selectbox("📊 주 스탯을 선택하세요", ["STR", "DEX", "INT", "LUK"])
 
     job_data = {
-        "전사": {"STR": ["히어로", "팔라딘", "다크나이트", "소울마스터", "미하일", "아란", "카이저", "제로", "아델"]},
-        "궁수": {"DEX": ["보우마스터", "신궁", "패스파인더", "윈드브레이커", "메르세데스", "와일드헌터"]},
-        "법사": {"INT": ["아크메이지(썬콜)", "아크메이지(불독)", "비숍", "플레임위자드", "에반", "루미너스", "배틀메이지", "키네시스", "일리움"]},
-        "도적": {"LUK": ["나이트로드", "새도어", "듀얼블레이드", "나이트워커", "팬텀", "카데나", "호영"]},
+        "전사": {["히어로", "팔라딘", "다크나이트", "소울마스터", "미하일", "아란", "카이저", "제로", "아델"]},
+        "궁수": {["보우마스터", "신궁", "패스파인더", "윈드브레이커", "메르세데스", "와일드헌터"]},
+        "법사": {["아크메이지(썬콜)", "아크메이지(불독)", "비숍", "플레임위자드", "에반", "루미너스", "배틀메이지", "키네시스", "일리움"]},
+        "도적": {["나이트로드", "새도어", "듀얼블레이드", "나이트워커", "팬텀", "카데나", "호영"]},
         "해적": {
-            "STR": ["바이퍼", "캐논슈터", "스트라이커"],
-            "DEX": ["메카닉", "엔젤릭버스터"],
+            ["바이퍼", "캐논슈터", "스트라이커"],
+            ["메카닉", "엔젤릭버스터"],
         },
         "특수직업": {
-            "STR": ["데몬어벤져"],
-            "LUK": ["제논"]
+            ["데몬어벤져"],
+            ["제논"]
         }
     }
 
-    job_options = job_data.get(job_group, {}).get(main_stat, [])
+    job_options = job_data.get(job_group, {}).get()
     selected_job = st.selectbox("🔍 직업을 선택하세요", job_options if job_options else ["선택 가능한 직업이 없습니다"])
 
     # 이미지 경로 확인 및 출력
@@ -918,6 +920,9 @@ elif menu == "드메템 대여 신청":
     # ✅ 대여자 선택 드롭다운
     st.markdown("#### 👤 대여자 선택")
     nickname_options = get_all_character_names(nickname)
+    st.write("🔎 로그인 닉네임:", nickname)
+    nickname_options = get_all_character_names(nickname)
+    st.write("📋 대여자 목록:", nickname_options)
     selected_borrower = st.selectbox("드메템 대여자", nickname_options)
 
     # ✅ 드메템 종류 선택
