@@ -232,11 +232,12 @@ if "user" not in st.session_state:
     if not st.session_state.signup_mode:
         st.subheader("🔐 로그인")
 
-        with st.form("login_form"):
-            login_id = st.text_input("아이디", key="login_id")
-            login_pw = st.text_input("비밀번호", type="password", key="login_pw")
-
-            col1, col2 = st.columns([1, 1])
+        col_center = st.columns([1, 2, 1])[1]  # 가운데 정렬
+        with col_center:
+            with st.form("login_form"):
+                login_id = st.text_input("아이디", key="login_id", max_chars=20)
+                login_pw = st.text_input("비밀번호", type="password", key="login_pw", max_chars=20)
+                col1, col2 = st.columns([1, 1])
             with col1:
                 login_btn = st.form_submit_button("로그인")
             with col2:
