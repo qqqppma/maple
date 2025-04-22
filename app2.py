@@ -277,7 +277,7 @@ if "user" not in st.session_state:
                     st.session_state.signup_mode = True
                     st.rerun()
 
-        st.stop()
+        st.rerun()
 
     else:
         st.subheader("📝 회원가입")
