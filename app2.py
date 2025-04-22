@@ -960,6 +960,13 @@ elif menu == "드메템 대여 신청":
     }
 
     st.markdown(f"### ⏰ `{selected_item}` 시간 단위 대여")
+    # 📅 날짜/요일 헤더 출력
+    cols = st.columns(len(dates) + 1)
+    cols[0].markdown("#### ")
+    for i, (day, label) in enumerate(zip(weekday_labels, date_labels)):
+        with cols[i + 1]:
+            st.markdown(f"#### {day}", unsafe_allow_html=True)
+            st.markdown(f"{label}")
     selection = {}
     for time in time_slots:
         row = st.columns(len(dates) + 1)
