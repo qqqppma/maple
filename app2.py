@@ -1007,8 +1007,8 @@ elif menu == "드메템 대여 신청":
             image_path = os.path.join(DROP_IMAGE_FOLDER, selected_image_name)
             if os.path.exists(image_path):
                 image = Image.open(image_path)
-                w_percent = 700 / float(image.size[0])  # 이미지 더 크게
-                resized_image = image.resize((700, int(float(image.size[1]) * w_percent)))
+                w_percent = 1000 / float(image.size[0])  # 이미지 더 크게
+                resized_image = image.resize((1000, int(float(image.size[1]) * w_percent)))
                 st.image(resized_image, caption=f"{selected_item} 이미지")
             else:
                 st.warning("⚠️ 해당 드메셋 이미지가 존재하지 않습니다.")
