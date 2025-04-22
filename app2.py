@@ -37,6 +37,15 @@ def get_all_character_names(nickname):
 
     return main_names + sub_names
 
+# ✅ 날짜 계산 함수
+def get_date_range_from_slots(time_slots_str):
+    try:
+        dates = sorted(set(slot.split()[0] for slot in time_slots_str.split(",") if slot.strip()))
+        return f"{dates[0]} ~ {dates[-1]}" if dates else ""
+    except:
+        return ""
+
+
 # ✅ Supabase 함수
 @st.cache_data(ttl=0)
 def get_members():
@@ -1011,13 +1020,16 @@ elif menu == "드메템 대여 신청":
 
         # 🔁 반납 처리 버튼
         for _, row in df.iterrows():
-            owners_list = json.loads(row["drop_owner"]) if isinstance(row["drop_owner"], str) and row["drop_owner"].startswith("[") else [row["drop_owner"]]
-            if nickname in owners_list:
-                with st.expander(f"\U0001F6E1️ '{row['dropitem_name']}' - 대여자: {row['drop_borrower']}"):
-                    st.markdown(f"**대여기간:** `{row['start_date']} ~ {row['end_date']}`")
+            owners_list = json.loads(row["drop_owner"])  # 소유자 리스트 불러오기
+            if nickname in owners_list:  # 로그인 유저가 소유자일 때만 반납 가능
+                with st.expander(f"..."):
+                    # ✅ 대여 정보 출력
+                    st.markdown(f"**📅 대여기간:** `{row['time_slots']}`")  # 여기만 수정 필요!
                     st.markdown(f"**소유자:** `{', '.join(owners_list)}`")
+
+                    # ✅ 반납 버튼
                     if st.button("🗑 반납 완료", key=f"drop_return_{row['id']}"):
-                        if delete_dropitem_rental(row["id"]):
+                        if delete_dropitem_rental(row["id"]):  # 실제 DB 삭제 함수
                             st.success("✅ 반납 완료되었습니다!")
                             st.rerun()
                         else:
