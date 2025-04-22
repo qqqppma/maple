@@ -927,7 +927,14 @@ elif menu == "보조대여 신청":
 
                 if nickname in owners_list:
                     with st.expander(f"🛡️ '{row['weapon_name']}' - 대여자: {borrower_name}"):
-                        st.markdown(f"**📅 대여기간:** `{row['time_slots']}`")
+                        try:
+                            slots = [s.strip() for s in row["time_slots"].split(",") if s.strip()]
+                            sorted_slots = sorted(slots, key=lambda x: datetime.strptime(x.split("~")[0], "%Y-%m-%d %H:%M"))
+                            display_range = f"{sorted_slots[0]} ~ {sorted_slots[-1]}" if sorted_slots else ""
+                        except Exception:
+                            display_range = row["time_slots"]
+
+                        st.markdown(f"**📅 대여기간:** `{display_range}`")
                         st.markdown(f"**소유자:** `{', '.join(owners_list)}`")
                         if st.button("🗑 반납 완료", key=f"weapon_return_{row['id']}"):
                             if delete_weapon_rental(row["id"]):
