@@ -893,7 +893,7 @@ elif menu == "보조대여 신청":
                 st.error(f"❌ 등록 실패: {response.status_code}")
 
     if weapon_data:
-        # 필터링 (정확한 무기 이름 또는 포함 테스트)
+        # 무기 필터링
         filtered = [
             r for r in weapon_data
             if selected_job in r.get("weapon_name", "") and "time_slots" in r
@@ -902,8 +902,10 @@ elif menu == "보조대여 신청":
         if filtered:
             df = pd.DataFrame(filtered).sort_values(by="id").reset_index(drop=True)
             df["ID"] = df.index + 1
-            # ✅ 시간 정렬 함수 적용
+
+            # ✅ 대여기간 요약 (가장 빠른 ~ 가장 늦은)
             df["대여기간"] = df["time_slots"].apply(get_weapon_range)
+
             df["대표소유자"] = df["owner"].apply(
                 lambda x: json.loads(x)[0] if isinstance(x, str) and x.startswith("[") else x
             )
@@ -927,14 +929,7 @@ elif menu == "보조대여 신청":
 
                 if nickname in owners_list:
                     with st.expander(f"🛡️ '{row['weapon_name']}' - 대여자: {borrower_name}"):
-                        try:
-                            slots = [s.strip() for s in row["time_slots"].split(",") if s.strip()]
-                            sorted_slots = sorted(slots, key=lambda x: datetime.strptime(x.split("~")[0], "%Y-%m-%d %H:%M"))
-                            display_range = f"{sorted_slots[0]} ~ {sorted_slots[-1]}" if sorted_slots else ""
-                        except Exception:
-                            display_range = row["time_slots"]
-
-                        st.markdown(f"**📅 대여기간:** `{display_range}`")
+                        st.markdown(f"**📅 대여기간:** `{row['대여기간']}`")  # ✅ 여기서도 get_weapon_range 결과 사용
                         st.markdown(f"**소유자:** `{', '.join(owners_list)}`")
                         if st.button("🗑 반납 완료", key=f"weapon_return_{row['id']}"):
                             if delete_weapon_rental(row["id"]):
