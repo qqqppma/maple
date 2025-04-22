@@ -881,7 +881,8 @@ elif menu == "보조대여 신청":
                     st.error(f"❌ 등록 실패: {response.status_code}")
 
     # ✅ 대여 현황은 이미지와 관계 없이 항상 출력
-    filtered = [r for r in (weapon_data or [])
+    filtered = [
+    r for r in (weapon_data or [])
     if isinstance(r, dict)
     and selected_job in str(r.get("weapon_name", ""))
     and "time_slots" in r]
