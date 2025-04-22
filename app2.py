@@ -1027,11 +1027,16 @@ elif menu == "드메템 대여 신청":
 
         # 🔁 반납 처리 버튼
         for _, row in df.iterrows():
-            owners_list = json.loads(row["drop_owner"])  # 소유자 리스트 불러오기
+            owners_list = json.loads(row["drop_owner"]) if isinstance(row["drop_owner"], str) and row["drop_owner"].startswith("[") else [row["drop_owner"]]
+
+            # 대여자 이름 안전하게 가져오기
+            borrower_name = row.get("drop_borrower", "")
+            if not borrower_name or str(borrower_name).lower() == "nan":
+                borrower_name = "(이름 없음)"
             if nickname in owners_list:  # 로그인 유저가 소유자일 때만 반납 가능
                 with st.expander(f"..."):
                     # ✅ 대여 정보 출력
-                    st.markdown(f"**📅 대여기간:** `{row['time_slots']}`")  # 여기만 수정 필요!
+                    st.markdown(f"**📅 대여기간:** `{row['time_slots']}`") 
                     st.markdown(f"**소유자:** `{', '.join(owners_list)}`")
 
                     # ✅ 반납 버튼
