@@ -1066,22 +1066,3 @@ elif menu == "드메템 대여 신청":
             else:
                 pass
             
-        # 🔁 반납 처리 버튼
-    for _, row in df.iterrows():
-        owners_list = json.loads(row["drop_owner"]) if isinstance(row["drop_owner"], str) and row["drop_owner"].startswith("[") else [row["drop_owner"]]
-        borrower_name = row.get("drop_borrower", "")
-        if not borrower_name or str(borrower_name).lower() == "nan":
-            borrower_name = "(이름 없음)"
-
-        # ✅ 조건: 현재 로그인 닉네임이 소유자 중 하나일 경우만 반납 UI 표시
-        if nickname in owners_list:
-            with st.expander(f"🛡️ '{row['dropitem_name']}' - 대여자: {borrower_name}"):
-                st.markdown(f"**📅 대여기간:** `{row['time_slots']}`")
-                st.markdown(f"**소유자:** `{', '.join(owners_list)}`")
-
-                if st.button("🗑 반납 완료", key=f"drop_return_{row['id']}"):
-                    if delete_dropitem_rental(row["id"]):
-                        st.success("✅ 반납 완료되었습니다!")
-                        st.rerun()
-                    else:
-                        st.error("❌ 반납 실패! 다시 시도해주세요.")
