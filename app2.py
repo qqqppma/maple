@@ -222,7 +222,7 @@ if query_user_id and query_token and "user" not in st.session_state:
     else:
         st.warning("❌ 자동 로그인 실패")
 
-# ✅ 로그인 UI 또는 회원가입
+# ✅ 로그인 및 회원가입 UI
 if "user" not in st.session_state:
     st.title("🛡️ 악마길드 관리 시스템")
 
@@ -231,11 +231,14 @@ if "user" not in st.session_state:
 
     if not st.session_state.signup_mode:
         st.subheader("🔐 로그인")
-
         with st.form("login_form"):
-            login_id = st.text_input("아이디")
-            login_pw = st.text_input("비밀번호", type="password")
-            submitted = st.form_submit_button("로그인")
+            login_id = st.text_input("아이디", key="login_id")
+            login_pw = st.text_input("비밀번호", type="password", key="login_pw")
+            col1, col2 = st.columns([1, 1])
+            with col1:
+                submitted = st.form_submit_button("로그인")
+            with col2:
+                go_signup = st.form_submit_button("회원가입")
 
             if submitted:
                 res = supabase.table("Users").select("*") \
@@ -260,44 +263,49 @@ if "user" not in st.session_state:
                 else:
                     st.error("❌ 아이디 또는 비밀번호가 올바르지 않습니다.")
 
-        if st.button("회원가입"):
-            st.session_state.signup_mode = True
-            st.rerun()
+            if go_signup:
+                st.session_state.signup_mode = True
+                st.rerun()
 
         st.stop()
 
     else:
         st.subheader("📝 회원가입")
-        new_id = st.text_input("사용할 아이디")
-        new_pw = st.text_input("비밀번호", type="password")
-        new_nick = st.text_input("본캐 닉네임")
+        with st.form("signup_form"):
+            new_id = st.text_input("사용할 아이디")
+            new_pw = st.text_input("비밀번호", type="password")
+            new_nick = st.text_input("본캐 닉네임")
+            col1, col2 = st.columns([1, 1])
+            with col1:
+                submitted = st.form_submit_button("가입하기")
+            with col2:
+                cancel = st.form_submit_button("↩️ 돌아가기")
 
-        c1, c2 = st.columns(2)
-        with c1:
-            if st.button("가입하기"):
-                exist = supabase.table("Users").select("user_id").eq("user_id", new_id.strip()).execute()
+            if submitted:
+                exist = supabase.table("Users").select("user_id") \
+                    .eq("user_id", new_id.strip()).execute()
                 if exist.data:
                     st.warning("⚠️ 이미 존재하는 아이디입니다.")
                 else:
-                    guild_check = supabase.table("Members").select("nickname").eq("nickname", new_nick.strip()).execute()
+                    guild_check = supabase.table("Members").select("nickname") \
+                        .eq("nickname", new_nick.strip()).execute()
                     if not guild_check.data:
                         st.warning("⚠️ 해당 닉네임은 길드에 등록되어 있지 않습니다.")
                     else:
-                        result = supabase.table("Users").insert({
+                        user_data = {
                             "user_id": new_id.strip(),
                             "password": new_pw.strip(),
                             "nickname": new_nick.strip()
-                        }).execute()
-
-                        if result.data:
+                        }
+                        res = supabase.table("Users").insert(user_data).execute()
+                        if res.data:
                             st.success("✅ 회원가입 완료! 로그인으로 이동합니다.")
                             st.session_state.signup_mode = False
                             st.rerun()
                         else:
                             st.error("🚫 회원가입 실패")
 
-        with c2:
-            if st.button("↩️ 돌아가기"):
+            if cancel:
                 st.session_state.signup_mode = False
                 st.rerun()
 
