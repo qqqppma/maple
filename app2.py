@@ -203,13 +203,13 @@ def authenticate_user(user_id, password):
         return None
     
 # =====================================================================================#
-# 🔐 자동 로그인 (단 1회만 시도)
-query_nickname = st.query_params.get("nickname", [None])[0]
+# ✅ 쿼리 파라미터 기반 자동 로그인 (1회만 시도)
+query_user_id = st.query_params.get("user_id", [None])[0]
 query_token = st.query_params.get("key", [None])[0]
 
-if query_nickname and query_token and "login_checked" not in st.session_state:
+if query_user_id and query_token and "login_checked" not in st.session_state:
     res = supabase.table("Users").select("*")\
-        .eq("nickname", query_nickname.strip())\
+        .eq("user_id", query_user_id.strip())\
         .eq("login_token", query_token.strip()).execute()
 
     if res.data:
@@ -218,9 +218,11 @@ if query_nickname and query_token and "login_checked" not in st.session_state:
         st.session_state["nickname"] = user_info["nickname"]
         st.session_state["is_admin"] = user_info["nickname"] in ADMIN_USERS
         st.session_state["login_checked"] = True
-        st.rerun()
+        st.stop()
+    else:
+        st.warning("❌ 자동 로그인 실패")
 
-# 🔐 로그인 UI
+# ✅ 로그인 UI
 if "user" not in st.session_state:
     st.title("🛡️ 악마길드 관리 시스템")
 
@@ -229,7 +231,6 @@ if "user" not in st.session_state:
 
     if not st.session_state.signup_mode:
         st.subheader("🔐 로그인")
-
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
             with st.form("login_form"):
@@ -239,7 +240,6 @@ if "user" not in st.session_state:
 
                 if submitted:
                     try:
-                        # 아이디+비밀번호로 유저 조회
                         res = supabase.table("Users").select("*")\
                             .eq("user_id", login_id.strip())\
                             .eq("password", login_pw.strip()).execute()
@@ -247,7 +247,7 @@ if "user" not in st.session_state:
                         if res.data:
                             user_info = res.data[0]
 
-                            # ✅ 토큰 생성 및 DB에 저장
+                            # ✅ 토큰 생성 및 저장
                             login_token = str(uuid.uuid4())
                             supabase.table("Users").update({"login_token": login_token})\
                                 .eq("user_id", login_id.strip()).execute()
@@ -258,11 +258,11 @@ if "user" not in st.session_state:
                             st.session_state["is_admin"] = user_info["nickname"] in ADMIN_USERS
                             st.session_state["login_checked"] = True
 
-                            # ✅ 쿼리 파라미터에 로그인 정보 추가 (자동 로그인용)
-                            st.query_params.update(nickname=user_info["nickname"], key=login_token)
-                            st.rerun()
+                            # ✅ URL에 로그인 정보 추가
+                            st.query_params.update(user_id=user_info["user_id"], key=login_token)
+                            st.stop()
                         else:
-                            st.error("❌ 아이디 또는 비밀번호가 잘못되었습니다.")
+                            st.error("❌ 아이디 또는 비밀번호가 올바르지 않습니다.")
                     except Exception as e:
                         st.error(f"로그인 오류: {e}")
         
@@ -316,10 +316,19 @@ nickname = st.session_state["nickname"]
 is_admin = st.session_state["is_admin"]
 
 st.sidebar.write(f"👤 로그인: {nickname}")
-if st.sidebar.button("로그아웃"):
-    st.session_state.clear()
-    st.query_params.clear()
-    st.rerun()
+
+if "user" in st.session_state:
+    st.sidebar.markdown(f"👤 로그인: {st.session_state['nickname']}")
+    if st.sidebar.button("로그아웃"):
+        # ✅ Supabase에서 login_token 제거
+        user_id = st.session_state.get("user")
+        if user_id:
+            supabase.table("Users").update({"login_token": None}).eq("user_id", user_id).execute()
+
+        # ✅ 세션/파라미터 정리
+        st.session_state.clear()
+        st.query_params.clear()
+        st.rerun()
 
 menu = st.sidebar.radio("메뉴", ["악마 길드원 정보 등록", "악마길드 길컨관리", "부캐릭터 관리","보조대여 신청","드메템 대여 신청"])
 
