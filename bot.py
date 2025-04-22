@@ -4,6 +4,8 @@ import discord
 import asyncio
 from supabase import create_client, Client
 from datetime import datetime, timedelta, timezone
+from discord.ext import commands
+from discord import app_commands
 
 # ✅ 환경 변수 불러오기
 SUPABASE_URL = os.getenv("SUPABASE_URL")
@@ -133,9 +135,70 @@ async def polling_loop():
 
         await asyncio.sleep(120)
 
+
+# ✅ 디스코드 봇 함수
+tree = app_commands.CommandTree(client)
+
+@tree.command(name="도움말", description="이 봇의 주요 명령어를 안내합니다.")
+async def help_command(interaction: discord.Interaction):
+    await interaction.response.send_message(
+        "🛠 사용 가능한 명령어 목록:\n"
+        "/정보 - 봇의 정보 출력\n"
+        "/대여정보 - 대여 현황 요약 출력 \n"
+        "/이벤트 - 진행중인 이벤트 내용 출력",
+        ephemeral=True
+    )
+
+@tree.command(name="대여정보", description="현재 대여 중인 아이템을 확인합니다.")
+async def rental_info(interaction: discord.Interaction):
+    channel_id = interaction.channel_id
+
+    if channel_id == WEAPON_CHANNEL_ID:
+        await interaction.response.send_message("🛡 보조무기 대여 현황을 불러오는 중입니다...")
+        # 🔄 여기에 Supabase에서 보조무기 요약 불러오는 코드 추가
+    elif channel_id == DROPITEM_CHANNEL_ID:
+        await interaction.response.send_message("🎁 드메템 대여 현황을 불러오는 중입니다...")
+        # 🔄 여기에 드메템 요약 불러오는 코드 추가
+    else:
+        await interaction.response.send_message("⚠️ 이 채널에서는 대여 정보를 볼 수 없습니다.")
+
+@tree.command(name="대여정보", description="특정 장비/세트의 대여 정보를 확인합니다.")
+@app_commands.describe(item="직업 이름 또는 드메템 세트명")
+async def rental_info(interaction: discord.Interaction, item: str):
+    channel_id = interaction.channel_id
+    item = item.strip()
+
+    if channel_id == WEAPON_CHANNEL_ID:
+        res = supabase.table("Weapon_Rentals").select("*").execute()
+        filtered = [r for r in res.data if item in r.get("weapon_name", "")]
+    elif channel_id == DROPITEM_CHANNEL_ID:
+        res = supabase.table("DropItem_Rentals").select("*").execute()
+        filtered = [r for r in res.data if item in r.get("dropitem_name", "")]
+    else:
+        await interaction.response.send_message("⚠️ 이 채널에서는 대여정보를 조회할 수 없습니다.")
+        return
+
+    if not filtered:
+        await interaction.response.send_message(f"❌ `{item}`에 대한 대여 정보가 없습니다.")
+        return
+
+    target = filtered[0]
+    borrower = target.get("borrower") or target.get("drop_borrower", "?")
+    time_slots = target.get("time_slots", "").split(",")
+    dates = sorted({s.split()[0] for s in time_slots if s.strip()})
+    date_range = f"{dates[0]} ~ {dates[-1]}" if dates else "기간 정보 없음"
+
+    label = "🛡️" if channel_id == WEAPON_CHANNEL_ID else "📿"
+    name = target.get("weapon_name") or target.get("dropitem_name")
+
+    await interaction.response.send_message(
+        f"{label} **{name}**\n• 대여자: `{borrower}`\n• 기간: `{date_range}`"
+    )
+
 @client.event
 async def on_ready():
     print(f"🤖 디스코드 봇 로그인됨: {client.user}")
+    await tree.sync()
     client.loop.create_task(polling_loop())
 
 if __name__ == "__main__":
