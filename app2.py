@@ -824,8 +824,8 @@ elif menu == "보조대여 신청":
 
         if image_available:
             image = Image.open(image_path)
-            w_percent = 600 / float(image.size[0])  # 더 큰 이미지 표시
-            resized_image = image.resize((600, int(float(image.size[1]) * w_percent)))
+            w_percent = 1000 / float(image.size[0])  # 더 큰 이미지 표시
+            resized_image = image.resize((1000, int(float(image.size[1]) * w_percent)))
             st.image(resized_image, caption=f"{selected_job}의 보조무기")
         else:
             st.warning("⚠️ 보유중인 보조무기가 없어 대여가 불가능합니다.")
@@ -986,7 +986,7 @@ elif menu == "드메템 대여 신청":
     # 드메템 이미지 매핑 (파일명은 세트명 기준으로 미리 저장 필요)
     dropitem_image_map = {
         "보스 드드셋": "보스 드드셋.jpg",
-        "사냥 드메셋": "사냥 드메셋.jpg",
+        "사냥 드메셋 I": "사냥 드메셋 I.jpg",
         "사냥 드메셋 II": "사냥 드메셋 II.jpg",
     }
 
