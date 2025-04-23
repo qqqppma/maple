@@ -307,6 +307,7 @@ def show_character_viewer():
         if server:
             st.success(f"✅ `{char_name}` 캐릭터는 `{server}` 서버에 있습니다.")
             basic = get_character_basic(char_name, server)
+            st.write("🔍 탐색된 서버:", server)
             if basic:
                 st.json(basic)
             else:
