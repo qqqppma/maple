@@ -270,7 +270,8 @@ EQUIP_POSITIONS = {
 
 # 🔍 캐릭터 기본 정보 API
 def get_character_basic(name):
-    url = f"https://open.api.nexon.com/maplestory/v1/character/basic?character_name={name}"
+    encoded_name = urllib.parse.quote(name)
+    url = f"https://open.api.nexon.com/maplestory/v1/character/basic?character_name={encoded_name}"
     res = requests.get(url, headers=NEXON_HEADERS)
     return res.json() if res.status_code == 200 else None
 
