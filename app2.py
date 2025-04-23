@@ -276,7 +276,7 @@ SERVER_LIST = [
     "버닝", "버닝2", "버닝3"
 ]
 
-# ✅ 자동 서버 탐색 함수
+# ✅ 서버 자동 탐색 함수
 def find_character_server(name):
     encoded_name = urllib.parse.quote(name)
     for server in SERVER_LIST:
@@ -287,7 +287,7 @@ def find_character_server(name):
             return server
     return None
 
-# ✅ 캐릭터 정보 조회 함수
+# ✅ 캐릭터 기본 정보 조회
 def get_character_basic(name, server):
     encoded_name = urllib.parse.quote(name)
     encoded_server = urllib.parse.quote(server)
@@ -297,22 +297,22 @@ def get_character_basic(name, server):
     st.write("🔍 응답 본문:", res.text)
     return res.json() if res.status_code == 200 else None
 
-# ✅ Streamlit UI
-st.title("🧾 메이플 캐릭터 정보 검색")
+# ✅ Streamlit에서 사용하는 캐릭터 정보 검색 함수
+def show_character_viewer():
+    st.title("🧾 메이플 캐릭터 정보 검색")
+    char_name = st.text_input("🔎 캐릭터명을 입력하세요")
 
-name_input = st.text_input("🔎 캐릭터명을 입력하세요")
-if name_input:
-    server_found = find_character_server(name_input)
-
-    if server_found:
-        st.success(f"✅ `{name_input}` 캐릭터는 `{server_found}` 서버에 있습니다.")
-        data = get_character_basic(name_input, server_found)
-        if data:
-            st.json(data)
+    if char_name:
+        server = find_character_server(char_name)
+        if server:
+            st.success(f"✅ `{char_name}` 캐릭터는 `{server}` 서버에 있습니다.")
+            basic = get_character_basic(char_name, server)
+            if basic:
+                st.json(basic)
+            else:
+                st.warning("⚠️ 캐릭터 데이터를 가져오지 못했습니다.")
         else:
-            st.warning("⚠️ 캐릭터 데이터를 가져오지 못했습니다.")
-    else:
-        st.error("❌ 캐릭터 정보를 불러올 수 없습니다. (서버 미탐색)")
+            st.error("❌ 캐릭터 정보를 불러올 수 없습니다. (서버를 찾을 수 없음)")
 
 # 🧰 장비 정보 API
 def get_character_equipment(name):
