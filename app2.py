@@ -304,9 +304,9 @@ def get_character_id(name, server):
     
     if res.status_code == 200:
         data = res.json()
-        st.write("🧩 CID:", data.get("character_id"))
+        st.write("🧩 CID:", data.get("ocid"))
         st.write("🗺️ 응답된 서버 이름:", data.get("world_name"))
-        return data.get("character_id")
+        return data.get("ocid")
     
     return None
 
