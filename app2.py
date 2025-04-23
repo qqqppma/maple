@@ -12,6 +12,9 @@ from supabase import create_client, Client
 import json
 import uuid
 from streamlit.components.v1 import html
+#=============위치고정=============================================#
+st.set_page_config(page_title="악마길드 관리 시스템", layout="wide")
+#=============위치고정=============================================#
 
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
 SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
@@ -377,7 +380,7 @@ def show_character_viewer():
 
 
 # =====================================================================================#
-st.set_page_config(page_title="악마길드 관리 시스템", layout="wide")
+
 # ✅ 자동 로그인 시도
 query_user_id = st.query_params.get("user_id")
 query_token = st.query_params.get("key")
