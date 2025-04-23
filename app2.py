@@ -373,7 +373,7 @@ def show_character_viewer():
                 else:
                     # ✅ 이게 바로 방어 처리 코드입니다!
                     st.warning("⚠️ 캐릭터 ID는 있으나 모든 API 정보 조회 실패 → 비정상 상태 또는 API 버그")
-
+##수정
         
 
 # 🧰 장비 정보 API
