@@ -297,6 +297,9 @@ def get_character_id(name, server):
     encoded_server = urllib.parse.quote(SERVER_NAME_MAP[server])
     url = f"https://open.api.nexon.com/maplestory/v1/id?character_name={encoded_name}&world_name={encoded_server}"
     res = requests.get(url, headers=NEXON_HEADERS)
+    st.write("🔗 최종 요청 URL:", url)
+    st.write("🧾 응답 상태:", res.status_code)
+    st.write("📦 응답 본문:", res.text)
     if res.status_code == 200 and "character_id" in res.json():
         return res.json()["character_id"]
     return None
