@@ -553,21 +553,23 @@ if "user" not in st.session_state:
                         "password": hashed_pw,  # 🔐 해시된 비밀번호 저장
                         "nickname": new_nick.strip()
                     }).execute()
-                    if res.data:
-                        # ✅ Members 테이블에도 자동 등록
-                        supabase.table("Members").insert({
-                            "nickname": new_nick.strip(),
-                            "position": "길드원",  # 기본 직책
-                            "active": True,
-                            "resume_date": None,
-                            "join_date": None,
-                            "note": None
-                        }).execute()
-                        st.success("✅ 회원가입 완료! 로그인으로 이동합니다.")
-                        st.session_state.signup_mode = False
-                        st.rerun()
-                    else:
-                        st.error("🚫 회원가입 실패")
+                    already_member = supabase.table("Members").select("nickname").eq("nickname", new_nick.strip()).execute()
+                    if not already_member.data:
+                        if res.data:
+                            # ✅ Members 테이블에도 자동 등록
+                            supabase.table("Members").insert({
+                                "nickname": new_nick.strip(),
+                                "position": "길드원",  # 기본 직책
+                                "active": True,
+                                "resume_date": None,
+                                "join_date": None,
+                                "note": None
+                            }).execute()
+                            st.success("✅ 회원가입 완료! 로그인으로 이동합니다.")
+                            st.session_state.signup_mode = False
+                            st.rerun()
+                        else:
+                            st.error("🚫 회원가입 실패")
 
         with col2:
             if st.button("↩️ 돌아가기"):
