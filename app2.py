@@ -268,56 +268,57 @@ EQUIP_POSITIONS = {
     "포켓 아이템": "right"
 }
 
-# ✅ 넥슨 서버 리스트 (대부분 고정)
-SERVER_LIST = [
-    "스카니아", "베라", "루나", "엘리시움", "크로아",
-    "유니온", "제니스", "이노시스", "레드", "오로라",
-    "아케인", "노바", "리부트", "리부트2"
-]
+# ✅ 서버 한글명 → 영문 코드 매핑
+SERVER_NAME_MAP = {
+    "스카니아": "SCANIA",
+    "베라": "BERA",
+    "루나": "LUNA",
+    "엘리시움": "ELYSIUM",
+    "크로아": "CROA",
+    "유니온": "UNION",
+    "제니스": "ZENITH",
+    "이노시스": "INNOSIS",
+    "레드": "RED",
+    "오로라": "AURORA",
+    "아케인": "ARCADIA",
+    "노바": "NOVA",
+    "리부트": "REBOOT",
+    "리부트2": "REBOOT2",
+    "버닝": "BURNING",
+    "버닝2": "BURNING2",
+    "버닝3": "BURNING3",
+}
 
-# ✅ 서버 자동 탐색 함수
-def find_character_server(name):
-    encoded_name = urllib.parse.quote(name)
-    for server in SERVER_LIST:
-        encoded_server = urllib.parse.quote(server)
-        url = f"https://open.api.nexon.com/maplestory/v1/character/basic?character_name={encoded_name}&world_name={encoded_server}"
-        res = requests.get(url, headers=NEXON_HEADERS)
+SERVER_LIST = list(SERVER_NAME_MAP.keys())
 
-        # 🔍 디버깅 출력
-        st.write(f"🔍 시도 중: {server}, 상태코드: {res.status_code}")
-        st.write(res.text)
-
-        if res.status_code == 200:
-            return server
-    return None
-
-# ✅ 캐릭터 기본 정보 조회
+# ✅ 캐릭터 ID 조회
 def get_character_id(name, server):
     encoded_name = urllib.parse.quote(name)
-    encoded_server = urllib.parse.quote(server)
+    encoded_server = urllib.parse.quote(SERVER_NAME_MAP[server])
     url = f"https://open.api.nexon.com/maplestory/v1/id?character_name={encoded_name}&world_name={encoded_server}"
     res = requests.get(url, headers=NEXON_HEADERS)
     if res.status_code == 200 and "character_id" in res.json():
         return res.json()["character_id"]
     return None
 
-# ✅ 캐릭터 기본 정보 조회 (ID 기반)
+# ✅ 캐릭터 기본 정보 조회
 def get_character_basic_by_id(char_id):
     url = f"https://open.api.nexon.com/maplestory/v1/character/basic?character_id={char_id}"
     res = requests.get(url, headers=NEXON_HEADERS)
     return res.json() if res.status_code == 200 else None
 
-# ✅ Streamlit UI 구현
+# ✅ Streamlit UI 함수
 def show_character_viewer():
     st.title("📝 메이플 캐릭터 정보 검색")
     char_name = st.text_input("🔎 캐릭터명을 입력하세요").strip()
 
     if char_name:
         st.write("입력된 캐릭터명:", repr(char_name))
+        found = False
 
         for server in SERVER_LIST:
-            char_id = get_character_id(char_name, server)
             st.write(f"🔍 시도 중: {server}")
+            char_id = get_character_id(char_name, server)
 
             if char_id:
                 st.success(f"✅ `{char_name}` 캐릭터는 `{server}` 서버에 있습니다.")
@@ -326,8 +327,10 @@ def show_character_viewer():
                     st.json(basic)
                 else:
                     st.warning("⚠️ 캐릭터 데이터를 가져오지 못했습니다.")
-                break  # 찾았으면 반복 종료
-        else:
+                found = True
+                break
+
+        if not found:
             st.error("❌ 캐릭터 정보를 불러올 수 없습니다. (모든 서버에서 실패)")
 
 
