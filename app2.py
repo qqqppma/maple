@@ -293,33 +293,44 @@ def find_character_server(name):
     return None
 
 # ✅ 캐릭터 기본 정보 조회
-def get_character_basic(name, server):
+def get_character_id(name, server):
     encoded_name = urllib.parse.quote(name)
     encoded_server = urllib.parse.quote(server)
-    url = f"https://open.api.nexon.com/maplestory/v1/character/basic?character_name={encoded_name}&world_name={encoded_server}"
+    url = f"https://open.api.nexon.com/maplestory/v1/id?character_name={encoded_name}&world_name={encoded_server}"
     res = requests.get(url, headers=NEXON_HEADERS)
-    st.write("🔍 응답 상태 코드:", res.status_code)
-    st.write("🔍 응답 본문:", res.text)
+    if res.status_code == 200 and "character_id" in res.json():
+        return res.json()["character_id"]
+    return None
+
+# ✅ 캐릭터 기본 정보 조회 (ID 기반)
+def get_character_basic_by_id(char_id):
+    url = f"https://open.api.nexon.com/maplestory/v1/character/basic?character_id={char_id}"
+    res = requests.get(url, headers=NEXON_HEADERS)
     return res.json() if res.status_code == 200 else None
 
-# ✅ Streamlit에서 사용하는 캐릭터 정보 검색 함수
+# ✅ Streamlit UI 구현
 def show_character_viewer():
-    st.title("🧾 메이플 캐릭터 정보 검색")
-    char_name = st.text_input("🔎 캐릭터명을 입력하세요")
-    st.write("입력된 캐릭터명:", repr(char_name))
+    st.title("📝 메이플 캐릭터 정보 검색")
+    char_name = st.text_input("🔎 캐릭터명을 입력하세요").strip()
 
     if char_name:
-        server = find_character_server(char_name)
-        if server:
-            st.success(f"✅ `{char_name}` 캐릭터는 `{server}` 서버에 있습니다.")
-            basic = get_character_basic(char_name, server)
-            st.write("🔍 탐색된 서버:", server)
-            if basic:
-                st.json(basic)
-            else:
-                st.warning("⚠️ 캐릭터 데이터를 가져오지 못했습니다.")
+        st.write("입력된 캐릭터명:", repr(char_name))
+
+        for server in SERVER_LIST:
+            char_id = get_character_id(char_name, server)
+            st.write(f"🔍 시도 중: {server}")
+
+            if char_id:
+                st.success(f"✅ `{char_name}` 캐릭터는 `{server}` 서버에 있습니다.")
+                basic = get_character_basic_by_id(char_id)
+                if basic:
+                    st.json(basic)
+                else:
+                    st.warning("⚠️ 캐릭터 데이터를 가져오지 못했습니다.")
+                break  # 찾았으면 반복 종료
         else:
-            st.error("❌ 캐릭터 정보를 불러올 수 없습니다. (서버를 찾을 수 없음)")
+            st.error("❌ 캐릭터 정보를 불러올 수 없습니다. (모든 서버에서 실패)")
+
 
 # 🧰 장비 정보 API
 def get_character_equipment(name):
@@ -1327,7 +1338,7 @@ elif menu == "드메템 대여 신청":
             else:
                 pass
 
-# ✅ 캐릭터 정보검색 메뉴 함수화
+
 elif menu == "캐릭터 정보 검색":
     show_character_viewer()
 
