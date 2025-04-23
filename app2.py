@@ -257,7 +257,7 @@ ALLOWED_NICKNAMES = load_guild_user_nicknames()
 #====================================================================================#
 # 🔐 Nexon API 설정
 API_KEY = st.secrets["NEXON_API_KEY"]
-HEADERS = {"x-nxopen-api-key": API_KEY}
+NEXON_HEADERS = {"x-nxopen-api-key": API_KEY}
 
 # 🧩 장비 부위별 위치 정의
 EQUIP_POSITIONS = {
@@ -271,13 +271,13 @@ EQUIP_POSITIONS = {
 # 🔍 캐릭터 기본 정보 API
 def get_character_basic(name):
     url = f"https://open.api.nexon.com/maplestory/v1/character/basic?character_name={name}"
-    res = requests.get(url, headers=HEADERS)
+    res = requests.get(url, headers=NEXON_HEADERS)
     return res.json() if res.status_code == 200 else None
 
 # 🧰 장비 정보 API
 def get_character_equipment(name):
     url = f"https://open.api.nexon.com/maplestory/v1/character/item-equipment?character_name={name}"
-    res = requests.get(url, headers=HEADERS)
+    res = requests.get(url, headers=NEXON_HEADERS)
     return res.json() if res.status_code == 200 else None
 
 # 🪄 장비 아이콘 + tooltip
@@ -521,6 +521,7 @@ if "user" in st.session_state:
         
 menu_options = []
 
+#관리자만 보이는 메뉴
 if st.session_state.get("is_admin"):
     menu_options.extend(["악마 길드원 정보 등록", "악마길드 길컨관리", "부캐릭터 관리"])
 
@@ -617,7 +618,7 @@ if menu == "악마 길드원 정보 등록":
         nickname_input = st.text_input("닉네임")
         position_input = st.text_input("직위")
         active_edit1 = st.selectbox("활동 여부", ["활동중", "비활동"])
-        active2 = True if active_edit == "활동중" else False
+        active2 = True if active_edit1 == "활동중" else False
         resume_date = st.date_input("활동 재개일", value=None)
         join_date = st.date_input("가입일", value=None)
         note = st.text_input("비고")
