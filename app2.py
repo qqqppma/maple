@@ -352,7 +352,7 @@ def show_character_viewer():
             char_id = get_character_id(char_name, server)
 
             if char_id:
-            # 기존 기본 정보 호출 실패할 수 있으니, 존재 확인용 API들 호출
+                # ▶ 캐릭터 존재 확인용 API 호출
                 stat = get_character_stat(char_id, server)
                 pop = get_character_popularity(char_id, server)
                 hyper = get_character_hyperstat(char_id, server)
@@ -368,8 +368,11 @@ def show_character_viewer():
                     if hyper:
                         st.subheader("🌟 하이퍼 스탯")
                         st.json(hyper)
+                    found = True
+                    break
                 else:
-                    st.warning("⚠️ 캐릭터 ID는 있지만 어떤 데이터도 조회되지 않음 (비정상 상태)")
+                    # ✅ 이게 바로 방어 처리 코드입니다!
+                    st.warning("⚠️ 캐릭터 ID는 있으나 모든 API 정보 조회 실패 → 비정상 상태 또는 API 버그")
 
         
 
