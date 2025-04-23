@@ -385,39 +385,6 @@ def show_equipment_grid(equip_list):
         for block in right:
             html(block, height=80)
 
-# 🧾 캐릭터 정보 검색 전체 기능
-def show_character_viewer():
-    st.title("🧾 메이플 캐릭터 정보 검색")
-    char_name = st.text_input("🔍 캐릭터명을 입력하세요")
-
-    if char_name:
-        basic = get_character_basic(char_name)
-        equip = get_character_equipment(char_name)
-
-        if basic:
-            nickname = basic["character_name"]
-            world = basic["world_name"]
-            guild = basic.get("character_guild_name", "")
-            job = basic["character_class"]
-            level = basic["character_level"]
-            exp_rate = basic.get("character_exp_rate", "0.0")
-            avatar_url = f"https://open.api.nexon.com/static/maplestory/character/{basic['character_image']}"
-
-            st.markdown("## 👤 캐릭터 요약")
-            col1, col2 = st.columns([1, 3])
-            with col1:
-                st.image(avatar_url, width=120)
-            with col2:
-                st.markdown(f"### `{nickname}`")
-                st.markdown(f"🌍 **{world}@{guild if guild else '길드 없음'}**")
-                st.markdown(f"🧭 {job} | Lv.{level} ({exp_rate}%)")
-
-            st.divider()
-            if equip:
-                st.markdown("## 🛡️ 장비창")
-                show_equipment_grid(equip["item_equipment"])
-        else:
-            st.warning("❌ 캐릭터 정보를 불러올 수 없습니다.")
 
 
 # =====================================================================================#
