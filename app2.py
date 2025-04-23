@@ -1214,9 +1214,9 @@ elif menu == "보조대여 신청":
         # 7. 반납 처리 영역
         for _, row in df.iterrows():  # df를 써야 weapon_name, owner 원본 필드 있음
             owners_list = json.loads(row["owner"]) if isinstance(row["owner"], str) and row["owner"].startswith("[") else [row["owner"]]
-            borrower_name = row.get("borrower", "(이름 없음)")
-            if not borrower_name or str(borrower_name).lower() == "nan":
-                borrower_name = "(이름 없음)"
+            borrower_name = row.get("borrower", "")
+            if borrower_name == "" or borrower_name.lower() == "nan":
+                        borrower_name = "(이름 없음)"
 
             if nickname in owners_list:
                 with st.expander(f"🛡️ '{row['weapon_name']}' - 대여자: {borrower_name}"):
@@ -1379,8 +1379,8 @@ elif menu == "드메템 대여 신청":
                 # ✅ 반납 처리 UI
                 for _, row in df.iterrows():
                     owners_list = json.loads(row["drop_owner"]) if isinstance(row["drop_owner"], str) and row["drop_owner"].startswith("[") else [row["drop_owner"]]
-                    borrower_name = row.get("drop_borrower", "(이름 없음)")
-                    if not borrower_name or str(borrower_name).lower() == "nan":
+                    borrower_name = row.get("drop_borrower", "").strip()
+                    if borrower_name == "" or borrower_name.lower() == "nan":
                         borrower_name = "(이름 없음)"
 
                     if nickname in owners_list:
