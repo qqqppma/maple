@@ -351,24 +351,24 @@ def show_character_viewer():
             char_id = get_character_id(char_name, server)
 
             if char_id:
-    # 기존 기본 정보 호출 실패할 수 있으니, 존재 확인용 API들 호출
-    stat = get_character_stat(char_id, server)
-    pop = get_character_popularity(char_id, server)
-    hyper = get_character_hyperstat(char_id, server)
+            # 기존 기본 정보 호출 실패할 수 있으니, 존재 확인용 API들 호출
+                stat = get_character_stat(char_id, server)
+                pop = get_character_popularity(char_id, server)
+                hyper = get_character_hyperstat(char_id, server)
 
-    if stat or pop or hyper:
-        st.success(f"✅ `{char_name}` 캐릭터는 `{server}` 서버에 존재합니다.")
-        if stat:
-            st.subheader("📊 능력치 정보")
-            st.json(stat)
-        if pop:
-            st.subheader("💖 인기도")
-            st.json(pop)
-        if hyper:
-            st.subheader("🌟 하이퍼 스탯")
-            st.json(hyper)
-    else:
-        st.warning("⚠️ 캐릭터 ID는 있지만 어떤 데이터도 조회되지 않음 (비정상 상태)")
+                if stat or pop or hyper:
+                    st.success(f"✅ `{char_name}` 캐릭터는 `{server}` 서버에 존재합니다.")
+                    if stat:
+                        st.subheader("📊 능력치 정보")
+                        st.json(stat)
+                    if pop:
+                        st.subheader("💖 인기도")
+                        st.json(pop)
+                    if hyper:
+                        st.subheader("🌟 하이퍼 스탯")
+                        st.json(hyper)
+                else:
+                    st.warning("⚠️ 캐릭터 ID는 있지만 어떤 데이터도 조회되지 않음 (비정상 상태)")
 
         
 
