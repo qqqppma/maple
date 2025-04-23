@@ -1212,14 +1212,10 @@ elif menu == "보조대여 신청":
         )
 
         # 7. 반납 처리 영역
-        for _, row in df.iterrows():
-            st.write("🔍 borrower_name 원본:", row.get("drop_borrower"))
-            st.write("📌 타입:", type(row.get("drop_borrower")))
-
-            owners_list = json.loads(row["drop_owner"]) if isinstance(row["drop_owner"], str) and row["drop_owner"].startswith("[") else [row["drop_owner"]]
-            borrower_name = row.get("drop_borrower", "").strip()
-
-            if borrower_name == "" or borrower_name.lower() == "nan":
+        for _, row in df.iterrows():  # df를 써야 weapon_name, owner 원본 필드 있음
+            owners_list = json.loads(row["owner"]) if isinstance(row["owner"], str) and row["owner"].startswith("[") else [row["owner"]]
+            borrower_name = row.get("borrower", "(이름 없음)")
+            if not borrower_name or str(borrower_name).lower() == "nan":
                 borrower_name = "(이름 없음)"
 
             if nickname in owners_list:
@@ -1380,13 +1376,13 @@ elif menu == "드메템 대여 신청":
                 # 변환된 데이터로 엑셀 저장
                 excel_data = convert_df_to_excel(excel_df)
                 st.download_button("📥 드메템 대여 현황 다운로드", data=excel_data, file_name="드메템_대여현황.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-                # ✅ 드메템 반납 처리 UI 개선 버전
+                # ✅ 반납 처리 UI
                 for _, row in df.iterrows():
-                    raw_borrower = row.get("drop_borrower")
+                    raw_borrower = row.get("대여자")  # 수정 포인트
                     st.write("🔍 borrower_name 원본:", raw_borrower)
                     st.write("📌 타입:", type(raw_borrower))
 
-                    owners_list = json.loads(row["drop_owner"]) if isinstance(row["drop_owner"], str) and row["drop_owner"].startswith("[") else [row["drop_owner"]]
+                    owners_list = [row["대표소유자"]] if isinstance(row["대표소유자"], str) else row["대표소유자"]
 
                     if raw_borrower is None:
                         borrower_name = "(이름 없음)"
