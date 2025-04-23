@@ -5,4 +5,5 @@ xlsxwriter
 discord.py
 supabase
 python-dotenv
+bcrypt
 #수정

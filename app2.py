@@ -25,7 +25,8 @@ HEADERS = {
     "Content-Type": "application/json"
 }
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-##수정
+
+
 ADMIN_USERS = ["자리스틸의왕", "나영진", "죤냇", "o차월o"]
 
 # ✅ 모든 캐릭터 닉네임 불러오기 함수 (Main + Sub)
