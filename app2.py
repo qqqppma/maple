@@ -283,6 +283,11 @@ def find_character_server(name):
         encoded_server = urllib.parse.quote(server)
         url = f"https://open.api.nexon.com/maplestory/v1/character/basic?character_name={encoded_name}&world_name={encoded_server}"
         res = requests.get(url, headers=NEXON_HEADERS)
+
+        # 🔍 디버깅 출력
+        st.write(f"🔍 시도 중: {server}, 상태코드: {res.status_code}")
+        st.write(res.text)
+
         if res.status_code == 200:
             return server
     return None
@@ -301,6 +306,7 @@ def get_character_basic(name, server):
 def show_character_viewer():
     st.title("🧾 메이플 캐릭터 정보 검색")
     char_name = st.text_input("🔎 캐릭터명을 입력하세요")
+    st.write("입력된 캐릭터명:", repr(char_name))
 
     if char_name:
         server = find_character_server(char_name)
