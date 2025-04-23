@@ -268,16 +268,51 @@ EQUIP_POSITIONS = {
     "포켓 아이템": "right"
 }
 
-# 🔍 캐릭터 기본 정보 API
-def get_character_basic(name):
-    encoded_name = urllib.parse.quote(name)
-    url = f"https://open.api.nexon.com/maplestory/v1/character/basic?character_name={encoded_name}"
-    res = requests.get(url, headers=NEXON_HEADERS)
+# ✅ 넥슨 서버 리스트 (대부분 고정)
+SERVER_LIST = [
+    "스카니아", "베라", "루나", "엘리시움", "크로아",
+    "유니온", "제니스", "이노시스", "레드", "오로라",
+    "아케인", "노바", "리부트", "리부트2",
+    "버닝", "버닝2", "버닝3"
+]
 
+# ✅ 자동 서버 탐색 함수
+def find_character_server(name):
+    encoded_name = urllib.parse.quote(name)
+    for server in SERVER_LIST:
+        encoded_server = urllib.parse.quote(server)
+        url = f"https://open.api.nexon.com/maplestory/v1/character/basic?character_name={encoded_name}&world_name={encoded_server}"
+        res = requests.get(url, headers=NEXON_HEADERS)
+        if res.status_code == 200:
+            return server
+    return None
+
+# ✅ 캐릭터 정보 조회 함수
+def get_character_basic(name, server):
+    encoded_name = urllib.parse.quote(name)
+    encoded_server = urllib.parse.quote(server)
+    url = f"https://open.api.nexon.com/maplestory/v1/character/basic?character_name={encoded_name}&world_name={encoded_server}"
+    res = requests.get(url, headers=NEXON_HEADERS)
     st.write("🔍 응답 상태 코드:", res.status_code)
     st.write("🔍 응답 본문:", res.text)
-    
     return res.json() if res.status_code == 200 else None
+
+# ✅ Streamlit UI
+st.title("🧾 메이플 캐릭터 정보 검색")
+
+name_input = st.text_input("🔎 캐릭터명을 입력하세요")
+if name_input:
+    server_found = find_character_server(name_input)
+
+    if server_found:
+        st.success(f"✅ `{name_input}` 캐릭터는 `{server_found}` 서버에 있습니다.")
+        data = get_character_basic(name_input, server_found)
+        if data:
+            st.json(data)
+        else:
+            st.warning("⚠️ 캐릭터 데이터를 가져오지 못했습니다.")
+    else:
+        st.error("❌ 캐릭터 정보를 불러올 수 없습니다. (서버 미탐색)")
 
 # 🧰 장비 정보 API
 def get_character_equipment(name):
