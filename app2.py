@@ -17,7 +17,7 @@ import textwrap
 #=============위치고정=============================================#
 st.set_page_config(page_title="악마길드 관리 시스템", layout="wide")
 #=============위치고정=============================================#
-
+##
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
 SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
 HEADERS = {
