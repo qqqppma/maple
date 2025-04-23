@@ -1381,24 +1381,14 @@ elif menu == "드메템 대여 신청":
                 excel_data = convert_df_to_excel(excel_df)
                 st.download_button("📥 드메템 대여 현황 다운로드", data=excel_data, file_name="드메템_대여현황.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
                 # ✅ 드메템 반납 처리 UI 개선 버전
+                # 🔁 반납 처리 버튼
                 for _, row in df.iterrows():
-                    raw_borrower = row.get("drop_borrower")
-                    st.write("🔍 borrower_name 원본:", raw_borrower)
-                    st.write("📌 타입:", type(raw_borrower))
-
                     owners_list = json.loads(row["drop_owner"]) if isinstance(row["drop_owner"], str) and row["drop_owner"].startswith("[") else [row["drop_owner"]]
-
-                    if raw_borrower is None:
-                        borrower_name = "(이름 없음)"
-                    else:
-                        borrower_name = str(raw_borrower).strip()
-                        if borrower_name == "" or borrower_name.lower() == "nan":
-                            borrower_name = "(이름 없음)"
-
                     if nickname in owners_list:
-                        with st.expander(f"\U0001F4FF '{row['대여 아이템']}' - 대여자: {borrower_name}"):
-                            st.markdown(f"**📅 대여기간:** `{row['time_slots']}`")
+                        with st.expander(f"🛡️ '{row['dropitem_name']}' - 대여자: {row['drop_borrower']}"):
+                            st.markdown(f"**대여기간:** `{row['start_date']} ~ {row['end_date']}`")
                             st.markdown(f"**소유자:** `{', '.join(owners_list)}`")
+
                             if st.button("🗑 반납 완료", key=f"drop_return_{row['id']}"):
                                 if delete_dropitem_rental(row["id"]):
                                     st.success("✅ 반납 완료되었습니다!")
