@@ -1377,23 +1377,15 @@ elif menu == "드메템 대여 신청":
                 excel_data = convert_df_to_excel(excel_df)
                 st.download_button("📥 드메템 대여 현황 다운로드", data=excel_data, file_name="드메템_대여현황.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
                 # ✅ 반납 처리 UI
-                for _, row in df.iterrows():
-                    raw_borrower = row.get("대여자")  # 수정 포인트
-                    st.write("🔍 borrower_name 원본:", raw_borrower)
-                    st.write("📌 타입:", type(raw_borrower))
-
-                    owners_list = [row["대표소유자"]] if isinstance(row["대표소유자"], str) else row["대표소유자"]
-
-                    if raw_borrower is None:
+                for _, row in df.iterrows():  # df를 써야 dropitem_name, owner 원본 필드 있음
+                    owners_list = json.loads(row["drop_owner"]) if isinstance(row["drop_owner"], str) and row["drop_owner"].startswith("[") else [row["drop_owner"]]
+                    borrower_name = row.get("drop_borrower", "(이름 없음)")
+                    if not borrower_name or str(borrower_name).lower() == "nan":
                         borrower_name = "(이름 없음)"
-                    else:
-                        borrower_name = str(raw_borrower).strip()
-                        if borrower_name == "" or borrower_name.lower() == "nan":
-                            borrower_name = "(이름 없음)"
 
                     if nickname in owners_list:
-                        with st.expander(f"\U0001F4FF '{row['대여 아이템']}' - 대여자: {borrower_name}"):
-                            st.markdown(f"**📅 대여기간:** `{row['time_slots']}`")
+                        with st.expander(f"📦 '{row['dropitem_name']}' - 대여자: {borrower_name}"):
+                            st.markdown(f"**📅 대여기간:** `{get_drop_range(row['time_slots'])}`")
                             st.markdown(f"**소유자:** `{', '.join(owners_list)}`")
                             if st.button("🗑 반납 완료", key=f"drop_return_{row['id']}"):
                                 if delete_dropitem_rental(row["id"]):
@@ -1401,8 +1393,8 @@ elif menu == "드메템 대여 신청":
                                     st.rerun()
                                 else:
                                     st.error("❌ 반납 실패! 다시 시도해주세요.")
-            else:
-                pass
+                            else:
+                                pass
 
 
 elif menu == "캐릭터 정보 검색":
