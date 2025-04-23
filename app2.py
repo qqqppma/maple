@@ -1213,6 +1213,8 @@ elif menu == "보조대여 신청":
 
         # 7. 반납 처리 영역
         for _, row in df.iterrows():  # df를 써야 weapon_name, owner 원본 필드 있음
+            st.write("🔍 borrower_name 원본:", row.get("drop_borrower"))
+            st.write("📌 타입:", type(row.get("drop_borrower")))
             owners_list = json.loads(row["owner"]) if isinstance(row["owner"], str) and row["owner"].startswith("[") else [row["owner"]]
             borrower_name = row.get("borrower", "")
             if borrower_name == "" or borrower_name.lower() == "nan":
