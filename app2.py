@@ -12,6 +12,7 @@ from supabase import create_client, Client
 import json
 import uuid
 from streamlit.components.v1 import html
+import bcrypt
 #=============위치고정=============================================#
 st.set_page_config(page_title="악마길드 관리 시스템", layout="wide")
 #=============위치고정=============================================#
@@ -371,9 +372,7 @@ def show_character_viewer():
                     found = True
                     break
                 else:
-                    # ✅ 이게 바로 방어 처리 코드입니다!
                     st.warning("⚠️ 캐릭터 ID는 있으나 모든 API 정보 조회 실패 → 비정상 상태 또는 API 버그")
-##수정
         
 
 # 🧰 장비 정보 API
@@ -491,24 +490,26 @@ if "user" not in st.session_state:
                 signup_btn = st.form_submit_button("회원가입")
 
             if login_btn:
-                res = supabase.table("Users").select("*") \
-                    .eq("user_id", login_id.strip()) \
-                    .eq("password", login_pw.strip()) \
-                    .execute()
+                res = supabase.table("Users").select("*").eq("user_id", login_id.strip()).execute()
 
                 if res.data:
                     user_info = res.data[0]
-                    login_token = str(uuid.uuid4())
-                    supabase.table("Users").update({"login_token": login_token}) \
-                        .eq("user_id", login_id.strip()).execute()
+                    stored_pw = user_info["password"]
+                    # 🔐 비밀번호 해시 비교
+                    if bcrypt.checkpw(login_pw.strip().encode('utf-8'), stored_pw.encode('utf-8')):
+                        login_token = str(uuid.uuid4())
+                        supabase.table("Users").update({"login_token": login_token}) \
+                            .eq("user_id", login_id.strip()).execute()
 
-                    st.session_state["user"] = user_info["user_id"]
-                    st.session_state["nickname"] = user_info["nickname"]
-                    st.session_state["is_admin"] = user_info["nickname"] in ADMIN_USERS
+                        st.session_state["user"] = user_info["user_id"]
+                        st.session_state["nickname"] = user_info["nickname"]
+                        st.session_state["is_admin"] = user_info["nickname"] in ADMIN_USERS
 
-                    st.query_params.clear()
-                    st.query_params.update(user_id=login_id.strip(), key=login_token)
-                    st.rerun()
+                        st.query_params.clear()
+                        st.query_params.update(user_id=login_id.strip(), key=login_token)
+                        st.rerun()
+                    else:
+                        st.error("❌ 아이디 또는 비밀번호가 올바르지 않습니다.")
                 else:
                     st.error("❌ 아이디 또는 비밀번호가 올바르지 않습니다.")
 
@@ -543,9 +544,12 @@ if "user" not in st.session_state:
                 elif new_nick.strip() not in ALLOWED_NICKNAMES:
                     st.warning("⚠️ 해당 닉네임은 길드에 등록되어 있지 않습니다.")
                 else:
+                    # ✅ 비밀번호 해시 처리
+                    hashed_pw = bcrypt.hashpw(new_pw.strip().encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
                     res = supabase.table("Users").insert({
                         "user_id": new_id.strip(),
-                        "password": new_pw.strip(),
+                        "password": hashed_pw,  # 🔐 해시된 비밀번호 저장
                         "nickname": new_nick.strip()
                     }).execute()
                     if res.data:
