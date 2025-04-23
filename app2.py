@@ -297,23 +297,28 @@ def get_character_id(name, server):
     encoded_server = urllib.parse.quote(SERVER_NAME_MAP[server])
     url = f"https://open.api.nexon.com/maplestory/v1/id?character_name={encoded_name}&world_name={encoded_server}"
     res = requests.get(url, headers=NEXON_HEADERS)
+    
     st.write("🔗 최종 요청 URL:", url)
     st.write("🧾 응답 상태:", res.status_code)
     st.write("📦 응답 본문:", res.text)
-    if res.status_code == 200 and "character_id" in res.json():
-        return res.json()["character_id"]
+    
+    if res.status_code == 200:
+        data = res.json()
+        return data.get("character_id")
     return None
 
 # ✅ 캐릭터 기본 정보 조회
 def get_character_basic_by_id(char_id, server):
-    encoded_server = urllib.parse.quote(server)
+    encoded_server = urllib.parse.quote(SERVER_NAME_MAP[server])
     url = f"https://open.api.nexon.com/maplestory/v1/character/basic?character_id={char_id}&world_name={encoded_server}"
     res = requests.get(url, headers=NEXON_HEADERS)
+    st.write("📥 캐릭터 상세 요청:", url)
+    st.write("🧾 상태 코드:", res.status_code)
     return res.json() if res.status_code == 200 else None
 
 # ✅ Streamlit UI 함수
 def show_character_viewer():
-    st.title("📝 메이플 캐릭터 정보 검색")
+    st.title("📝 메이플 캐릭터 정보 검색기")
     char_name = st.text_input("🔎 캐릭터명을 입력하세요").strip()
 
     if char_name:
@@ -321,22 +326,21 @@ def show_character_viewer():
         found = False
 
         for server in SERVER_LIST:
-            st.write(f"🔍 시도 중: {server}")
+            st.write(f"🔍 서버 확인 중: `{server}`")
             char_id = get_character_id(char_name, server)
 
             if char_id:
-                st.success(f"✅ `{char_name}` 캐릭터는 `{server}` 서버에 있습니다.")
-                basic = get_character_basic_by_id(char_id, server)
-                if basic:
-                    st.json(basic)
+                basic_info = get_character_basic_by_id(char_id, server)
+                if basic_info and "character_name" in basic_info:
+                    st.success(f"✅ `{char_name}` 캐릭터는 `{server}` 서버에 있습니다.")
+                    st.json(basic_info)
+                    found = True
+                    break
                 else:
-                    st.warning("⚠️ 캐릭터 데이터를 가져오지 못했습니다.")
-                found = True
-                break
+                    st.warning(f"⚠️ `{server}` 서버에 CID는 있지만 상세 정보가 없습니다.")
 
         if not found:
             st.error("❌ 캐릭터 정보를 불러올 수 없습니다. (모든 서버에서 실패)")
-
 
 # 🧰 장비 정보 API
 def get_character_equipment(name):
