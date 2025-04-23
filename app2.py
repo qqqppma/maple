@@ -268,72 +268,54 @@ EQUIP_POSITIONS = {
     "포켓 아이템": "right"
 }
 
-# ✅ 서버 한글명 → 영문 코드 매핑
-SERVER_NAME_MAP = {
-    "스카니아": "SCANIA",
-    "베라": "BERA",
-    "루나": "LUNA",
-    "엘리시움": "ELYSIUM",
-    "크로아": "CROA",
-    "유니온": "UNION",
-    "제니스": "ZENITH",
-    "이노시스": "INNOSIS",
-    "레드": "RED",
-    "오로라": "AURORA",
-    "아케인": "ARCADIA",
-    "노바": "NOVA",
-    "리부트": "REBOOT",
-    "리부트2": "REBOOT2",
-    "버닝": "BURNING",
-    "버닝2": "BURNING2",
-    "버닝3": "BURNING3",
+# ✅ 서버 목록 및 영문 매핑
+SERVER_KR_TO_EN = {
+    "스카니아": "SCANIA", "베라": "BERA", "루나": "LUNA", "엘리시움": "ELYSIUM", "크로아": "CROA",
+    "유니온": "UNION", "제니스": "ZENITH", "이노시스": "INNOSIS", "레드": "RED", "오로라": "AURORA",
+    "아케인": "ARCADIA", "노바": "NOVA", "리부트": "REBOOT", "리부트2": "REBOOT2",
+    "버닝": "BURNING", "버닝2": "BURNING2", "버닝3": "BURNING3"
 }
 
-SERVER_LIST = list(SERVER_NAME_MAP.keys())
-
 # ✅ 캐릭터 ID 조회
-def get_character_id(name, server):
-    encoded_name = urllib.parse.quote(name)
-    encoded_server = urllib.parse.quote(SERVER_NAME_MAP[server])
-    url = f"https://open.api.nexon.com/maplestory/v1/id?character_name={encoded_name}&world_name={encoded_server}"
+
+def get_character_id(name, server_kr):
+    name_encoded = urllib.parse.quote(name)
+    server_en = SERVER_KR_TO_EN.get(server_kr)
+    if not server_en:
+        return None
+    server_encoded = urllib.parse.quote(server_en)
+    url = f"https://open.api.nexon.com/maplestory/v1/id?character_name={name_encoded}&world_name={server_encoded}"
     res = requests.get(url, headers=NEXON_HEADERS)
-    st.write("🔗 최종 요청 URL:", url)
-    st.write("🧾 응답 상태:", res.status_code)
-    st.write("📦 응답 본문:", res.text)
     if res.status_code == 200 and "character_id" in res.json():
         return res.json()["character_id"]
     return None
 
-# ✅ 캐릭터 기본 정보 조회
+# ✅ 캐릭터 기본 정보 조회 (ID 기반)
 def get_character_basic_by_id(char_id):
     url = f"https://open.api.nexon.com/maplestory/v1/character/basic?character_id={char_id}"
     res = requests.get(url, headers=NEXON_HEADERS)
     return res.json() if res.status_code == 200 else None
 
-# ✅ Streamlit UI 함수
+# ✅ Streamlit UI 구현
 def show_character_viewer():
     st.title("📝 메이플 캐릭터 정보 검색")
     char_name = st.text_input("🔎 캐릭터명을 입력하세요").strip()
 
     if char_name:
         st.write("입력된 캐릭터명:", repr(char_name))
-        found = False
 
-        for server in SERVER_LIST:
-            st.write(f"🔍 시도 중: {server}")
-            char_id = get_character_id(char_name, server)
-
+        for server_kr in SERVER_KR_TO_EN:
+            st.write(f"🔍 시도 중: {server_kr}")
+            char_id = get_character_id(char_name, server_kr)
             if char_id:
-                st.success(f"✅ `{char_name}` 캐릭터는 `{server}` 서버에 있습니다.")
+                st.success(f"✅ `{char_name}` 캐릭터는 `{server_kr}` 서버에 있습니다.")
                 basic = get_character_basic_by_id(char_id)
                 if basic:
                     st.json(basic)
                 else:
                     st.warning("⚠️ 캐릭터 데이터를 가져오지 못했습니다.")
-                found = True
                 break
-
-        if not found:
+        else:
             st.error("❌ 캐릭터 정보를 불러올 수 없습니다. (모든 서버에서 실패)")
 
 
