@@ -1035,7 +1035,7 @@ elif menu == "부캐릭터 등록":
                     st.rerun()
                 else:
                     st.error("❌ 등록 실패")
-    st.warning("⚠️ 허위정보 등록 적발 시 이용에 제한됩니다.")
+    st.warning("⚠️ 허위정보 등록 적발 시 이용이 제한됩니다.")
 
 
 elif menu == "보조대여 신청":
