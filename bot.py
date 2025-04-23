@@ -157,13 +157,14 @@ tree = app_commands.CommandTree(client)
 @tree.command(name="도움말", description="이 봇의 주요 명령어를 안내합니다.")
 async def help_command(interaction: discord.Interaction):
     await interaction.response.send_message(
-        "🛠 사용 가능한 명령어 목록:\n"
+        "🛠 사용 가능한 명령어 목록:/정보, /대여정보\n"
         "/정보 - 봇의 정보 출력\n"
         "/대여정보 [조회할 내용]- ex) /대여정보 히어로 - 히어로 보조무기 대여정보 출력 \n",
         #"/이벤트 - 진행중인 이벤트 내용 출력",
         ephemeral=False
     )
 
+# ✅ 봇의 기본본정보 열람 함수
 @tree.command(name="정보", description="이 봇의 기본 정보를 확인합니다.")
 async def info_command(interaction: discord.Interaction):
     await interaction.response.send_message(
@@ -178,6 +179,14 @@ async def info_command(interaction: discord.Interaction):
 async def rental_info(interaction: discord.Interaction, item: str):
     channel_id = interaction.channel_id
     item = item.strip()
+
+# ✅ 링크주소 열람 함수
+@tree.command(name="링크", description="악마길드 홈페이지")
+async def fixed_link_command(interaction: discord.Interaction):
+    await interaction.response.send_message(
+        "🔗 바로가기 링크: https://maple-demon-guild.streamlit.app/",
+        ephemeral=False
+    )
 
     # 💬 Supabase에서 데이터 조회
     if channel_id == CHANNEL_ID:
