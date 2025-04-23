@@ -318,6 +318,25 @@ def get_character_basic_by_id(char_id, server):
     st.write("🧾 상태 코드:", res.status_code)
     return res.json() if res.status_code == 200 else None
 
+#=================================================#
+def get_character_stat(char_id, server):
+    encoded_server = urllib.parse.quote(SERVER_NAME_MAP[server])
+    url = f"https://open.api.nexon.com/maplestory/v1/character/stat?character_id={char_id}&world_name={encoded_server}"
+    res = requests.get(url, headers=NEXON_HEADERS)
+    return res.json() if res.status_code == 200 else None
+
+def get_character_popularity(char_id, server):
+    encoded_server = urllib.parse.quote(SERVER_NAME_MAP[server])
+    url = f"https://open.api.nexon.com/maplestory/v1/character/popularity?character_id={char_id}&world_name={encoded_server}"
+    res = requests.get(url, headers=NEXON_HEADERS)
+    return res.json() if res.status_code == 200 else None
+
+def get_character_hyperstat(char_id, server):
+    encoded_server = urllib.parse.quote(SERVER_NAME_MAP[server])
+    url = f"https://open.api.nexon.com/maplestory/v1/character/hyper-stat?character_id={char_id}&world_name={encoded_server}"
+    res = requests.get(url, headers=NEXON_HEADERS)
+    return res.json() if res.status_code == 200 else None
+
 # ✅ Streamlit UI 함수
 def show_character_viewer():
     st.title("📝 메이플 캐릭터 정보 검색기")
@@ -332,17 +351,26 @@ def show_character_viewer():
             char_id = get_character_id(char_name, server)
 
             if char_id:
-                basic_info = get_character_basic_by_id(char_id, server)
-                if basic_info and "character_name" in basic_info:
-                    st.success(f"✅ `{char_name}` 캐릭터는 `{server}` 서버에 있습니다.")
-                    st.json(basic_info)
-                    found = True
-                    break
-                else:
-                    st.warning(f"⚠️ `{server}` 서버에 CID는 있지만 상세 정보가 없습니다.")
+    # 기존 기본 정보 호출 실패할 수 있으니, 존재 확인용 API들 호출
+    stat = get_character_stat(char_id, server)
+    pop = get_character_popularity(char_id, server)
+    hyper = get_character_hyperstat(char_id, server)
 
-        if not found:
-            st.error("❌ 캐릭터 정보를 불러올 수 없습니다. (모든 서버에서 실패)")
+    if stat or pop or hyper:
+        st.success(f"✅ `{char_name}` 캐릭터는 `{server}` 서버에 존재합니다.")
+        if stat:
+            st.subheader("📊 능력치 정보")
+            st.json(stat)
+        if pop:
+            st.subheader("💖 인기도")
+            st.json(pop)
+        if hyper:
+            st.subheader("🌟 하이퍼 스탯")
+            st.json(hyper)
+    else:
+        st.warning("⚠️ 캐릭터 ID는 있지만 어떤 데이터도 조회되지 않음 (비정상 상태)")
+
+        
 
 # 🧰 장비 정보 API
 def get_character_equipment(name):
