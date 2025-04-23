@@ -273,6 +273,10 @@ def get_character_basic(name):
     encoded_name = urllib.parse.quote(name)
     url = f"https://open.api.nexon.com/maplestory/v1/character/basic?character_name={encoded_name}"
     res = requests.get(url, headers=NEXON_HEADERS)
+
+    st.write("🔍 응답 상태 코드:", res.status_code)
+    st.write("🔍 응답 본문:", res.text)
+    
     return res.json() if res.status_code == 200 else None
 
 # 🧰 장비 정보 API
