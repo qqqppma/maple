@@ -8,10 +8,10 @@ import io
 import os
 from PIL import Image
 from datetime import date, timedelta
-st.set_page_config(page_title="악마길드 관리 시스템", layout="wide")
 from supabase import create_client, Client
 import json
 import uuid
+from streamlit.components.v1 import html
 
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
 SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
@@ -250,8 +250,134 @@ def load_guild_user_nicknames():
     return df["닉네임"].astype(str).str.strip().tolist()
 
 ALLOWED_NICKNAMES = load_guild_user_nicknames()
-    
+
+#====================================================================================#
+# 🔐 Nexon API 설정
+API_KEY = st.secrets["NEXON_API_KEY"]
+HEADERS = {"x-nxopen-api-key": API_KEY}
+
+# 🧩 장비 부위별 위치 정의
+EQUIP_POSITIONS = {
+    "무기": "left", "보조무기": "right", "엠블렘": "right",
+    "펜던트": "left", "펜던트2": "left", "반지1": "left", "반지2": "left", "반지3": "right", "반지4": "right",
+    "상의": "center", "하의": "center", "신발": "center", "장갑": "center", "망토": "center", "모자": "center",
+    "눈장식": "right", "얼굴장식": "right", "귀고리": "right", "뱃지": "right", "벨트": "right",
+    "포켓 아이템": "right"
+}
+
+# 🔍 캐릭터 기본 정보 API
+def get_character_basic(name):
+    url = f"https://open.api.nexon.com/maplestory/v1/character/basic?character_name={name}"
+    res = requests.get(url, headers=HEADERS)
+    return res.json() if res.status_code == 200 else None
+
+# 🧰 장비 정보 API
+def get_character_equipment(name):
+    url = f"https://open.api.nexon.com/maplestory/v1/character/item-equipment?character_name={name}"
+    res = requests.get(url, headers=HEADERS)
+    return res.json() if res.status_code == 200 else None
+
+# 🪄 장비 아이콘 + tooltip
+def equipment_icon_with_tooltip(item):
+    tooltip = f"""
+    <div class="tooltip">
+        <img src="{item['item_icon']}" width="50">
+        <span class="tooltiptext">
+            <b>{item['item_name']}</b><br>
+            {item.get('item_description', '')}<br>
+            옵션: {item.get('potential_option_grade', '정보 없음')}<br>
+            스타포스: {item.get('starforce', '0')}성
+        </span>
+    </div>
+    """
+    style = """
+    <style>
+    .tooltip { position: relative; display: inline-block; }
+    .tooltip .tooltiptext {
+        visibility: hidden;
+        width: 180px;
+        background-color: #222;
+        color: #fff;
+        text-align: left;
+        border-radius: 6px;
+        padding: 8px;
+        position: absolute;
+        z-index: 1;
+        bottom: 125%; left: 50%; margin-left: -90px;
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+    .tooltip:hover .tooltiptext {
+        visibility: visible;
+        opacity: 1;
+    }
+    </style>
+    """
+    return style + tooltip
+
+# 🧱 장비창 출력 함수
+def show_equipment_grid(equip_list):
+    left, center, right = [], [], []
+
+    for item in equip_list:
+        part = item["item_equipment_part"]
+        html_block = equipment_icon_with_tooltip(item)
+
+        if EQUIP_POSITIONS.get(part, "center") == "left":
+            left.append(html_block)
+        elif EQUIP_POSITIONS.get(part, "center") == "right":
+            right.append(html_block)
+        else:
+            center.append(html_block)
+
+    cols = st.columns(3)
+    with cols[0]:
+        for block in left:
+            html(block, height=80)
+    with cols[1]:
+        for block in center:
+            html(block, height=80)
+    with cols[2]:
+        for block in right:
+            html(block, height=80)
+
+# 🧾 캐릭터 정보 검색 전체 기능
+def show_character_viewer():
+    st.title("🧾 메이플 캐릭터 정보 검색")
+    char_name = st.text_input("🔍 캐릭터명을 입력하세요")
+
+    if char_name:
+        basic = get_character_basic(char_name)
+        equip = get_character_equipment(char_name)
+
+        if basic:
+            nickname = basic["character_name"]
+            world = basic["world_name"]
+            guild = basic.get("character_guild_name", "")
+            job = basic["character_class"]
+            level = basic["character_level"]
+            exp_rate = basic.get("character_exp_rate", "0.0")
+            avatar_url = f"https://open.api.nexon.com/static/maplestory/character/{basic['character_image']}"
+
+            st.markdown("## 👤 캐릭터 요약")
+            col1, col2 = st.columns([1, 3])
+            with col1:
+                st.image(avatar_url, width=120)
+            with col2:
+                st.markdown(f"### `{nickname}`")
+                st.markdown(f"🌍 **{world}@{guild if guild else '길드 없음'}**")
+                st.markdown(f"🧭 {job} | Lv.{level} ({exp_rate}%)")
+
+            st.divider()
+            if equip:
+                st.markdown("## 🛡️ 장비창")
+                show_equipment_grid(equip["item_equipment"])
+        else:
+            st.warning("❌ 캐릭터 정보를 불러올 수 없습니다.")
+
+
 # =====================================================================================#
+st.set_page_config(page_title="악마길드 관리 시스템", layout="wide")
 # ✅ 자동 로그인 시도
 query_user_id = st.query_params.get("user_id")
 query_token = st.query_params.get("key")
@@ -396,7 +522,7 @@ if st.session_state.get("is_admin"):
     menu_options.extend(["악마 길드원 정보 등록", "악마길드 길컨관리", "부캐릭터 관리"])
 
 # 모든 사용자에게 보이는 메뉴
-menu_options.extend(["부캐릭터 등록", "보조대여 신청", "드메템 대여 신청"])
+menu_options.extend(["부캐릭터 등록", "보조대여 신청", "드메템 대여 신청","캐릭터 정보 검색"])
 
 menu = st.sidebar.radio("메뉴", menu_options)
 
@@ -1182,4 +1308,9 @@ elif menu == "드메템 대여 신청":
                                     st.error("❌ 반납 실패! 다시 시도해주세요.")
             else:
                 pass
-            
+
+# ✅ 캐릭터 정보검색 메뉴 함수화
+elif menu == "캐릭터 정보 검색":
+    show_character_viewer()
+
+          
