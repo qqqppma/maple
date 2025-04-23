@@ -157,9 +157,10 @@ tree = app_commands.CommandTree(client)
 @tree.command(name="도움말", description="이 봇의 주요 명령어를 안내합니다.")
 async def help_command(interaction: discord.Interaction):
     await interaction.response.send_message(
-        "🛠 사용 가능한 명령어 목록:/정보, /대여정보\n"
+        "🛠 사용 가능한 명령어 목록:/정보, /대여정보, /주소소\n"
         "/정보 - 봇의 정보 출력\n"
-        "/대여정보 [조회할 내용]- ex) /대여정보 히어로 - 히어로 보조무기 대여정보 출력 \n",
+        "/대여정보 [조회할 내용]- ex) /대여정보 히어로 - 히어로 보조무기 대여정보 출력 \n"
+        "/주소 - 악마길드 홈페이지 주소 출력",
         #"/이벤트 - 진행중인 이벤트 내용 출력",
         ephemeral=False
     )
@@ -181,7 +182,7 @@ async def rental_info(interaction: discord.Interaction, item: str):
     item = item.strip()
 
 # ✅ 링크주소 열람 함수
-@tree.command(name="링크", description="악마길드 홈페이지")
+@tree.command(name="주소", description="악마길드 홈페이지")
 async def fixed_link_command(interaction: discord.Interaction):
     await interaction.response.send_message(
         "🔗 바로가기 링크: https://maple-demon-guild.streamlit.app/",
