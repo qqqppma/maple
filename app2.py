@@ -324,7 +324,7 @@ def get_character_basic_by_id(char_id, server):
 
 #=================================================#
 def get_character_stat(char_id, server):
-    encoded_server = urllib.parse.quote(SERVER_NAME_MAP[server])
+    encoded_server = SERVER_NAME_MAP[server]
     url = f"https://open.api.nexon.com/maplestory/v1/character/stat?character_id={char_id}&world_name={encoded_server}"
     res = requests.get(url, headers=NEXON_HEADERS)
     return res.json() if res.status_code == 200 else None
