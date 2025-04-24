@@ -1158,8 +1158,9 @@ elif menu == "보조대여 신청":
                 day_selected[i] = st.checkbox("전체", key=f"day_select_{i}", disabled=not has_available_slot)
 
         selection = {}
-      
-
+        KST = timezone(timedelta(hours=9))
+        now = datetime.now(KST)
+###
         for time_label, row in time_slot_grid.items():
             row_cols = st.columns(len(row) + 1)
             row_cols[0].markdown(f"**{time_label}**")
