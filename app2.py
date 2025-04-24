@@ -12,6 +12,7 @@ from supabase import create_client, Client
 import json
 import uuid
 from streamlit.components.v1 import html
+from utils.time_grid import generate_slot_table
 import bcrypt
 import textwrap
 import codecs
@@ -837,49 +838,6 @@ elif menu == "악마길드 길컨관리":
                     st.code(res.text)
 
 
-    # if is_admin and mainmembers:
-    #     st.markdown("### ✏️ 메인 캐릭터 수정 및 삭제")
-
-    #     selected = st.selectbox("수정/삭제할 닉네임 선택", [m["nickname"] for m in mainmembers])
-    #     selected_row = [m for m in mainmembers if m["nickname"] == selected][0]
-
-    #     suro_input_display = st.selectbox("수로 참여 여부", ["참여", "미참"], index=0 if selected_row["suro"] else 1, key="suro_edit")
-    #     suro_input_edit = suro_input_display == "참여"
-    #     suro_score_edit = st.number_input("수로 점수", min_value=0, step=1, value=selected_row["suro_score"], key="suro_score_edit")
-
-    #     flag_input_display = st.selectbox("플래그 참여 여부", ["참여", "미참"], index=0 if selected_row["flag"] else 1, key="flag_edit")
-    #     flag_input_edit = flag_input_display == "참여"
-    #     flag_score_edit = st.number_input("플래그 점수", min_value=0, step=1, value=selected_row["flag_score"], key="flag_score_edit")
-
-    #     mission_point_edit = st.number_input("주간미션포인트", min_value=0, step=1, value=selected_row["mission_point"], key="mission_point_edit")
-    #     event_sum_edit = st.number_input("합산", min_value=0, step=1, value=selected_row["event_sum"], key="event_sum_edit")
-
-    #     col1, col2 = st.columns(2)
-    #     with col1:
-    #         if st.button("✅ 수정", key="main_update_btn"):
-    #             updated = {
-    #                 "suro": suro_input_edit,
-    #                 "suro_score": suro_score_edit,
-    #                 "flag": flag_input_edit,
-    #                 "flag_score": flag_score_edit,
-    #                 "mission_point": mission_point_edit,
-    #                 "event_sum": event_sum_edit
-    #             }
-    #             if update_mainember(selected_row["id"], updated):
-    #                 st.success("✅ 수정 완료")
-    #                 st.rerun()
-    #             else:
-    #                 st.error("🚫 수정 실패")
-
-    #     with col2:
-    #         st.write("🧪 삭제 대상 ID 확인:", selected_row["id"])
-    #         if st.button("🗑 삭제", key="main_delete_btn"):
-    #             if delete_mainmember(selected_row["id"]):
-    #                 st.success("🗑 삭제 완료")
-    #                 st.rerun()
-    #             else:
-    #                 st.error("🚫 삭제 실패")
-
 
 elif menu == "부캐릭터 관리":
     st.subheader("👥 부캐릭터 등록 및 관리")
@@ -1118,32 +1076,23 @@ elif menu == "부캐릭터 등록":
 
 
 elif menu == "보조대여 신청":
+    from utils.time_grid import generate_slot_table  # 꼭 맨 위에서 import!
+
     st.header("\U0001F6E1️ 보조무기 대여 시스템")
     nickname = st.session_state["nickname"]
     owner = ["자리스틸의왕", "죤냇", "새훨", "나영진", "o차월o"]
 
-    # 이미지 및 직업군 설정
     IMAGE_FOLDER = "보조무기 사진"
     CYGNUS_SHARED = ["나이트워커", "스트라이커", "플레임위자드", "윈드브레이커", "소울마스터"]
-
     job_data = {
-    "전사": ["히어로", "팔라딘", "다크나이트", "소울마스터", "미하일", "아란", "카이저", "제로", "아델"],
-    "궁수": ["보우마스터", "신궁", "패스파인더", "윈드브레이커", "메르세데스", "와일드헌터"],
-    "법사": ["아크메이지(썬콜)", "아크메이지(불독)", "비숍", "플레임위자드", "에반", "루미너스", "배틀메이지", "키네시스", "일리움"],
-    "도적": ["나이트로드", "새도어", "듀얼블레이드", "나이트워커", "팬텀", "카데나", "호영"],
-    "해적": ["바이퍼", "캐논슈터", "스트라이커", "메카닉", "엔젤릭버스터"],
-    "특수직업": ["데몬어벤져", "제논"]
+        "전사": [...], "궁수": [...], "법사": [...], "도적": [...],
+        "해적": [...], "특수직업": ["데몬어벤져", "제논"]
     }
 
-
-    # 좌 1/3, 우 2/3 비율로 컬럼 나눔
     col_left, col_right = st.columns([1, 2])
-
     with col_left:
-        st.markdown("#### 👤 대여자 선택")
         nickname_options = get_all_character_names(nickname)
         selected_borrower = st.selectbox("보조무기 대여자", nickname_options)
-
         job_group = st.selectbox("🧩 직업군을 선택하세요", list(job_data.keys()))
         selected_job = st.selectbox("🔍 직업을 선택하세요", job_data[job_group])
 
@@ -1151,26 +1100,14 @@ elif menu == "보조대여 신청":
         image_path = os.path.join(IMAGE_FOLDER, "시그너스보조.jpg") if selected_job in CYGNUS_SHARED \
                     else os.path.join(IMAGE_FOLDER, f"{selected_job}보조.jpg")
         image_available = os.path.exists(image_path)
-
         if image_available:
-            image = Image.open(image_path)
-            w_percent = 1000 / float(image.size[0])  # 더 큰 이미지 표시
-            resized_image = image.resize((1000, int(float(image.size[1]) * w_percent)))
-            st.image(resized_image, caption=f"{selected_job}의 보조무기")
+            st.image(Image.open(image_path).resize((1000, 500)), caption=f"{selected_job}의 보조무기")
         else:
             st.warning("⚠️ 보유중인 보조무기가 없어 대여가 불가능합니다.")
 
-    # 무기 대여 데이터 로딩 (한 번만 호출)
     weapon_data = fetch_weapon_rentals()
 
     if image_available:
-        # 날짜 및 시간 슬롯 생성
-        today = date.today()
-        dates = [today + timedelta(days=i) for i in range(7)]
-        weekday_labels = ["월", "화", "수", "목", "금", "토", "일"]
-        date_labels = [d.strftime("%m/%d") for d in dates]
-        time_slots = [f"{h:02d}:00~{(h+2)%24:02d}:00" for h in range(0, 24, 2)]
-
         reserved_slots = {
             slot.strip(): row["borrower"]
             for row in weapon_data
@@ -1179,45 +1116,19 @@ elif menu == "보조대여 신청":
             if slot.strip()
         }
 
-        st.markdown(f"### ⏰ `{selected_job}`")
-        cols = st.columns(len(dates) + 1)
-        cols[0].markdown("#### ")
-        day_selected = {}
-
-        for i, (day, label) in enumerate(zip([weekday_labels[d.weekday()] for d in dates], date_labels)):
-            date_str = str(dates[i])
-            reserved_count = sum(1 for t in time_slots if f"{date_str} {t}" in reserved_slots)
-            disable_day_checkbox = reserved_count == len(time_slots)
-            with cols[i + 1]:
-                st.markdown(f"#### {day}", unsafe_allow_html=True)
-                st.markdown(f"{label}")
-                day_selected[i] = st.checkbox("전체", key=f"day_select_{i}", disabled=disable_day_checkbox)
-
-        existing_slots = {
-            slot.strip(): row["borrower"]
-            for row in weapon_data
-            if selected_job in row.get("weapon_name", "")  # ✅ 무기별 예약 필터
-            for slot in row.get("time_slots", "").split(",")
-            if slot.strip()
-        }
-
+        st.markdown(f"### ⏰ `{selected_job}` 시간표")
+        time_slot_grid, _ = generate_slot_table()
 
         selection = {}
-        for time in time_slots:
-            row = st.columns(len(dates) + 1)
-            row[0].markdown(f"**{time}**")
-            for j, d in enumerate(dates):
-                key = f"{selected_job}_{d} {time}"  # ✅ 무기별 고유 키
-                date_str = str(d)
-                full_key = f"{date_str} {time}"
-
-                borrower = existing_slots.get(full_key)
+        for i, (label, row) in enumerate(time_slot_grid.items()):
+            cols = st.columns(len(row) + 1)
+            cols[0].markdown(f"**{label}**")
+            for j, (slot_time, slot_key) in enumerate(row):
+                borrower = reserved_slots.get(slot_time)
                 if borrower:
-                    # 🔒 이미 대여된 시간 → 이름 표시 + 체크박스 비활성화
-                    row[j + 1].checkbox(borrower, value=True, key=key, disabled=True)
+                    cols[j + 1].checkbox(borrower, value=True, key=slot_key, disabled=True)
                 else:
-                    # ✅ 선택 가능
-                    selection[full_key] = row[j + 1].checkbox("", value=day_selected[j], key=key)
+                    selection[slot_time] = cols[j + 1].checkbox("", value=False, key=slot_key)
 
         selected_time_slots = [k for k, v in selection.items() if v]
         selected_dates = sorted({datetime.strptime(k.split()[0], "%Y-%m-%d").date() for k in selected_time_slots})
@@ -1241,6 +1152,8 @@ elif menu == "보조대여 신청":
                     st.rerun()
                 else:
                     st.error(f"❌ 등록 실패: {response.status_code}")
+
+        
 
    # 1. 무기 대여 데이터 가져오기
     weapon_data = fetch_weapon_rentals()
