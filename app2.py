@@ -742,7 +742,7 @@ elif menu == "악마길드 길컨관리":
         df_editable = df_main[["ID", "nickname"] + editable_cols].copy()
         df_editable.set_index("ID", inplace=True)  # 보여지는 인덱스만 표시용 ID
 
-        st.markdown("### 📋 현재 등록된 메인 캐릭터 ")
+        st.markdown("### 📋 악마 길드 길드컨트롤 등록현황 ")
         edited_df = st.data_editor(
             df_editable,
             use_container_width=True,
