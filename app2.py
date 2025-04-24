@@ -824,8 +824,9 @@ elif menu == "부캐릭터 관리":
 
     with st.form("add_sub_form"):
         selected_main = st.selectbox("본캐 닉네임 선택", main_names)
-        guild_name1 = st.text_input("길드 이름")
-        sub_name = st.text_input("부캐 이름")
+        guild_name1 = st.selectbox("부캐 길드 선택", guild_options)
+        linked_subs = df_sub[df_sub["main_name"] == selected_main]["sub_name"].tolist()
+        sub_name = st.selectbox("부캐 이름 선택", linked_subs) if linked_subs else st.warning("⚠️ 선택한 본캐에 등록된 부캐가 없습니다.")
         suro_score = st.number_input("수로 점수", min_value=0, step=1)
         flag_score = st.number_input("플래그 점수", min_value=0, step=1)
         mission_point = st.number_input("주간미션포인트", min_value=0, step=1)
