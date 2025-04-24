@@ -758,7 +758,7 @@ elif menu == "악마길드 길컨관리":
         edited_df = st.data_editor(
             df_editable,
             use_container_width=True,
-            disabled=["nickname"],
+            disabled=["닉네임"],
             num_rows="dynamic",
             key="main_editor"
         )
