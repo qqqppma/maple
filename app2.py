@@ -1156,17 +1156,38 @@ elif menu == "보조대여 신청":
 
         # 시간표 렌더링
         selection = {}
+        now = datetime.now()
+
         for time_label, row in time_slot_grid.items():
             row_cols = st.columns(len(row) + 1)
             row_cols[0].markdown(f"**{time_label}**")
+            
             for j, (slot_time, slot_key) in enumerate(row):
                 borrower = reserved_slots.get(slot_time)
-                default_checked = slot_time in editing_slots
-                if borrower and borrower != nickname:
+                is_editing = editing_id is not None
+                is_self = borrower == nickname
+                is_reserved = borrower is not None and borrower != nickname
+
+                # 체크박스 기본값 설정
+                default_checked = slot_time in editing_slots or day_selected[j]
+
+                if is_reserved:
+                    # 다른 사람이 예약했으면 항상 비활성화
                     row_cols[j + 1].checkbox(borrower, value=True, key=slot_key, disabled=True)
+
+                elif is_self:
+                    # 본인 예약이면: 수정 중일 때만 해제 가능
+                    slot_time_obj = datetime.strptime(slot_time, "%Y-%m-%d %H:%M")
+                    if is_editing and now < slot_time_obj:
+                        selection[slot_time] = row_cols[j + 1].checkbox("", value=True, key=slot_key)
+                    else:
+                        # 수정이 아니거나 이미 시작된 경우, 해제 불가
+                        row_cols[j + 1].checkbox(borrower, value=True, key=slot_key, disabled=True)
+
                 else:
+                    # 빈 슬롯은 전체선택 여부 또는 수정시 미리 체크
                     selection[slot_time] = row_cols[j + 1].checkbox(
-                        "", value=default_checked or day_selected[j], key=slot_key
+                        "", value=default_checked, key=slot_key
                     )
 
         selected_time_slots = [k for k, v in selection.items() if v]
