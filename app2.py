@@ -771,7 +771,7 @@ elif menu == "악마길드 길컨관리":
             use_container_width=True,
             disabled=["닉네임"],
             num_rows="dynamic",
-            height=400,
+            height=180,
             key="main_editor"
         )
 
