@@ -1291,118 +1291,124 @@ elif menu == "보조대여 신청":
 
 
 elif menu == "드메템 대여 신청":
-    st.header("\U0001F4FF 드메템 대여 시스템")
+    st.header("💠 드메템 대여 시스템")
     nickname = st.session_state["nickname"]
-    owners = ["자리스틸의왕", "새훨", "죤냇", "나영진", "o차월o"]
+    owners = ["자리스틸의왕", "죤냇", "새훨", "나영진", "o차월o"]
 
-    # 드메템 이미지 폴더 지정
     DROP_IMAGE_FOLDER = "드메템 사진"
-
-    # 드메템 이미지 매핑 (파일명은 세트명 기준으로 미리 저장 필요)
     dropitem_image_map = {
         "보스 드드셋": "보스 드드셋.jpg",
         "사냥 드메셋 I": "사냥 드메셋 I.jpg",
         "사냥 드메셋 II": "사냥 드메셋 II.jpg",
     }
 
-    # 좌 1/3, 우 2/3 비율로 나누기
-    col_left, col_right = st.columns([1, 2])
+    selected_set = st.selectbox("드메템 세트 선택", list(dropitem_image_map.keys()))
+    image_path = os.path.join(DROP_IMAGE_FOLDER, dropitem_image_map[selected_set])
 
-    with col_left:
-        st.markdown("#### 👤 대여자 선택")
-        nickname_options = get_all_character_names(nickname)
-        selected_borrower = st.selectbox("드메템 대여자", nickname_options)
+    if os.path.exists(image_path):
+        st.image(Image.open(image_path).resize((1000, 500)), caption=f"{selected_set}")
+    else:
+        st.warning("⚠️ 이미지가 존재하지 않습니다.")
+        st.stop()
 
-        item_options = list(dropitem_image_map.keys())
-        selected_item = st.selectbox("대여할 드메템 세트를 선택하세요", item_options)
-
-    with col_right:
-        selected_image_name = dropitem_image_map.get(selected_item)
-        if selected_image_name:
-            image_path = os.path.join(DROP_IMAGE_FOLDER, selected_image_name)
-            if os.path.exists(image_path):
-                image = Image.open(image_path)
-                w_percent = 1000 / float(image.size[0])  # 이미지 더 크게
-                resized_image = image.resize((1000, int(float(image.size[1]) * w_percent)))
-                st.image(resized_image, caption=f"{selected_item} 이미지")
-            else:
-                st.warning("⚠️ 해당 드메셋 이미지가 존재하지 않습니다.")
-
-    today = date.today()
-    dates = [today + timedelta(days=i) for i in range(7)]
-    date_labels = [d.strftime("%m/%d") for d in dates]
-    day_names = ["월", "화", "수", "목", "금", "토", "일"]
-    weekday_labels = [day_names[d.weekday()] for d in dates]
-    time_slots = ["00:00~24:00"]
-
-    drop_data = fetch_dropitem_rentals()
-    filtered_data = [row for row in drop_data if row["dropitem_name"] == selected_item]
+    drop_data = fetch_drop_rentals()
+    editing_id = st.session_state.get("edit_dropitem_id")
+    editing_slots = st.session_state.get("edit_time_slots", []) if editing_id else []
 
     reserved_slots = {
-        slot.strip(): row["drop_borrower"]
-        for row in filtered_data
+        slot.strip(): row["borrower"]
+        for row in drop_data
+        if selected_set in row.get("dropitem_name", "")
         for slot in row.get("time_slots", "").split(",")
         if slot.strip()
     }
 
-    st.markdown(f"### ⏰ `{selected_item}`")
-    # 📅 날짜/요일 헤더 출력
-    cols = st.columns(len(dates) + 1)
-    cols[0].markdown("#### ")
-    for i, (day, label) in enumerate(zip(weekday_labels, date_labels)):
+    st.markdown(f"### ⏰ `{selected_set}` 시간표")
+    time_slot_grid, days = generate_slot_table()
+    weekday_labels = ["월", "화", "수", "목", "금", "토", "일"]
+    cols = st.columns(len(days) + 1)
+    cols[0].markdown("**시간**")
+    day_selected = {}
+
+    for i, day in enumerate(days):
+        label = f"{weekday_labels[day.weekday()]}<br>{day.strftime('%m/%d')}"
+        day_str = day.strftime("%Y-%m-%d")
+
+        has_available_slot = any(
+            reserved_slots.get(slot_time) in (None, nickname)
+            for time_label, row in time_slot_grid.items()
+            for slot_time, _ in row if slot_time.startswith(day_str)
+        )
+
         with cols[i + 1]:
-            st.markdown(f"#### {day}", unsafe_allow_html=True)
-            st.markdown(f"{label}")
+            st.markdown(label, unsafe_allow_html=True)
+            day_selected[i] = st.checkbox("전체", key=f"drop_day_select_{i}", disabled=not has_available_slot)
+
     selection = {}
-    for time in time_slots:
-        row = st.columns(len(dates) + 1)
-        row[0].markdown(f"**{time}**")
-        for j, d in enumerate(dates):
-            key = f"{d} {time}"
-            if key in reserved_slots:
-                label = reserved_slots[key]
-                selection[key] = row[j + 1].checkbox(label, value=True, key=key, disabled=True)
+    now = datetime.now(timezone.utc) + timedelta(hours=9)
+
+    for time_label, row in time_slot_grid.items():
+        row_cols = st.columns(len(row) + 1)
+        row_cols[0].markdown(f"**{time_label}**")
+
+        for j, (slot_time, slot_key) in enumerate(row):
+            borrower = reserved_slots.get(slot_time)
+            is_editing = editing_id is not None
+            is_self = borrower == nickname
+            is_reserved = borrower is not None and borrower != nickname
+
+            default_checked = slot_time in editing_slots or day_selected[j]
+
+            if is_reserved:
+                row_cols[j + 1].checkbox(borrower, value=True, key=slot_key, disabled=True)
+            elif is_self:
+                slot_time_obj = datetime.strptime(slot_time, "%Y-%m-%d %H:%M").replace(tzinfo=timezone(timedelta(hours=9)))
+                if is_editing and now < slot_time_obj:
+                    selection[slot_time] = row_cols[j + 1].checkbox("", value=True, key=slot_key)
+                else:
+                    row_cols[j + 1].checkbox(borrower, value=True, key=slot_key, disabled=True)
             else:
-                selection[key] = row[j + 1].checkbox("", key=key)
+                selection[slot_time] = row_cols[j + 1].checkbox("", value=default_checked, key=slot_key)
 
     selected_time_slots = [k for k, v in selection.items() if v]
     selected_dates = sorted({datetime.strptime(k.split()[0], "%Y-%m-%d").date() for k in selected_time_slots})
 
-    if st.button("📥 대여 등록"):
+    if editing_id:
+        st.info("✏️ 현재 대여 정보를 수정 중입니다. 원하는 시간대를 다시 선택 후 '수정 완료'를 눌러주세요.")
+
+    if st.button("✏️ 수정 완료" if editing_id else "📥 대여 등록"):
         if not selected_time_slots:
-            st.warning("❗ 최소 1개 이상의 날짜를 선택해주세요.")
+            st.warning("❗ 최소 1개 이상의 시간을 선택해주세요.")
         elif len(selected_dates) > 7:
             st.warning("❗ 대여 기간은 최대 7일까지만 선택할 수 있습니다.")
         else:
             rental_data = {
-                "drop_borrower": selected_borrower,
-                "dropitem_name": selected_item,
-                "drop_owner": json.dumps(owners),
-                "time_slots": ", ".join(selected_time_slots)
+                "borrower": nickname,
+                "dropitem_name": selected_set,
+                "owner": json.dumps(owners),
+                "time_slots": ", ".join(selected_time_slots),
+                "is_edit": editing_id is not None
             }
-            response = requests.post(
-                f"{SUPABASE_URL}/rest/v1/DropItem_Rentals",
-                headers=HEADERS,
-                json=rental_data
-            )
+
+            if editing_id:
+                delete_dropitem_rental(editing_id)
+                del st.session_state["edit_dropitem_id"]
+                del st.session_state["edit_time_slots"]
+
+            response = requests.post(f"{SUPABASE_URL}/rest/v1/DropItem_Rentals", headers=HEADERS, json=rental_data)
             if response.status_code == 201:
-                st.success("✅ 대여 등록이 완료되었습니다!")
+                st.success("✅ 수정이 완료되었습니다!" if editing_id else "✅ 대여 등록이 완료되었습니다!")
                 st.rerun()
             else:
                 st.error(f"❌ 등록 실패: {response.status_code}")
-                st.code(response.text)
-
 
     # 📊 대여 현황 테이블 표시
     if drop_data:
-        # ✅ 필터링
-        filtered = [r for r in drop_data if r.get("dropitem_name") == selected_item]
-
         # ✅ drop_data가 있고, 'dropitem_name' & 'time_slots' 조건을 만족할 때만 필터링
         if drop_data:
             filtered = [
                 r for r in drop_data
-                if r.get("dropitem_name") == selected_item and "time_slots" in r
+                if r.get("dropitem_name") == selected_set and "time_slots" in r
             ]
 
             if filtered:

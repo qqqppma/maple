@@ -20,7 +20,7 @@ DROPITEM_CHANNEL_ID = int(os.getenv("DROPITEM_CHANNEL_ID"))  # 드메템 채널 
 
 # ✅ 멘션할 유저 ID 리스트
 MENTION_USERS_WEAPON = [380952595293929473, 339743306802135041]  # 보조무기 담당자
-MENTION_USERS_DROP = [380952595293929473, 339743306802135041]    # 드메템 담당자
+MENTION_USERS_DROP = [339743306802135041]    # 드메템 담당자
 
 # ✅ 멘션 메시지 생성 함수
 def get_mentions(user_ids):
@@ -99,7 +99,7 @@ async def polling_loop():
                 for new_id in new_ids:
                     data = current_weapon_data[new_id]
                     if data.get("is_edit"):
-                        msg = f"📌 `{data['borrower']}`님이 신청한 `{data['weapon_name']}` 대여 정보가 수정되었습니다."
+                        msg = f"{get_mentions(MENTION_USERS_DROP)}📌 `{data['borrower']}`님이 신청한 `{data['weapon_name']}` 대여 정보가 수정되었습니다."
                     else:
                         msg = f"{get_mentions(MENTION_USERS_WEAPON)} 📥 `{data['borrower']}`님이 `{data['weapon_name']}` 을 대여 요청하였습니다."
 
@@ -147,10 +147,12 @@ async def polling_loop():
                 last_dropitem_data = current_drop_data
                 print("🚫 [DropItem] 첫 실행이므로 상태 초기화만 수행")
             else:
-                new_ids = current_drop_ids - last_dropitem_ids
                 for new_id in new_ids:
                     data = current_drop_data[new_id]
-                    msg = f"{get_mentions(MENTION_USERS_DROP)} 🎁 `{data['drop_borrower']}`님이 `{data['dropitem_name']}` 을 대여 요청하였습니다."
+                    if data.get("is_edit"):
+                        msg = f"{get_mentions(MENTION_USERS_DROP)}📌 `{data['drop_borrower']}`님이 신청한 `{data['dropitem_name']}` 대여 정보가 수정되었습니다."
+                    else:
+                        msg = f"{get_mentions(MENTION_USERS_DROP)} 🎁 `{data['drop_borrower']}`님이 `{data['dropitem_name']}` 을 대여 요청하였습니다."
                     await dropitem_channel.send(msg)
                     print(f"[Drop 등록] {msg}")
 
