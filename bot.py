@@ -107,10 +107,25 @@ async def polling_loop():
                     print(f"[Weapon 등록] {msg}")
 
                 removed_ids = last_weapon_ids - current_weapon_ids
+
                 for removed_id in removed_ids:
-                    data = last_weapon_data.get(removed_id, {})
+                    deleted_data = last_weapon_data.get(removed_id, {})
+
+                    # ✅ 수정으로 인한 삭제인지 확인
+                    was_edited = any(
+                        r["borrower"] == deleted_data.get("borrower")
+                        and r["weapon_name"] == deleted_data.get("weapon_name")
+                        and r.get("is_edit")  # 수정 등록임을 의미
+                        for r in current_weapon_data.values()
+                    )
+
+                    if was_edited:
+                        print(f"🔁 수정에 따른 삭제로 판단, 반납 메시지 생략: {deleted_data.get('borrower')} / {deleted_data.get('weapon_name')}")
+                        continue
+
+                    # ✅ 진짜 반납일 경우
                     now = datetime.now(timezone.utc) + timedelta(hours=9)
-                    msg = f"🗑 `{data.get('borrower', '?')}`님이 대여한 `{data.get('weapon_name', '?')}` 이/가 {now.strftime('%y-%m-%d %H:%M')} 반납되었습니다."
+                    msg = f"🗑 `{deleted_data.get('borrower', '?')}`님이 대여한 `{deleted_data.get('weapon_name', '?')}` 이/가 {now.strftime('%y-%m-%d %H:%M')} 반납되었습니다."
                     await weapon_channel.send(msg)
                     print(f"[Weapon 반납] {msg}")
 
