@@ -997,6 +997,23 @@ elif menu == "부캐릭터 등록":
     st.markdown("---")
     st.subheader("✏️ 등록된 부캐릭터 정보 수정")
 
+    # 로그인한 유저의 부캐 목록만 필터링
+    submembers = get_submembers()
+    df_sub = pd.DataFrame(submembers)
+    user_subs = df_sub[df_sub["main_name"] == nickname]
+
+    if user_subs.empty:
+        st.info("등록된 부캐릭터가 없습니다.")
+    else:
+        # ✅ 닉네임과 길드만 표시하는 표
+        display_df = user_subs[["sub_name", "guild_name1"]].rename(columns={
+            "sub_name": "부캐 닉네임",
+            "guild_name1": "부캐 길드"
+        }).reset_index(drop=True)
+
+        st.markdown("### 📋 현재 등록된 내 부캐 목록")
+        st.dataframe(display_df, use_container_width=True)
+
     submembers = get_submembers()
     df_sub = pd.DataFrame(submembers)
     user_subs = df_sub[df_sub["main_name"] == nickname]
