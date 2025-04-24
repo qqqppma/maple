@@ -1205,6 +1205,82 @@ elif menu == "보조대여 신청":
                     st.error(f"❌ 등록 실패: {response.status_code}")
 
 
+    # ✅ 대여 현황 및 반납/수정 처리
+    weapon_data = fetch_weapon_rentals()
+    filtered = [
+        r for r in (weapon_data or [])
+        if isinstance(r.get("weapon_name"), str)
+        and selected_job in r["weapon_name"]
+        and "time_slots" in r
+    ]
+
+    if filtered:
+        df = pd.DataFrame(filtered).sort_values(by="id").reset_index(drop=True)
+        df_display = df.copy()
+        df_display["ID"] = df_display.index + 1
+        df_display["대여기간"] = df_display["time_slots"].apply(get_weapon_range)
+        df_display["대표소유자"] = df_display["owner"].apply(
+            lambda x: json.loads(x)[0] if isinstance(x, str) and x.startswith("[") else x
+        )
+        df_display.rename(columns={
+            "borrower": "대여자",
+            "weapon_name": "대여 아이템"
+        }, inplace=True)
+
+        st.markdown("### 📄 보조무기 대여 현황")
+        st.dataframe(df_display[["ID", "대여자", "대여 아이템", "대표소유자", "대여기간"]], use_container_width=True)
+
+        excel_df = df_display[["대여자", "대여 아이템", "대표소유자", "대여기간"]].copy()
+        excel_data = convert_df_to_excel(excel_df)
+        st.download_button(
+            label="📅 보조무기 대여 현황 다운로드",
+            data=excel_data,
+            file_name="보조무기_대여현황.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+
+        for _, row in df.iterrows():
+            owners_list = json.loads(row["owner"]) if isinstance(row["owner"], str) and row["owner"].startswith("[") else [row["owner"]]
+            borrower_name = row.get("borrower", "(이름 없음)")
+            if not borrower_name or str(borrower_name).lower() == "nan":
+                borrower_name = "(이름 없음)"
+
+            is_owner = nickname in owners_list
+            is_borrower = nickname == borrower_name
+
+            if is_owner or is_borrower:
+                with st.expander(f"🛡️ '{row['weapon_name']}' - 대여자: {borrower_name}"):
+                    st.markdown(f"**📅 대여기간:** `{get_weapon_range(row['time_slots'])}`")
+                    st.markdown(f"**소유자:** `{', '.join(owners_list)}`")
+
+                    if is_owner:
+                        if st.button("🗑 반납 완료", key=f"weapon_return_{row['id']}"):
+                            if delete_weapon_rental(row["id"]):
+                                st.success("✅ 반납 완료되었습니다!")
+                                st.rerun()
+                            else:
+                                st.error("❌ 반납 실패! 다시 시도해주세요.")
+
+                    if is_borrower:
+                        try:
+                            slot_times = [
+                                datetime.strptime(t.strip(), "%Y-%m-%d %H:%M").replace(tzinfo=timezone(timedelta(hours=9)))
+                                for t in row["time_slots"].split(",") if t.strip()
+                            ]
+                            earliest_time = min(slot_times)
+                            now = datetime.now(timezone.utc) + timedelta(hours=9)
+
+                            if now < earliest_time:
+                                if st.button("✏️ 수정하기", key=f"edit_rental_{row['id']}"):
+                                    st.session_state["edit_rental_id"] = row["id"]
+                                    st.session_state["edit_time_slots"] = row["time_slots"].split(", ")
+                                    st.rerun()
+                            else:
+                                st.caption("⏰ 이미 시작된 대여로 수정할 수 없습니다.")
+                        except Exception as e:
+                            st.error(f"시간 파싱 오류: {e}")
+
+
 
 elif menu == "드메템 대여 신청":
     from utils.time_grid import generate_slot_table
@@ -1320,11 +1396,12 @@ elif menu == "드메템 대여 신청":
                 else:
                     st.error(f"❌ 등록 실패: {response.status_code}")
 
+
     # 📊 대여 현황 테이블 표시
     if drop_data:
         filtered = [
             r for r in drop_data
-            if r.get("dropitem_name") == selected_dropitem and "time_slots" in r
+            if r.get("dropitem_name") == selected_set and "time_slots" in r
         ]
 
         if filtered:
