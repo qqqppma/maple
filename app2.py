@@ -1123,16 +1123,35 @@ elif menu == "보조대여 신청":
         st.markdown(f"### ⏰ `{selected_job}` 시간표")
         time_slot_grid, _ = generate_slot_table()
 
+        # ✅ 시간표 생성 + 전체 선택 포함
+        time_slot_grid, days = generate_slot_table()
+        weekday_labels = ["월", "화", "수", "목", "금", "토", "일"]
+
+        # ✅ 열 구성 (시간 + 요일 7개)
+        cols = st.columns(len(days) + 1)
+
+        # ✅ 요일 헤더 + 전체 선택 체크박스
+        cols[0].markdown("**시간**")
+        day_selected = {}
+        for i, day in enumerate(days):
+            label = f"{weekday_labels[day.weekday()]}<br>{day.strftime('%m/%d')}"
+            with cols[i + 1]:
+                st.markdown(label, unsafe_allow_html=True)
+                day_selected[i] = st.checkbox("전체", key=f"day_select_{i}")
+
+        # ✅ 시간표 행 렌더링
         selection = {}
-        for i, (label, row) in enumerate(time_slot_grid.items()):
-            cols = st.columns(len(row) + 1)
-            cols[0].markdown(f"**{label}**")
+        for time_label, row in time_slot_grid.items():
+            row_cols = st.columns(len(row) + 1)
+            row_cols[0].markdown(f"**{time_label}**")
             for j, (slot_time, slot_key) in enumerate(row):
                 borrower = reserved_slots.get(slot_time)
                 if borrower:
-                    cols[j + 1].checkbox(borrower, value=True, key=slot_key, disabled=True)
+                    row_cols[j + 1].checkbox(borrower, value=True, key=slot_key, disabled=True)
                 else:
-                    selection[slot_time] = cols[j + 1].checkbox("", value=False, key=slot_key)
+                    selection[slot_time] = row_cols[j + 1].checkbox(
+                        "", value=day_selected[j], key=slot_key
+                    )
 
         selected_time_slots = [k for k, v in selection.items() if v]
         selected_dates = sorted({datetime.strptime(k.split()[0], "%Y-%m-%d").date() for k in selected_time_slots})
