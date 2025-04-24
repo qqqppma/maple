@@ -1144,11 +1144,15 @@ elif menu == "보조대여 신청":
         for i, day in enumerate(days):
             label = f"{weekday_labels[day.weekday()]}<br>{day.strftime('%m/%d')}"
             day_str = day.strftime("%Y-%m-%d")
+            now = datetime.now(timezone.utc) + timedelta(hours=9)
+
             has_available_slot = any(
-                reserved_slots.get(slot_time) in (None, nickname)
+                reserved_slots.get(slot_time) is None and
+                datetime.strptime(slot_time, "%Y-%m-%d %H:%M").replace(tzinfo=timezone(timedelta(hours=9))) > now
                 for time_label, row in time_slot_grid.items()
                 for slot_time, _ in row if slot_time.startswith(day_str)
             )
+
             with cols[i + 1]:
                 st.markdown(label, unsafe_allow_html=True)
                 day_selected[i] = st.checkbox("전체", key=f"day_select_{i}", disabled=not has_available_slot)
@@ -1337,14 +1341,18 @@ elif menu == "드메템 대여 신청":
         for i, day in enumerate(days):
             label = f"{weekday_labels[day.weekday()]}<br>{day.strftime('%m/%d')}"
             day_str = day.strftime("%Y-%m-%d")
+            now = datetime.now(timezone.utc) + timedelta(hours=9)
+
             has_available_slot = any(
-                reserved_slots.get(slot_time) in (None, nickname)
+                reserved_slots.get(slot_time) is None and
+                datetime.strptime(slot_time, "%Y-%m-%d %H:%M").replace(tzinfo=timezone(timedelta(hours=9))) > now
                 for time_label, row in time_slot_grid.items()
                 for slot_time, _ in row if slot_time.startswith(day_str)
             )
+
             with cols[i + 1]:
                 st.markdown(label, unsafe_allow_html=True)
-                day_selected[i] = st.checkbox("전체", key=f"day_select_drop_{i}", disabled=not has_available_slot)
+                day_selected[i] = st.checkbox("전체", key=f"day_select_{i}", disabled=not has_available_slot)
 
         selection = {}
         now = datetime.now(timezone.utc) + timedelta(hours=9)
@@ -1401,7 +1409,7 @@ elif menu == "드메템 대여 신청":
     if drop_data:
         filtered = [
             r for r in drop_data
-            if r.get("dropitem_name") == selected_set and "time_slots" in r
+            if r.get("dropitem_name") == selected_dropitem and "time_slots" in r
         ]
 
         if filtered:
