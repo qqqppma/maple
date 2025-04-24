@@ -1269,7 +1269,7 @@ elif menu == "보조대여 신청":
                     if is_borrower:
                         try:
                             slot_times = [
-                                datetime.strptime(t.strip(), "%Y-%m-%d %H:%M") + timedelta(hours=9)
+                                datetime.strptime(t.strip(), "%Y-%m-%d %H:%M")  # KST 기준 문자열 그대로 저장했다면
                                 for t in row["time_slots"].split(",") if t.strip()
                             ]
 
