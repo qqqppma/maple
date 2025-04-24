@@ -1287,7 +1287,6 @@ elif menu == "보조대여 신청":
 
 
 elif menu == "드메템 대여 신청":
-    from utils.time_grid import generate_slot_table
     from datetime import datetime, timedelta, timezone
 
     st.header("\U0001F4FF 드메템 대여 시스템")
@@ -1305,7 +1304,7 @@ elif menu == "드메템 대여 신청":
 
     with col_left:
         nickname_options = get_all_character_names(nickname)
-        selected_borrower = st.selectbox("드메템 대여자", nickname_options)
+        selected_borrower = st.selectbox("대여자", nickname_options)
         selected_dropitem = st.selectbox("드메템 세트", list(dropitem_image_map.keys()))
 
     with col_right:
@@ -1319,68 +1318,43 @@ elif menu == "드메템 대여 신청":
     drop_data = fetch_dropitem_rentals()
 
     if image_available:
-        editing_id = st.session_state.get("edit_drop_id")
-        editing_slots = st.session_state.get("edit_drop_slots", []) if editing_id else []
+        editing_id = st.session_state.get("edit_dropitem_id")
+        editing_slots = st.session_state.get("edit_time_slots", []) if editing_id else []
 
         reserved_slots = {
-            slot.strip(): row["대여자자"]
+            slot.strip(): row["drop_borrower"]
             for row in drop_data
-            if selected_dropitem in row.get("대여 아이템", "")
+            if selected_dropitem in row.get("dropitem_name", "")
             and (not editing_id or row["id"] != editing_id)
             for slot in row.get("time_slots", "").split(",")
             if slot.strip()
         }
 
-        st.markdown(f"### ⏰ `{selected_dropitem}` 시간표")
-        time_slot_grid, days = generate_slot_table()
-        weekday_labels = ["월", "화", "수", "목", "금", "토", "일"]
-        cols = st.columns(len(days) + 1)
-        cols[0].markdown("**시간**")
-        day_selected = {}
+        # 하루 단위 슬롯 생성
+        base = datetime.now(timezone.utc) + timedelta(hours=9)
+        days = [base.date() + timedelta(days=i) for i in range(7)]
+        day_slots = [(str(day), day.strftime("%Y-%m-%d 00:00")) for day in days]
 
-        for i, day in enumerate(days):
-            label = f"{weekday_labels[day.weekday()]}<br>{day.strftime('%m/%d')}"
-            day_str = day.strftime("%Y-%m-%d")
-            now = datetime.now(timezone.utc) + timedelta(hours=9)
-
-            has_available_slot = any(
-                reserved_slots.get(slot_time) is None and
-                datetime.strptime(slot_time, "%Y-%m-%d %H:%M").replace(tzinfo=timezone(timedelta(hours=9))) > now
-                for time_label, row in time_slot_grid.items()
-                for slot_time, _ in row if slot_time.startswith(day_str)
-            )
-
-            with cols[i + 1]:
-                st.markdown(label, unsafe_allow_html=True)
-                day_selected[i] = st.checkbox("전체", key=f"day_select_{i}", disabled=not has_available_slot)
-
+        st.markdown(f"### 📆 `{selected_dropitem}` 대여 가능 날짜")
         selection = {}
-        now = datetime.now(timezone.utc) + timedelta(hours=9)
 
-        for time_label, row in time_slot_grid.items():
-            row_cols = st.columns(len(row) + 1)
-            row_cols[0].markdown(f"**{time_label}**")
-            for j, (slot_time, slot_key) in enumerate(row):
-                slot_time_obj = datetime.strptime(slot_time, "%Y-%m-%d %H:%M").replace(tzinfo=timezone(timedelta(hours=9)))
-                borrower = reserved_slots.get(slot_time)
-                default_checked = slot_time in editing_slots or day_selected.get(j, False)
-
-                if borrower and (not editing_id or slot_time not in editing_slots):
-                    row_cols[j + 1].checkbox(borrower, value=True, key=slot_key, disabled=True)
-                elif now > slot_time_obj:
-                    row_cols[j + 1].checkbox("지남", value=False, key=slot_key, disabled=True)
-                else:
-                    selection[slot_time] = row_cols[j + 1].checkbox("", value=default_checked, key=slot_key)
+        for label, slot_time in day_slots:
+            borrower = reserved_slots.get(slot_time)
+            if borrower and (not editing_id or slot_time not in editing_slots):
+                st.checkbox(borrower, value=True, key=slot_time, disabled=True)
+            else:
+                default_checked = slot_time in editing_slots
+                selection[slot_time] = st.checkbox(label, value=default_checked, key=slot_time)
 
         selected_time_slots = [k for k, v in selection.items() if v]
         selected_dates = sorted({datetime.strptime(k.split()[0], "%Y-%m-%d").date() for k in selected_time_slots})
 
         if editing_id:
-            st.info("✏️ 현재 대여 정보를 수정 중입니다. 원하는 시간대를 다시 선택 후 '수정 완료'를 눌러주세요.")
+            st.info("✏️ 현재 대여 정보를 수정 중입니다. 원하는 날짜를 다시 선택 후 '수정 완료'를 눌러주세요.")
 
         if st.button("✏️ 수정 완료" if editing_id else "📥 대여 등록"):
             if not selected_time_slots:
-                st.warning("❗ 최소 1개 이상의 시간을 선택해주세요.")
+                st.warning("❗ 최소 1일 이상을 선택해주세요.")
             elif len(selected_dates) > 7:
                 st.warning("❗ 대여 기간은 최대 7일까지만 선택할 수 있습니다.")
             else:
@@ -1394,8 +1368,8 @@ elif menu == "드메템 대여 신청":
 
                 if editing_id:
                     delete_dropitem_rental(editing_id)
-                    del st.session_state["edit_drop_id"]
-                    del st.session_state["edit_drop_slots"]
+                    del st.session_state["edit_dropitem_id"]
+                    del st.session_state["edit_time_slots"]
 
                 response = requests.post(f"{SUPABASE_URL}/rest/v1/DropItem_Rentals", headers=HEADERS, json=rental_data)
                 if response.status_code == 201:
