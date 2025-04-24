@@ -748,13 +748,11 @@ elif menu == "악마길드 길컨관리":
         }, inplace=True)
         df_display.set_index("ID", inplace=True)
 
-        # ✅ 전체 보기 토글 상태 관리
+        # ✅ 토글 상태
         if "show_all_mainmembers" not in st.session_state:
             st.session_state["show_all_mainmembers"] = False
 
         show_all = st.session_state["show_all_mainmembers"]
-        row_limit = None if show_all else 5
-        height_value = None if show_all else 210
 
         # ✅ 토글 버튼
         btn_label = "🔽 전체 보기" if not show_all else "🔼 일부만 보기"
@@ -762,17 +760,20 @@ elif menu == "악마길드 길컨관리":
             st.session_state["show_all_mainmembers"] = not show_all
             st.rerun()
 
+        # ✅ 높이만 조건부로 설정 (행 수 제한 없음!)
+        height_value = None if show_all else 210 
+
         # ✅ 표 표시
         st.markdown("### 📋 악마 길드 길드컨트롤 등록현황 ")
-        display_df_limited = df_display.head(row_limit)
         edited_df = st.data_editor(
-            display_df_limited,
+            df_display,  # 전체 데이터 항상 사용
             use_container_width=True,
             disabled=["닉네임"],
             num_rows="dynamic",
-            height=height_value,
+            height=height_value,  # ✅ 보기 상태에 따라 height만 다르게
             key="main_editor"
         )
+
 
         # ✅ 수정 저장 처리
         column_map = {
