@@ -1323,9 +1323,9 @@ elif menu == "드메템 대여 신청":
         editing_slots = st.session_state.get("edit_drop_slots", []) if editing_id else []
 
         reserved_slots = {
-            slot.strip(): row["borrower"]
+            slot.strip(): row["대여자자"]
             for row in drop_data
-            if selected_dropitem in row.get("dropitem_name", "")
+            if selected_dropitem in row.get("대여 아이템", "")
             and (not editing_id or row["id"] != editing_id)
             for slot in row.get("time_slots", "").split(",")
             if slot.strip()
