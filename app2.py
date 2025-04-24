@@ -1271,7 +1271,7 @@ elif menu == "보조대여 신청":
                             if st.button("✏️ 수정하기", key=f"edit_rental_{row['id']}"):
                                 st.session_state["edit_rental_id"] = row["id"]
                                 st.session_state["edit_time_slots"] = row["time_slots"].split(", ")
-                                st.experimental_rerun()
+                                st.rerun()
                     except Exception as e:
                         st.error(f"시간 파싱 오류: {e}")
 
