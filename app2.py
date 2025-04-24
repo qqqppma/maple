@@ -13,6 +13,7 @@ import json
 import uuid
 from streamlit.components.v1 import html
 from utils.time_grid import generate_slot_table
+from st_aggrid import AgGrid, GridOptionsBuilder
 import bcrypt
 import textwrap
 import codecs
@@ -1030,7 +1031,7 @@ elif menu == "부캐릭터 등록":
     user_subs = df_sub[df_sub["main_name"] == nickname]
 
     if user_subs.empty:
-        st.info("등록된 부캐릭터가 없습니다.")
+        pass
     else:
         # ✅ 닉네임과 길드만 표시하는 표
         display_df = user_subs[["sub_name", "guild_name1"]].rename(columns={
@@ -1235,10 +1236,17 @@ elif menu == "보조대여 신청":
             "weapon_name": "대여 아이템"
         }, inplace=True)
 
-        #✅ HTML 기반 테이블 출력 (줄바꿈 적용)
-        st.markdown("### 📄 보조무기 대여 현황")
-        st.write(df_display[["ID", "대여자", "대여 아이템", "대표소유자", "대여기간"]].to_html(escape=False, index=False), unsafe_allow_html=True)
+        # AgGrid 옵션 설정
+        gb = GridOptionsBuilder.from_dataframe(df_display[["ID", "대여자", "대여 아이템", "대표소유자", "대여기간"]])
+        gb.configure_column("대여기간", wrapText=True, autoHeight=True)  # 줄바꿈 활성화
+        grid_options = gb.build()
 
+        # 출력
+        st.markdown("### 📄 보조무기 대여 현황")
+        AgGrid(df_display[["ID", "대여자", "대여 아이템", "대표소유자", "대여기간"]],
+            gridOptions=grid_options,
+            height=300,
+            theme="streamlit")
         excel_df = df_display[["대여자", "대여 아이템", "대표소유자", "대여기간"]].copy()
         excel_data = convert_df_to_excel(excel_df)
         st.download_button(
