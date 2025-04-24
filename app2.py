@@ -633,8 +633,7 @@ if menu == "악마 길드원 정보 등록":
         st.dataframe(
             df_display[[
                 "ID", "닉네임", "직위", "비고", "길드명"
-            ]].reset_index(drop=True),
-            use_container_width=True
+            ]].reset_index(drop=True)
         )
         # ✅ 다운로드 버튼 추가
         excel_data = convert_df_to_excel(df_display)
