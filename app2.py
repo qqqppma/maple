@@ -1287,162 +1287,167 @@ elif menu == "보조대여 신청":
 
 
 elif menu == "드메템 대여 신청":
-    from datetime import datetime, timedelta, timezone
-
     st.header("\U0001F4FF 드메템 대여 시스템")
     nickname = st.session_state["nickname"]
-    owners = ["자리스틸의왕", "죤냇", "새훨", "나영진", "o차월o"]
+    owners = ["자리스틸의왕", "새훨", "죤냇", "나영진", "o차월o"]
 
+    # 드메템 이미지 폴더 지정
     DROP_IMAGE_FOLDER = "드메템 사진"
+
+    # 드메템 이미지 매핑 (파일명은 세트명 기준으로 미리 저장 필요)
     dropitem_image_map = {
         "보스 드드셋": "보스 드드셋.jpg",
         "사냥 드메셋 I": "사냥 드메셋 I.jpg",
         "사냥 드메셋 II": "사냥 드메셋 II.jpg",
     }
 
+    # 좌 1/3, 우 2/3 비율로 나누기
     col_left, col_right = st.columns([1, 2])
 
     with col_left:
+        st.markdown("#### 👤 대여자 선택")
         nickname_options = get_all_character_names(nickname)
         selected_borrower = st.selectbox("드메템 대여자", nickname_options)
-        selected_dropitem = st.selectbox("드메템 세트", list(dropitem_image_map.keys()))
+
+        item_options = list(dropitem_image_map.keys())
+        selected_item = st.selectbox("대여할 드메템 세트를 선택하세요", item_options)
 
     with col_right:
-        image_path = os.path.join(DROP_IMAGE_FOLDER, dropitem_image_map[selected_dropitem])
-        image_available = os.path.exists(image_path)
-        if image_available:
-            st.image(Image.open(image_path).resize((1000, 500)), caption=selected_dropitem)
-        else:
-            st.warning("⚠️ 드메템 이미지가 없어 대여가 불가능합니다.")
+        selected_image_name = dropitem_image_map.get(selected_item)
+        if selected_image_name:
+            image_path = os.path.join(DROP_IMAGE_FOLDER, selected_image_name)
+            if os.path.exists(image_path):
+                image = Image.open(image_path)
+                w_percent = 1000 / float(image.size[0])  # 이미지 더 크게
+                resized_image = image.resize((1000, int(float(image.size[1]) * w_percent)))
+                st.image(resized_image, caption=f"{selected_item} 이미지")
+            else:
+                st.warning("⚠️ 해당 드메셋 이미지가 존재하지 않습니다.")
+
+    today = date.today()
+    dates = [today + timedelta(days=i) for i in range(7)]
+    date_labels = [d.strftime("%m/%d") for d in dates]
+    day_names = ["월", "화", "수", "목", "금", "토", "일"]
+    weekday_labels = [day_names[d.weekday()] for d in dates]
+    time_slots = ["00:00~24:00"]
 
     drop_data = fetch_dropitem_rentals()
+    filtered_data = [row for row in drop_data if row["dropitem_name"] == selected_item]
 
-    if image_available:
-        editing_id = st.session_state.get("edit_dropitem_id")
-        editing_slots = st.session_state.get("edit_time_slots", []) if editing_id else []
+    reserved_slots = {
+        slot.strip(): row["drop_borrower"]
+        for row in filtered_data
+        for slot in row.get("time_slots", "").split(",")
+        if slot.strip()
+    }
 
-        reserved_slots = {
-            slot.strip(): row["drop_borrower"]
-            for row in drop_data
-            if selected_dropitem in row.get("dropitem_name", "")
-            and (not editing_id or row["id"] != editing_id)
-            for slot in row.get("time_slots", "").split(",")
-            if slot.strip()
-        }
-
-        now = datetime.now(timezone.utc) + timedelta(hours=9)
-        days = [now.date() + timedelta(days=i) for i in range(7)]
-        day_slots = [(day.strftime("%a %m/%d"), day.strftime("%Y-%m-%d")) for day in days]
-
-        st.markdown(f"### ⏰ `{selected_dropitem}` 대여 시간표")
-        cols = st.columns(len(day_slots) + 1)
-        cols[0].markdown("**시간**")
-        cols[0].markdown("00:00~24:00")
-        selection = {}
-
-        for i, (label, slot_time) in enumerate(day_slots):
-            borrower = reserved_slots.get(slot_time)
-            if borrower and (not editing_id or slot_time not in editing_slots):
-                cols[i + 1].checkbox(borrower, value=True, key=slot_time, disabled=True)
+    st.markdown(f"### ⏰ `{selected_item}`")
+    # 📅 날짜/요일 헤더 출력
+    cols = st.columns(len(dates) + 1)
+    cols[0].markdown("#### ")
+    for i, (day, label) in enumerate(zip(weekday_labels, date_labels)):
+        with cols[i + 1]:
+            st.markdown(f"#### {day}", unsafe_allow_html=True)
+            st.markdown(f"{label}")
+    selection = {}
+    for time in time_slots:
+        row = st.columns(len(dates) + 1)
+        row[0].markdown(f"**{time}**")
+        for j, d in enumerate(dates):
+            key = f"{d} {time}"
+            if key in reserved_slots:
+                label = reserved_slots[key]
+                selection[key] = row[j + 1].checkbox(label, value=True, key=key, disabled=True)
             else:
-                default_checked = slot_time in editing_slots
-                selection[slot_time] = cols[i + 1].checkbox("", value=default_checked, key=slot_time)
+                selection[key] = row[j + 1].checkbox("", key=key)
 
-        selected_time_slots = [k for k, v in selection.items() if v]
-        selected_dates = sorted({datetime.strptime(k, "%Y-%m-%d").date() for k in selected_time_slots})
+    selected_time_slots = [k for k, v in selection.items() if v]
+    selected_dates = sorted({datetime.strptime(k.split()[0], "%Y-%m-%d").date() for k in selected_time_slots})
 
-        if editing_id:
-            st.info("✏️ 현재 대여 정보를 수정 중입니다. 원하는 날짜를 다시 선택 후 '수정 완료'를 눌러주세요.")
-
-        if st.button("✏️ 수정 완료" if editing_id else "📥 대여 등록"):
-            if not selected_time_slots:
-                st.warning("❗ 최소 1일 이상을 선택해주세요.")
-            elif len(selected_dates) > 7:
-                st.warning("❗ 대여 기간은 최대 7일까지만 선택할 수 있습니다.")
+    if st.button("📥 대여 등록"):
+        if not selected_time_slots:
+            st.warning("❗ 최소 1개 이상의 날짜를 선택해주세요.")
+        elif len(selected_dates) > 7:
+            st.warning("❗ 대여 기간은 최대 7일까지만 선택할 수 있습니다.")
+        else:
+            rental_data = {
+                "drop_borrower": selected_borrower,
+                "dropitem_name": selected_item,
+                "drop_owner": json.dumps(owners),
+                "time_slots": ", ".join(selected_time_slots)
+            }
+            response = requests.post(
+                f"{SUPABASE_URL}/rest/v1/DropItem_Rentals",
+                headers=HEADERS,
+                json=rental_data
+            )
+            if response.status_code == 201:
+                st.success("✅ 대여 등록이 완료되었습니다!")
+                st.rerun()
             else:
-                rental_data = {
-                    "borrower": selected_borrower,
-                    "dropitem_name": selected_dropitem,
-                    "owner": json.dumps(owners),
-                    "time_slots": ", ".join(selected_time_slots),
-                    "is_edit": editing_id is not None
-                }
+                st.error(f"❌ 등록 실패: {response.status_code}")
+                st.code(response.text)
 
-                if editing_id:
-                    delete_dropitem_rental(editing_id)
-                    del st.session_state["edit_dropitem_id"]
-                    del st.session_state["edit_time_slots"]
 
-                response = requests.post(f"{SUPABASE_URL}/rest/v1/DropItem_Rentals", headers=HEADERS, json=rental_data)
-                if response.status_code == 201:
-                    st.success("✅ 수정이 완료되었습니다!" if editing_id else "✅ 대여 등록이 완료되었습니다!")
-                    st.rerun()
-                else:
-                    st.error(f"❌ 등록 실패: {response.status_code}")
-
+    # 📊 대여 현황 테이블 표시
     if drop_data:
-        filtered = [
-            r for r in drop_data
-            if r.get("dropitem_name") == selected_dropitem and "time_slots" in r
-        ]
+        # ✅ 필터링
+        filtered = [r for r in drop_data if r.get("dropitem_name") == selected_item]
 
-        if filtered:
-            df = pd.DataFrame(filtered).sort_values(by="id").reset_index(drop=True)
-            df["ID"] = df.index + 1
-            df["대여기간"] = df["time_slots"].apply(get_drop_range)
-            df["대표소유자"] = df["drop_owner"].apply(lambda x: json.loads(x)[0] if isinstance(x, str) and x.startswith("[") else x)
-            df.rename(columns={
-                "drop_borrower": "대여자",
-                "dropitem_name": "대여 아이템"
-            }, inplace=True)
+        # ✅ drop_data가 있고, 'dropitem_name' & 'time_slots' 조건을 만족할 때만 필터링
+        if drop_data:
+            filtered = [
+                r for r in drop_data
+                if r.get("dropitem_name") == selected_item and "time_slots" in r
+            ]
 
-            st.markdown("### 📄 드메템 대여 현황")
-            st.dataframe(df[["ID", "대여자", "대여 아이템", "대표소유자", "대여기간"]], use_container_width=True)
+            if filtered:
+                # ✅ 이후 DataFrame 처리
+                df = pd.DataFrame(filtered).sort_values(by="id").reset_index(drop=True)
+                df["ID"] = df.index + 1
 
-            excel_df = df[["대여자", "대여 아이템", "대표소유자", "대여기간"]].copy()
-            excel_data = convert_df_to_excel(excel_df)
-            st.download_button("📥 드메템 대여 현황 다운로드", data=excel_data, file_name="드메템_대여현황.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                def get_drop_range(slots):
+                    try:
+                        times = sorted(set([s.split()[0] for s in slots.split(",")]))
+                        return f"{times[0]} ~ {times[-1]}" if times else ""
+                    except:
+                        return ""
 
-            for _, row in df.iterrows():
-                owners_list = json.loads(row["대표소유자"]) if isinstance(row["대표소유자"], str) and row["대표소유자"].startswith("[") else [row["대표소유자"]]
-                borrower_name = row.get("대여자", "(이름 없음)")
-                if not borrower_name or str(borrower_name).lower() == "nan":
-                    borrower_name = "(이름 없음)"
+                df["대여기간"] = df["time_slots"].apply(get_drop_range)
+                df["대표소유자"] = df["drop_owner"].apply(lambda x: json.loads(x)[0] if isinstance(x, str) and x.startswith("[") else x)
+                df.rename(columns={
+                    "drop_borrower": "대여자",
+                    "dropitem_name": "대여 아이템"
+                }, inplace=True)
 
-                is_owner = nickname in owners_list
-                is_borrower = nickname == borrower_name
+                st.markdown("### 📄 드메템 대여 현황")
+                st.dataframe(df[["ID", "대여자", "대여 아이템", "대표소유자", "대여기간"]], use_container_width=True)
 
-                if is_owner or is_borrower:
-                    with st.expander(f"📦 '{row['대여 아이템']}' - 대여자: {borrower_name}"):
-                        st.markdown(f"**📅 대여기간:** `{get_drop_range(row['time_slots'])}`")
-                        st.markdown(f"**소유자:** `{', '.join(owners_list)}`")
+                # 엑셀용 DataFrame 준비
+                excel_df = df[["대여자", "대여 아이템", "대표소유자", "대여기간"]].copy()
 
-                        if is_owner:
-                            if st.button("🗑 반납 완료", key=f"drop_return_{row['ID']}"):
-                                if delete_dropitem_rental(row["ID"]):
+                # 변환된 데이터로 엑셀 저장
+                excel_data = convert_df_to_excel(excel_df)
+                st.download_button("📥 드메템 대여 현황 다운로드", data=excel_data, file_name="드메템_대여현황.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                # ✅ 반납 처리 UI
+                for _, row in df.iterrows():
+                    owners_list = json.loads(row["drop_owner"]) if isinstance(row["drop_owner"], str) and row["drop_owner"].startswith("[") else [row["drop_owner"]]
+                    borrower_name = row.get("drop_borrower", "(이름 없음)")
+                    if not borrower_name or str(borrower_name).lower() == "nan":
+                        borrower_name = "(이름 없음)"
+
+                    if nickname in owners_list:
+                        with st.expander(f"\U0001F4FF '{row['대여 아이템']}' - 대여자: {borrower_name}"):
+                            st.markdown(f"**📅 대여기간:** `{row['time_slots']}`")
+                            st.markdown(f"**소유자:** `{', '.join(owners_list)}`")
+                            if st.button("🗑 반납 완료", key=f"drop_return_{row['id']}"):
+                                if delete_dropitem_rental(row["id"]):
                                     st.success("✅ 반납 완료되었습니다!")
                                     st.rerun()
                                 else:
                                     st.error("❌ 반납 실패! 다시 시도해주세요.")
-
-                        if is_borrower:
-                            try:
-                                slot_times = [
-                                    datetime.strptime(t.strip(), "%Y-%m-%d").replace(tzinfo=timezone(timedelta(hours=9)))
-                                    for t in row["time_slots"].split(",") if t.strip()
-                                ]
-                                earliest_time = min(slot_times)
-                                now = datetime.now(timezone.utc) + timedelta(hours=9)
-
-                                if now < earliest_time:
-                                    if st.button("✏️ 수정하기", key=f"edit_drop_{row['ID']}"):
-                                        st.session_state["edit_dropitem_id"] = row["ID"]
-                                        st.session_state["edit_time_slots"] = row["time_slots"].split(", ")
-                                        st.rerun()
-                                else:
-                                    st.caption("⏰ 이미 시작된 대여로 수정할 수 없습니다.")
-                            except Exception as e:
-                                st.error(f"시간 파싱 오류: {e}")
+            else:
+                pass
 
 elif menu == "캐릭터 정보 검색":
     show_character_viewer()
