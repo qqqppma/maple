@@ -7,7 +7,7 @@ import urllib.parse
 import io
 import os
 from PIL import Image
-from datetime import date, timedelta
+from datetime import date, timezone, timedelta
 from supabase import create_client, Client
 import json
 import uuid
@@ -1277,7 +1277,7 @@ elif menu == "보조대여 신청":
                         try:
                             slot_times = [datetime.strptime(t.strip(), "%Y-%m-%d %H:%M") for t in row["time_slots"].split(",") if t.strip()]
                             earliest_time = min(slot_times)
-                            now = datetime.now()
+                            now = datetime.now(timezone.utc) + timedelta(hours=9)
                             if now < earliest_time:
                                 if st.button("✏️ 수정하기", key=f"edit_rental_{row['id']}"):
                                     st.session_state["edit_rental_id"] = row["id"]
