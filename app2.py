@@ -1290,13 +1290,16 @@ elif menu == "보조대여 신청":
                                 datetime.strptime(t.strip(), "%Y-%m-%d %H:%M").replace(tzinfo=timezone(timedelta(hours=9)))
                                 for t in row["time_slots"].split(",") if t.strip()
                             ]
-                            editable = any(now < t for t in slot_times)
+                            earliest_time = min(slot_times)
+                            now = datetime.now(timezone.utc) + timedelta(hours=9)
 
-                            if editable:
+                            if now < earliest_time:
                                 if st.button("✏️ 수정하기", key=f"edit_rental_{row['id']}"):
                                     st.session_state["edit_rental_id"] = row["id"]
                                     st.session_state["edit_time_slots"] = row["time_slots"].split(", ")
                                     st.rerun()
+                            else:
+                                st.caption("⏰ 이미 시작된 대여로 수정할 수 없습니다.")
                         except Exception as e:
                             st.error(f"시간 파싱 오류: {e}")
 
@@ -1477,14 +1480,17 @@ elif menu == "드메템 대여 신청":
                                     for t in row["time_slots"].split(",") if t.strip()
                                 ]
                                 earliest_time = min(slot_times)
-                                if now_kst < earliest_time:
+                                now = datetime.now(timezone.utc) + timedelta(hours=9)
+
+                                if now < earliest_time:
                                     if st.button("✏️ 수정하기", key=f"edit_drop_{row['id']}"):
                                         st.session_state["edit_dropitem_id"] = row["id"]
                                         st.session_state["edit_time_slots"] = row["time_slots"].split(", ")
                                         st.rerun()
+                                else:
+                                    st.caption("⏰ 이미 시작된 대여로 수정할 수 없습니다.")
                             except Exception as e:
                                 st.error(f"시간 파싱 오류: {e}")
-
 
 elif menu == "캐릭터 정보 검색":
     show_character_viewer()
