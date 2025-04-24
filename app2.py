@@ -193,25 +193,34 @@ def get_drop_range(slots):
         return ""
 
 #✅ 보조무기 대여 계산함수
-def get_weapon_range(slots):
-    try:
-        from datetime import datetime
-
-        # 빈값 방지
-        slot_list = [s.strip() for s in slots.split(",") if s.strip()]
-        if not slot_list:
-            return ""
-
-        # 시작 시간 기준으로 정렬
-        sorted_slots = sorted(
-            slot_list,
-            key=lambda x: datetime.strptime(x.split("~")[0], "%Y-%m-%d %H:%M")
-        )
-
-        # 가장 처음과 마지막만 반환
-        return f"{sorted_slots[0]} ~ {sorted_slots[-1]}"
-    except Exception:
+def get_weapon_range(time_slots_str):
+    if not time_slots_str:
         return ""
+
+    slots = sorted([
+        datetime.strptime(s.strip(), "%Y-%m-%d %H:%M")
+        for s in time_slots_str.split(",")
+        if s.strip()
+    ])
+
+    if not slots:
+        return ""
+
+    result = []
+    start = slots[0]
+    prev = slots[0]
+
+    for current in slots[1:]:
+        # 2시간 단위라면 2시간 간격 유지 확인
+        if current - prev != timedelta(hours=2):
+            result.append(f"{start.strftime('%Y-%m-%d %H:%M')} ~ {prev + timedelta(hours=2):%Y-%m-%d %H:%M}")
+            start = current
+        prev = current
+
+    # 마지막 구간 추가
+    result.append(f"{start.strftime('%Y-%m-%d %H:%M')} ~ {prev + timedelta(hours=2):%Y-%m-%d %H:%M}")
+
+    return "\n".join(result)
     
 # ✅ 데이터 수정
 def update_dropitem_rental(row_id, data):
