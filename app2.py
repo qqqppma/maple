@@ -754,7 +754,7 @@ elif menu == "악마길드 길컨관리":
 
         show_all = st.session_state["show_all_mainmembers"]
         row_limit = None if show_all else 5
-        height_value = None if show_all else 400
+        height_value = None if show_all else 210
 
         # ✅ 토글 버튼
         btn_label = "🔽 전체 보기" if not show_all else "🔼 일부만 보기"
