@@ -674,7 +674,6 @@ if menu == "악마 길드원 정보 등록":
         nickname_input = st.text_input("닉네임")
         position_input = st.text_input("직위")
         note = st.text_input("비고")
-        guild_name = st.text_input("길드명")
 
         submitted = st.form_submit_button("등록")
         if submitted:
@@ -685,7 +684,6 @@ if menu == "악마 길드원 정보 등록":
                     "nickname": nickname_input,
                     "position": position_input,
                     "note": note,
-                    "guild_name": guild_name,
                 }
                 if insert_member(data):
                     st.success("✅ 길드원이 등록되었습니다!")
