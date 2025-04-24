@@ -741,6 +741,18 @@ elif menu == "악마길드 길컨관리":
         editable_cols = ["position", "suro_score", "flag_score", "mission_point", "event_sum"]
         df_editable = df_main[["ID", "nickname"] + editable_cols].copy()
         df_editable.set_index("ID", inplace=True)  # 보여지는 인덱스만 표시용 ID
+        df_display = df_main[["ID", "nickname"] + editable_cols].copy()
+        df_display.set_index("ID", inplace=True)
+
+        # ✅ 컬럼명 한글로 변경
+        df_display.rename(columns={
+            "nickname": "닉네임",
+            "position": "직위",
+            "suro_score": "수로 점수",
+            "flag_score": "플래그 점수",
+            "mission_point": "주간미션포인트",
+            "event_sum": "합계"
+        }, inplace=True)
 
         st.markdown("### 📋 악마 길드 길드컨트롤 등록현황 ")
         edited_df = st.data_editor(
