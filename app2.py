@@ -826,6 +826,9 @@ elif menu == "부캐릭터 관리":
         selected_main = st.selectbox("본캐 닉네임 선택", main_names)
         guild_name1 = st.selectbox("길드 이름", guild_options)
         sub_name = st.text_input("부캐 이름")
+        # 선택된 본캐 기준으로 등록된 부캐 가져오기
+        # linked_subs = df_sub[df_sub["main_name"] == selected_main]["sub_name"].tolist()
+        # sub_name = st.selectbox("부캐 이름 선택", linked_subs) if linked_subs else st.warning("⚠️ 선택한 본캐에 등록된 부캐가 없습니다.")
         suro_score = st.number_input("수로 점수", min_value=0, step=1)
         flag_score = st.number_input("플래그 점수", min_value=0, step=1)
         mission_point = st.number_input("주간미션포인트", min_value=0, step=1)
@@ -989,6 +992,32 @@ elif menu == "부캐릭터 등록":
                     st.rerun()
                 else:
                     st.error("❌ 등록 실패")
+
+    #수정 칸
+    st.markdown("---")
+    st.subheader("✏️ 등록된 부캐릭터 정보 수정")
+
+    submembers = get_submembers()
+    df_sub = pd.DataFrame(submembers)
+    user_subs = df_sub[df_sub["main_name"] == nickname]
+
+    if user_subs.empty:
+        st.info("등록된 부캐릭터가 없습니다.")
+    else:
+        sub_names = user_subs["sub_name"].tolist()
+        selected_sub = st.selectbox("수정할 부캐 선택", sub_names)
+
+        sub_row = user_subs[user_subs["sub_name"] == selected_sub].iloc[0]
+        sub_id = sub_row["sub_id"]
+
+        # 수정 입력창
+        new_sub_name = st.text_input("부캐 이름", value=sub_row["sub_name"], key="edit_subname")
+        new_guild_name = st.selectbox(
+            "부캐 길드 선택",
+            guild_options,
+            index=guild_options.index(sub_row.get("guild_name1", guild_options[0])) if sub_row.get("guild_name1") in guild_options else 0,
+            key="edit_guildname")
+
     st.warning("⚠️ 허위정보 등록 적발 시 이용이 제한됩니다.")
     st.markdown("### ❗ 필독 ❗")
     st.info(''' 
