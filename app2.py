@@ -610,7 +610,7 @@ menu = st.sidebar.radio("메뉴", menu_options)
 
 
 if menu == "악마 길드원 정보 등록":
-    st.subheader("👥 길드원 정보 등록")
+    st.subheader("👥 길드원 정보")
     members = get_members()
     df = pd.DataFrame(members)
     if not df.empty:
