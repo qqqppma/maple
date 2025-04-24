@@ -1211,7 +1211,7 @@ elif menu == "보조대여 신청":
 
                 response = requests.post(f"{SUPABASE_URL}/rest/v1/Weapon_Rentals", headers=HEADERS, json=rental_data)
                 if response.status_code == 201:
-                    msg = "✅ 연장이 완료되었습니다!" if editing_id else "✅ 대여 등록이 완료되었습니다!"
+                    msg = "✅ 수정이 완료되었습니다!" if editing_id else "✅ 대여 등록이 완료되었습니다!"
                     st.success(msg)
                     st.rerun()
                 else:
