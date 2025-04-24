@@ -739,7 +739,7 @@ elif menu == "악마길드 길컨관리":
 
         # ✅ 수정 가능한 컬럼 설정
         editable_cols = ["직위", "수로 점수", "플래그 점수", "주간미션포인트", "합계"]
-        df_editable = df_main[["ID", "nickname"] + editable_cols].copy()
+        df_editable = df_main[["ID", "닉네임"] + editable_cols].copy()
         df_editable.set_index("ID", inplace=True)  # 보여지는 인덱스만 표시용 ID
 
         # ✅ 한글 컬럼 변환
