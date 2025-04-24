@@ -1017,6 +1017,17 @@ elif menu == "부캐릭터 등록":
             guild_options,
             index=guild_options.index(sub_row.get("guild_name1", guild_options[0])) if sub_row.get("guild_name1") in guild_options else 0,
             key="edit_guildname")
+         # ✅ 수정 완료 버튼 추가
+        if st.button("✅ 수정하기", key="edit_sub_submit"):
+            update_data = {
+                "sub_name": new_sub_name,
+                "guild_name1": new_guild_name
+            }
+            if update_submember(sub_id, update_data):
+                st.success("✅ 부캐릭터 정보가 수정되었습니다.")
+                st.rerun()
+            else:
+                st.error("❌ 수정 실패")
 
     st.warning("⚠️ 허위정보 등록 적발 시 이용이 제한됩니다.")
     st.markdown("### ❗ 필독 ❗")
