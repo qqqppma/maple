@@ -1014,9 +1014,7 @@ elif menu == "부캐릭터 등록":
         st.markdown("### 📋 현재 등록된 내 부캐 목록")
         st.dataframe(display_df, use_container_width=True)
 
-    submembers = get_submembers()
-    df_sub = pd.DataFrame(submembers)
-    user_subs = df_sub[df_sub["main_name"] == nickname]
+    
 
     if user_subs.empty:
         st.info("등록된 부캐릭터가 없습니다.")
