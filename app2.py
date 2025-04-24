@@ -727,6 +727,8 @@ elif menu == "악마길드 길컨관리":
 
         # ✅ 표시용 ID 컬럼 추가
         df_main["ID"] = df_main.index + 1
+        # Supabase 업데이트용 id 따로 저장
+        id_map = df_main.set_index("ID")["id"].to_dict()
 
         # ✅ 수정 가능한 컬럼 설정
         editable_cols = ["position", "suro_score", "flag_score", "mission_point", "event_sum"]
@@ -743,8 +745,8 @@ elif menu == "악마길드 길컨관리":
         )
 
         if st.button("💾 수정 내용 저장"):
-            for _, row in edited_df.iterrows():
-                row_id = row["id"]  # 실제 Supabase의 id
+            for idx, row in edited_df.iterrows():
+                row_id = id_map.get(idx)  # 표시용 ID → 실제 Supabase id
                 updated = row[editable_cols].to_dict()
                 original = df_main[df_main["id"] == row_id][editable_cols].iloc[0]
 
