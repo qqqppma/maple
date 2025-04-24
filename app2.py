@@ -1152,6 +1152,19 @@ elif menu == "보조대여 신청":
                     selection[slot_time] = row_cols[j + 1].checkbox(
                         "", value=day_selected[j], key=slot_key
                     )
+        if st.button("✏️ 등록 시간 수정"):
+            user_rental = supabase.table("Weapon_Rentals").select("*").eq("borrower", nickname).execute().data
+            if user_rental:
+                rental = user_rental[0]
+                rental_id = rental["id"]
+                original_slots = rental["time_slots"].split(", ")
+                start_time = datetime.strptime(original_slots[0], "%Y-%m-%d %H:%M")
+
+                if datetime.now() < start_time:
+                    st.success("📝 수정 모드가 활성화되었습니다.")
+                    st.session_state["edit_mode"] = True
+                else:
+                    st.warning("❌ 대여 시작 시간이 이미 지났습니다. 수정할 수 없습니다.")
 
         selected_time_slots = [k for k, v in selection.items() if v]
         selected_dates = sorted({datetime.strptime(k.split()[0], "%Y-%m-%d").date() for k in selected_time_slots})
