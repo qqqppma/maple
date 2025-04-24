@@ -1200,7 +1200,8 @@ elif menu == "보조대여 신청":
                     "borrower": selected_borrower,
                     "weapon_name": weapon_name,
                     "owner": json.dumps(owner),
-                    "time_slots": ", ".join(selected_time_slots)
+                    "time_slots": ", ".join(selected_time_slots),
+                    "is_edit": editing_id is not None
                 }
 
                 if editing_id:

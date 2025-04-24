@@ -98,7 +98,11 @@ async def polling_loop():
                 new_ids = current_weapon_ids - last_weapon_ids
                 for new_id in new_ids:
                     data = current_weapon_data[new_id]
-                    msg = f"{get_mentions(MENTION_USERS_WEAPON)} 📥 `{data['borrower']}`님이 `{data['weapon_name']}` 을 대여 요청하였습니다."
+                    if data.get("is_edit"):
+                        msg = f"📌 `{data['borrower']}`님이 신청한 `{data['weapon_name']}` 대여 정보가 수정되었습니다."
+                    else:
+                        msg = f"{get_mentions(MENTION_USERS_WEAPON)} 📥 `{data['borrower']}`님이 `{data['weapon_name']}` 을 대여 요청하였습니다."
+
                     await weapon_channel.send(msg)
                     print(f"[Weapon 등록] {msg}")
 
