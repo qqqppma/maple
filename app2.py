@@ -672,6 +672,13 @@ if menu == "악마 길드원 정보 등록":
                         "note": note_edit
                     }
                     if update_member(selected_row["id"], updated_data):
+                        # ✅ MainMembers에도 닉네임 업데이트
+                        old_nickname = selected_row["nickname"]
+                        new_nickname = nickname_edit.strip()
+                        if old_nickname != new_nickname:
+                            supabase.table("MainMembers").update({"nickname": new_nickname}) \
+                                .eq("nickname", old_nickname).execute()
+
                         st.success("수정 완료!")
                         st.rerun()
                     else:
