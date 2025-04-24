@@ -718,37 +718,42 @@ elif menu == "악마길드 길컨관리":
 
     if mainmembers:
         df_main = pd.DataFrame(mainmembers)
+
+        # ✅ 정렬
         df_main = df_main.sort_values(
             by=["position", "nickname"],
             key=lambda x: x.map(get_position_priority) if x.name == "position" else x.map(korean_first_sort)
         ).reset_index(drop=True)
 
+        # ✅ 표시용 ID 컬럼 추가
+        df_main["표시용ID"] = df_main.index + 1
+
+        # ✅ 수정 가능한 컬럼 설정
         editable_cols = ["position", "suro_score", "flag_score", "mission_point", "event_sum"]
-        df_editable = df_main[["id", "nickname"] + editable_cols].copy()
-        df_editable.set_index("id", inplace=True)
+        df_editable = df_main[["표시용ID", "id", "nickname"] + editable_cols].copy()
+        df_editable.set_index("표시용ID", inplace=True)  # 보여지는 인덱스만 표시용 ID
 
         st.markdown("### 📋 현재 등록된 메인 캐릭터 (표에서 직접 수정 가능)")
         edited_df = st.data_editor(
             df_editable,
             use_container_width=True,
-            disabled=["nickname"],  # 닉네임은 고정
+            disabled=["nickname"],
             num_rows="dynamic",
             key="main_editor"
         )
 
         if st.button("💾 수정 내용 저장"):
-            for row_id in edited_df.index:
-                old = df_editable.loc[row_id]
-                new = edited_df.loc[row_id]
+            for _, row in edited_df.iterrows():
+                row_id = row["id"]  # 실제 Supabase의 id
+                updated = row[editable_cols].to_dict()
+                original = df_main[df_main["id"] == row_id][editable_cols].iloc[0]
 
-                if not old.equals(new):
-                    patch_data = new.to_dict()
-                    if update_mainember(row_id, patch_data):
-                        st.success(f"✅ `{old['nickname']}` 수정 완료")
+                if not original.equals(pd.Series(updated)):
+                    if update_mainember(row_id, updated):
+                        st.success(f"✅ `{row['nickname']}` 수정 완료")
                     else:
-                        st.error(f"❌ `{old['nickname']}` 수정 실패")
+                        st.error(f"❌ `{row['nickname']}` 수정 실패")
             st.rerun()
-
 
     with st.form("main_member_add_form"):
         st.markdown("### ➕ 메인 캐릭터 등록")
