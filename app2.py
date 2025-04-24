@@ -1078,21 +1078,22 @@ elif menu == "부캐릭터 등록":
 elif menu == "보조대여 신청":
     from utils.time_grid import generate_slot_table  # 꼭 맨 위에서 import!
 
-    st.header("\U0001F6E1️ 보조무기 대여 시스템")
+    st.header("🛡️ 보조무기 대여 시스템")
     nickname = st.session_state["nickname"]
     owner = ["자리스틸의왕", "죤냇", "새훨", "나영진", "o차월o"]
 
     IMAGE_FOLDER = "보조무기 사진"
     CYGNUS_SHARED = ["나이트워커", "스트라이커", "플레임위자드", "윈드브레이커", "소울마스터"]
     job_data = {
-    "전사": ["히어로", "팔라딘", "다크나이트", "소울마스터", "미하일", "아란", "카이저", "제로", "아델"],
-    "궁수": ["보우마스터", "신궁", "패스파인더", "윈드브레이커", "메르세데스", "와일드헌터"],
-    "법사": ["아크메이지(썬콜)", "아크메이지(불독)", "비숍", "플레임위자드", "에반", "루미너스", "배틀메이지", "키네시스", "일리움"],
-    "도적": ["나이트로드", "새도어", "듀얼블레이드", "나이트워커", "팬텀", "카데나", "호영"],
-    "해적": ["바이퍼", "캐논슈터", "스트라이커", "메카닉", "엔젤릭버스터"],
-    "특수직업": ["데몬어벤져", "제논"]
+        "전사": ["히어로", "팔라딘", "다크나이트", "소울마스터", "미하일", "아란", "카이저", "제로", "아델"],
+        "궁수": ["보우마스터", "신궁", "패스파인더", "윈드브레이커", "메르세데스", "와일드헌터"],
+        "법사": ["아크메이지(썬콜)", "아크메이지(불독)", "비숍", "플레임위자드", "에반", "루미너스", "배틀메이지", "키네시스", "일리움"],
+        "도적": ["나이트로드", "새도어", "듀얼블레이드", "나이트워커", "팬텀", "카데나", "호영"],
+        "해적": ["바이퍼", "캐논슈터", "스트라이커", "메카닉", "엔젤릭버스터"],
+        "특수직업": ["데몬어벤져", "제논"]
     }
 
+    # 좌측: 닉네임, 직업 선택
     col_left, col_right = st.columns([1, 2])
     with col_left:
         nickname_options = get_all_character_names(nickname)
@@ -1100,9 +1101,10 @@ elif menu == "보조대여 신청":
         job_group = st.selectbox("🧩 직업군을 선택하세요", list(job_data.keys()))
         selected_job = st.selectbox("🔍 직업을 선택하세요", job_data[job_group])
 
+    # 우측: 보조무기 이미지 출력
     with col_right:
         image_path = os.path.join(IMAGE_FOLDER, "시그너스보조.jpg") if selected_job in CYGNUS_SHARED \
-                    else os.path.join(IMAGE_FOLDER, f"{selected_job}보조.jpg")
+            else os.path.join(IMAGE_FOLDER, f"{selected_job}보조.jpg")
         image_available = os.path.exists(image_path)
         if image_available:
             st.image(Image.open(image_path).resize((1000, 500)), caption=f"{selected_job}의 보조무기")
@@ -1112,6 +1114,10 @@ elif menu == "보조대여 신청":
     weapon_data = fetch_weapon_rentals()
 
     if image_available:
+        # 수정 모드 여부
+        editing_id = st.session_state.get("edit_rental_id")
+        editing_slots = st.session_state.get("edit_time_slots", []) if editing_id else []
+
         reserved_slots = {
             slot.strip(): row["borrower"]
             for row in weapon_data
@@ -1121,29 +1127,24 @@ elif menu == "보조대여 신청":
         }
 
         st.markdown(f"### ⏰ `{selected_job}` 시간표")
-        time_slot_grid, _ = generate_slot_table()
-
-        # ✅ 시간표 생성 + 전체 선택 포함
         time_slot_grid, days = generate_slot_table()
         weekday_labels = ["월", "화", "수", "목", "금", "토", "일"]
-
-        # ✅ 열 구성 (시간 + 요일 7개)
         cols = st.columns(len(days) + 1)
 
-        # ✅ 요일 헤더 + 전체 선택 체크박스
+        # 요일 헤더 + 전체선택 체크박스
         cols[0].markdown("**시간**")
         day_selected = {}
         for i, day in enumerate(days):
             label = f"{weekday_labels[day.weekday()]}<br>{day.strftime('%m/%d')}"
             date_str = str(day)
 
-            # 해당 날짜에 가능한 슬롯이 1개라도 있는지 체크
+            # 선택 가능한 슬롯이 하나라도 있는지 확인
             available = False
             for time_label, row in time_slot_grid.items():
                 for slot_time, _ in row:
                     if date_str in slot_time:
                         borrower = reserved_slots.get(slot_time)
-                        if not borrower or borrower == nickname:  # 빈 칸이거나 본인이면 선택 가능
+                        if not borrower or borrower == nickname:
                             available = True
                             break
                 if available:
@@ -1151,31 +1152,31 @@ elif menu == "보조대여 신청":
 
             with cols[i + 1]:
                 st.markdown(label, unsafe_allow_html=True)
-                day_selected[i] = st.checkbox(
-                    "전체",
-                    key=f"day_select_{i}",
-                    disabled=not available  # 예약 가능한 칸이 하나도 없으면 비활성화
-                )
+                day_selected[i] = st.checkbox("전체", key=f"day_select_{i}", disabled=not available)
 
-        # ✅ 시간표 행 렌더링
+        # 시간표 렌더링
         selection = {}
         for time_label, row in time_slot_grid.items():
             row_cols = st.columns(len(row) + 1)
             row_cols[0].markdown(f"**{time_label}**")
             for j, (slot_time, slot_key) in enumerate(row):
                 borrower = reserved_slots.get(slot_time)
-                if borrower:
+                default_checked = slot_time in editing_slots
+                if borrower and borrower != nickname:
                     row_cols[j + 1].checkbox(borrower, value=True, key=slot_key, disabled=True)
                 else:
                     selection[slot_time] = row_cols[j + 1].checkbox(
-                        "", value=day_selected[j], key=slot_key
+                        "", value=default_checked or day_selected[j], key=slot_key
                     )
-    
 
         selected_time_slots = [k for k, v in selection.items() if v]
         selected_dates = sorted({datetime.strptime(k.split()[0], "%Y-%m-%d").date() for k in selected_time_slots})
 
-        if st.button("📥 대여 등록"):
+        if editing_id:
+            st.info("✏️ 현재 대여 정보를 수정 중입니다. 원하는 시간대를 다시 선택 후 '수정 완료'를 눌러주세요.")
+
+        button_label = "✏️ 수정 완료" if editing_id else "📥 대여 등록"
+        if st.button(button_label):
             if not selected_time_slots:
                 st.warning("❗ 최소 1개 이상의 시간을 선택해주세요.")
             elif len(selected_dates) > 7:
@@ -1188,13 +1189,24 @@ elif menu == "보조대여 신청":
                     "owner": json.dumps(owner),
                     "time_slots": ", ".join(selected_time_slots)
                 }
-                response = requests.post(f"{SUPABASE_URL}/rest/v1/Weapon_Rentals", headers=HEADERS, json=rental_data)
+
+                # 수정이면 기존 삭제
+                if editing_id:
+                    delete_weapon_rental(editing_id)
+                    del st.session_state["edit_rental_id"]
+                    del st.session_state["edit_time_slots"]
+
+                response = requests.post(
+                    f"{SUPABASE_URL}/rest/v1/Weapon_Rentals",
+                    headers=HEADERS,
+                    json=rental_data
+                )
                 if response.status_code == 201:
-                    st.success("✅ 대여 등록이 완료되었습니다!")
+                    msg = "✅ 연장이 완료되었습니다!" if editing_id else "✅ 대여 등록이 완료되었습니다!"
+                    st.success(msg)
                     st.rerun()
                 else:
                     st.error(f"❌ 등록 실패: {response.status_code}")
-
         
 
    # 1. 무기 대여 데이터 가져오기
