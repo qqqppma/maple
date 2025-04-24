@@ -730,8 +730,8 @@ elif menu == "악마길드 길컨관리":
 
         # ✅ 수정 가능한 컬럼 설정
         editable_cols = ["position", "suro_score", "flag_score", "mission_point", "event_sum"]
-        df_editable = df_main[["표시용ID", "id", "nickname"] + editable_cols].copy()
-        df_editable.set_index("표시용ID", inplace=True)  # 보여지는 인덱스만 표시용 ID
+        df_editable = df_main[["ID", "nickname"] + editable_cols].copy()
+        df_editable.set_index("ID", inplace=True)  # 보여지는 인덱스만 표시용 ID
 
         st.markdown("### 📋 현재 등록된 메인 캐릭터 (표에서 직접 수정 가능)")
         edited_df = st.data_editor(
