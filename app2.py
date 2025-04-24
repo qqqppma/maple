@@ -30,6 +30,7 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 
 ADMIN_USERS = ["자리스틸의왕", "나영진", "죤냇", "o차월o"]
+guild_options = ["악질", "악먀"]  # 혹은 DB나 리스트에서 불러오기
 
 # ✅ 모든 캐릭터 닉네임 불러오기 함수 (Main + Sub)
 def get_all_character_names(nickname):
@@ -916,7 +917,12 @@ elif menu == "부캐릭터 관리":
                         sub = sub_row["sub_id"]
 
                         # 🔽 이 아래부터는 수정 입력 영역
-                        new_guild_name = st.text_input("부캐 길드", value=sub_row.get("guild_name1", ""), key=f"guild_{sub}")
+                        new_guild_name = st.selectbox(
+                            "부캐 길드",
+                            options=guild_options,
+                            index=guild_options.index(sub_row.get("guild_name1", "길드A")) if sub_row.get("guild_name1", "길드A") in guild_options else 0,
+                            key=f"guild_{sub}"
+                        )
                         new_suro_score = st.number_input("수로 점수", min_value=0, step=1, value=sub_row.get("suro_score", 0), key=f"suro_score_{sub}")
                         new_flag_score = st.number_input("플래그 점수", min_value=0, step=1, value=sub_row.get("flag_score", 0), key=f"flag_score_{sub}")
                         new_mission = st.number_input("주간미션포인트", min_value=0, step=1, value=sub_row.get("mission_point", 0), key=f"mission_{sub}")
