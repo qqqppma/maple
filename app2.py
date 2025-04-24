@@ -754,6 +754,20 @@ elif menu == "악마길드 길컨관리":
             "event_sum": "합계"
         }, inplace=True)
 
+        # ✅ 세션 상태 초기화
+        if "show_all_mainmembers" not in st.session_state:
+            st.session_state["show_all_mainmembers"] = False
+
+        # ✅ 표시할 행 수 설정
+        row_limit = None if st.session_state["show_all_mainmembers"] else 5
+        display_df_limited = df_display.head(row_limit)  # 제한 적용
+
+        # ✅ 토글 버튼
+        btn_label = "🔽 전체 보기" if not st.session_state["show_all_mainmembers"] else "🔼 일부만 보기"
+        if st.button(btn_label, key="toggle_mainmember_display"):
+            st.session_state["show_all_mainmembers"] = not st.session_state["show_all_mainmembers"]
+            st.rerun()  # 즉시 반영
+
         st.markdown("### 📋 악마 길드 길드컨트롤 등록현황 ")
         edited_df = st.data_editor(
             df_display,
