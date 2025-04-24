@@ -670,6 +670,7 @@ if menu == "악마 길드원 정보 등록":
     else:
         st.info("아직 등록된 길드원이 없습니다.")
 
+    st.subheader("길드원 정보 등록")
     with st.form("add_member_form"):
         nickname_input = st.text_input("닉네임")
         position_input = st.text_input("직위")
