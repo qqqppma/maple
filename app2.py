@@ -1268,13 +1268,16 @@ elif menu == "보조대여 신청":
 
                     if is_borrower:
                         try:
+                            KST = timezone(timedelta(hours=9))
+                            now = datetime.now(KST)
                             slot_times = [
-                                datetime.strptime(t.strip(), "%Y-%m-%d %H:%M")  # KST 기준 문자열 그대로 저장했다면
+                                datetime.strptime(t.strip(), "%Y-%m-%d %H:%M").replace(tzinfo=KST)
                                 for t in row["time_slots"].split(",") if t.strip()
                             ]
 
                             earliest_time = min(slot_times)
-                            now = datetime.now(timezone.utc) + timedelta(hours=9)
+                            
+
 
                             if now < earliest_time:
                                 if st.button("✏️ 수정하기", key=f"edit_rental_{row['id']}"):
