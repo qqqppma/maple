@@ -738,7 +738,7 @@ elif menu == "악마길드 길컨관리":
         id_map = df_main.set_index("ID")["id"].to_dict()
 
         # ✅ 수정 가능한 컬럼 설정
-        editable_cols = ["position", "suro_score", "flag_score", "mission_point", "event_sum"]
+        editable_cols = ["직위", "수로 점수", "플래그 점수", "주간미션포인트", "합계"]
         df_editable = df_main[["ID", "nickname"] + editable_cols].copy()
         df_editable.set_index("ID", inplace=True)  # 보여지는 인덱스만 표시용 ID
 
