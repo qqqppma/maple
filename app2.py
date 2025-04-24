@@ -1138,13 +1138,14 @@ elif menu == "보조대여 신청":
             label = f"{weekday_labels[day.weekday()]}<br>{day.strftime('%m/%d')}"
             date_str = str(day)
 
-            # 선택 가능한 슬롯이 하나라도 있는지 확인
+            # 대여 가능한 슬롯이 하나라도 있는지 확인
             available = False
+
             for time_label, row in time_slot_grid.items():
                 for slot_time, _ in row:
                     if date_str in slot_time:
-                        borrower = reserved_slots.get(slot_time)
-                        if not borrower or borrower == nickname:
+                        # ✅ 대여 기록이 없거나 빈 슬롯이면 선택 가능
+                        if not reserved_slots or reserved_slots.get(slot_time) is None or reserved_slots.get(slot_time) == nickname:
                             available = True
                             break
                 if available:
