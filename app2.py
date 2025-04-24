@@ -1226,7 +1226,7 @@ elif menu == "보조대여 신청":
         df = pd.DataFrame(filtered).sort_values(by="id").reset_index(drop=True)
         df_display = df.copy()
         df_display["ID"] = df_display.index + 1
-        df_display["대여기간"] = df_display["time_slots"].apply(lambda x: get_weapon_range(x).replace("\n", "<br>"))
+        df_display["대여기간"] = df_display["time_slots"].apply(get_weapon_range)
         df_display["대표소유자"] = df_display["owner"].apply(
             lambda x: json.loads(x)[0] if isinstance(x, str) and x.startswith("[") else x
         )
