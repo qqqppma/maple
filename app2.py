@@ -726,7 +726,7 @@ elif menu == "악마길드 길컨관리":
         ).reset_index(drop=True)
 
         # ✅ 표시용 ID 컬럼 추가
-        df_main["표시용ID"] = df_main.index + 1
+        df_main["ID"] = df_main.index + 1
 
         # ✅ 수정 가능한 컬럼 설정
         editable_cols = ["position", "suro_score", "flag_score", "mission_point", "event_sum"]
