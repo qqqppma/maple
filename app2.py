@@ -1269,9 +1269,10 @@ elif menu == "보조대여 신청":
                     if is_borrower:
                         try:
                             slot_times = [
-                                datetime.strptime(t.strip(), "%Y-%m-%d %H:%M").replace(tzinfo=timezone(timedelta(hours=9)))
+                                datetime.strptime(t.strip(), "%Y-%m-%d %H:%M") + timedelta(hours=9)
                                 for t in row["time_slots"].split(",") if t.strip()
                             ]
+
                             earliest_time = min(slot_times)
                             now = datetime.now(timezone.utc) + timedelta(hours=9)
 
