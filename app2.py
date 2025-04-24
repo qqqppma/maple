@@ -1330,7 +1330,6 @@ elif menu == "드메템 대여 신청":
             if slot.strip()
         }
 
-        # 날짜 생성
         now = datetime.now(timezone.utc) + timedelta(hours=9)
         days = [now.date() + timedelta(days=i) for i in range(7)]
         day_slots = [(day.strftime("%a %m/%d"), day.strftime("%Y-%m-%d")) for day in days]
@@ -1381,8 +1380,6 @@ elif menu == "드메템 대여 신청":
                 else:
                     st.error(f"❌ 등록 실패: {response.status_code}")
 
-
-    # 📊 대여 현황 테이블 표시
     if drop_data:
         filtered = [
             r for r in drop_data
@@ -1392,7 +1389,6 @@ elif menu == "드메템 대여 신청":
         if filtered:
             df = pd.DataFrame(filtered).sort_values(by="id").reset_index(drop=True)
             df["ID"] = df.index + 1
-
             df["대여기간"] = df["time_slots"].apply(get_drop_range)
             df["대표소유자"] = df["drop_owner"].apply(lambda x: json.loads(x)[0] if isinstance(x, str) and x.startswith("[") else x)
             df.rename(columns={
@@ -1408,7 +1404,7 @@ elif menu == "드메템 대여 신청":
             st.download_button("📥 드메템 대여 현황 다운로드", data=excel_data, file_name="드메템_대여현황.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
             for _, row in df.iterrows():
-                owners_list = json.loads(row["drop_owner"]) if isinstance(row["drop_owner"], str) and row["drop_owner"].startswith("[") else [row["drop_owner"]]
+                owners_list = json.loads(row["대표소유자"]) if isinstance(row["대표소유자"], str) and row["대표소유자"].startswith("[") else [row["대표소유자"]]
                 borrower_name = row.get("대여자", "(이름 없음)")
                 if not borrower_name or str(borrower_name).lower() == "nan":
                     borrower_name = "(이름 없음)"
@@ -1422,8 +1418,8 @@ elif menu == "드메템 대여 신청":
                         st.markdown(f"**소유자:** `{', '.join(owners_list)}`")
 
                         if is_owner:
-                            if st.button("🗑 반납 완료", key=f"drop_return_{row['id']}"):
-                                if delete_dropitem_rental(row["id"]):
+                            if st.button("🗑 반납 완료", key=f"drop_return_{row['ID']}"):
+                                if delete_dropitem_rental(row["ID"]):
                                     st.success("✅ 반납 완료되었습니다!")
                                     st.rerun()
                                 else:
@@ -1432,15 +1428,15 @@ elif menu == "드메템 대여 신청":
                         if is_borrower:
                             try:
                                 slot_times = [
-                                    datetime.strptime(t.strip(), "%Y-%m-%d %H:%M").replace(tzinfo=timezone(timedelta(hours=9)))
+                                    datetime.strptime(t.strip(), "%Y-%m-%d").replace(tzinfo=timezone(timedelta(hours=9)))
                                     for t in row["time_slots"].split(",") if t.strip()
                                 ]
                                 earliest_time = min(slot_times)
                                 now = datetime.now(timezone.utc) + timedelta(hours=9)
 
                                 if now < earliest_time:
-                                    if st.button("✏️ 수정하기", key=f"edit_drop_{row['id']}"):
-                                        st.session_state["edit_dropitem_id"] = row["id"]
+                                    if st.button("✏️ 수정하기", key=f"edit_drop_{row['ID']}"):
+                                        st.session_state["edit_dropitem_id"] = row["ID"]
                                         st.session_state["edit_time_slots"] = row["time_slots"].split(", ")
                                         st.rerun()
                                 else:
