@@ -1160,7 +1160,6 @@ elif menu == "보조대여 신청":
         selection = {}
         KST = timezone(timedelta(hours=9))
         now = datetime.now(KST)
-        slot_time_obj = datetime.strptime(slot_time, "%Y-%m-%d %H:%M").replace(tzinfo=KST)
 
         for time_label, row in time_slot_grid.items():
             row_cols = st.columns(len(row) + 1)
