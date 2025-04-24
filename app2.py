@@ -741,10 +741,9 @@ elif menu == "악마길드 길컨관리":
         editable_cols = ["position", "suro_score", "flag_score", "mission_point", "event_sum"]
         df_editable = df_main[["ID", "nickname"] + editable_cols].copy()
         df_editable.set_index("ID", inplace=True)  # 보여지는 인덱스만 표시용 ID
-        df_display = df_main[["ID", "nickname"] + editable_cols].copy()
-        df_display.set_index("ID", inplace=True)
 
-        # ✅ 컬럼명 한글로 변경
+        # ✅ 한글 컬럼 변환
+        df_display = df_main[["ID", "nickname"] + editable_cols].copy()
         df_display.rename(columns={
             "nickname": "닉네임",
             "position": "직위",
@@ -753,20 +752,27 @@ elif menu == "악마길드 길컨관리":
             "mission_point": "주간미션포인트",
             "event_sum": "합계"
         }, inplace=True)
+        df_display.set_index("ID", inplace=True)
 
-        # ✅ 세션 상태 초기화
+        # ✅ 토글 버튼 상태
         if "show_all_mainmembers" not in st.session_state:
             st.session_state["show_all_mainmembers"] = False
 
-        # ✅ 표시할 행 수 설정
         row_limit = None if st.session_state["show_all_mainmembers"] else 5
-        display_df_limited = df_display.head(row_limit)  # 제한 적용
-
-        # ✅ 토글 버튼
         btn_label = "🔽 전체 보기" if not st.session_state["show_all_mainmembers"] else "🔼 일부만 보기"
         if st.button(btn_label, key="toggle_mainmember_display"):
             st.session_state["show_all_mainmembers"] = not st.session_state["show_all_mainmembers"]
-            st.rerun()  # 즉시 반영
+            st.rerun()
+
+        # ✅ 최종 표 표시 (중복 없이)
+        display_df_limited = df_display.head(row_limit)
+        edited_df = st.data_editor(
+            display_df_limited,
+            use_container_width=True,
+            disabled=["닉네임"],
+            num_rows="dynamic",
+            key="main_editor"
+        )
 
         st.markdown("### 📋 악마 길드 길드컨트롤 등록현황 ")
         edited_df = st.data_editor(
