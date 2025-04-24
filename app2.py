@@ -742,7 +742,7 @@ elif menu == "악마길드 길컨관리":
         df_editable = df_main[["ID", "nickname"] + editable_cols].copy()
         df_editable.set_index("ID", inplace=True)  # 보여지는 인덱스만 표시용 ID
 
-        st.markdown("### 📋 현재 등록된 메인 캐릭터 (표에서 직접 수정 가능)")
+        st.markdown("### 📋 현재 등록된 메인 캐릭터 ")
         edited_df = st.data_editor(
             df_editable,
             use_container_width=True,
@@ -765,7 +765,7 @@ elif menu == "악마길드 길컨관리":
             st.rerun()
 
     with st.form("main_member_add_form"):
-        st.markdown("### ➕ 메인 캐릭터 등록")
+        st.markdown("### ➕ 악마 길드원 길드컨트롤 등록")
 
         nickname_input = st.selectbox("닉네임", member_nicknames, key="nickname_input")
         suro_score_input = st.number_input("수로 점수", min_value=0, step=1, key="suro_score_input")
