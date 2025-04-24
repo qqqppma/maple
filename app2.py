@@ -1136,24 +1136,23 @@ elif menu == "보조대여 신청":
         day_selected = {}
         for i, day in enumerate(days):
             label = f"{weekday_labels[day.weekday()]}<br>{day.strftime('%m/%d')}"
-            date_str = str(day)
+            day_str = day.strftime("%Y-%m-%d")
 
-            # 대여 가능한 슬롯이 하나라도 있는지 확인
-            available = False
-
+            # 해당 요일의 예약 안 된 슬롯이 1개라도 있는지 확인
+            has_available_slot = False
             for time_label, row in time_slot_grid.items():
-                for slot_time, _ in row:
-                    if date_str in slot_time:
-                        # ✅ 대여 기록이 없거나 빈 슬롯이면 선택 가능
-                        if not reserved_slots or reserved_slots.get(slot_time) is None or reserved_slots.get(slot_time) == nickname:
-                            available = True
+                for slot_time_str, _ in row:
+                    if slot_time_str.startswith(day_str):  # 요일 일치 여부
+                        borrower = reserved_slots.get(slot_time_str)
+                        if borrower is None or borrower == nickname:
+                            has_available_slot = True
                             break
-                if available:
+                if has_available_slot:
                     break
 
             with cols[i + 1]:
                 st.markdown(label, unsafe_allow_html=True)
-                day_selected[i] = st.checkbox("전체", key=f"day_select_{i}", disabled=not available)
+                day_selected[i] = st.checkbox("전체", key=f"day_select_{i}", disabled=not has_available_slot)
 
         # 시간표 렌더링
         selection = {}
