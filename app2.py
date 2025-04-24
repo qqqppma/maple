@@ -1432,7 +1432,7 @@ elif menu == "드메템 대여 신청":
                 # ✅ 반납 처리 UI
                 for _, row in df.iterrows():
                     owners_list = json.loads(row["drop_owner"]) if isinstance(row["drop_owner"], str) and row["drop_owner"].startswith("[") else [row["drop_owner"]]
-                    borrower_name = row.get("drop_borrower", "(이름 없음)")
+                    borrower_name = row.get("대여자", "(이름 없음)")
                     if not borrower_name or str(borrower_name).lower() == "nan":
                         borrower_name = "(이름 없음)"
 
