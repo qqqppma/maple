@@ -6,5 +6,4 @@ discord.py
 supabase
 python-dotenv
 bcrypt
-streamlit-aggrid
 #수정

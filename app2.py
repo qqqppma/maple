@@ -13,7 +13,6 @@ import json
 import uuid
 from streamlit.components.v1 import html
 from utils.time_grid import generate_slot_table
-from st_aggrid import AgGrid, GridOptionsBuilder
 import bcrypt
 import textwrap
 import codecs
@@ -194,31 +193,25 @@ def get_drop_range(slots):
         return ""
 
 #✅ 보조무기 대여 계산함수
-def get_weapon_range(time_slots_str):
-    if not time_slots_str:
+def get_weapon_range(slots):
+    try:
+        from datetime import datetime
+
+        # 빈값 방지
+        slot_list = [s.strip() for s in slots.split(",") if s.strip()]
+        if not slot_list:
+            return ""
+
+        # 시작 시간 기준으로 정렬
+        sorted_slots = sorted(
+            slot_list,
+            key=lambda x: datetime.strptime(x.split("~")[0], "%Y-%m-%d %H:%M")
+        )
+
+        # 가장 처음과 마지막만 반환
+        return f"{sorted_slots[0]} ~ {sorted_slots[-1]}"
+    except Exception:
         return ""
-
-    slots = sorted([
-        datetime.strptime(s.strip(), "%Y-%m-%d %H:%M")
-        for s in time_slots_str.split(",")
-        if s.strip()
-    ])
-
-    if not slots:
-        return ""
-
-    result = []
-    start = slots[0]
-    prev = slots[0]
-
-    for current in slots[1:]:
-        if current - prev != timedelta(hours=2):
-            result.append(f"{start.strftime('%Y-%m-%d %H:%M')} ~ {prev + timedelta(hours=2):%Y-%m-%d %H:%M}")
-            start = current
-        prev = current
-
-    result.append(f"{start.strftime('%Y-%m-%d %H:%M')} ~ {prev + timedelta(hours=2):%Y-%m-%d %H:%M}")
-    return "\n".join(result)
     
 # ✅ 데이터 수정
 def update_dropitem_rental(row_id, data):
@@ -1031,7 +1024,7 @@ elif menu == "부캐릭터 등록":
     user_subs = df_sub[df_sub["main_name"] == nickname]
 
     if user_subs.empty:
-        pass
+        st.info("등록된 부캐릭터가 없습니다.")
     else:
         # ✅ 닉네임과 길드만 표시하는 표
         display_df = user_subs[["sub_name", "guild_name1"]].rename(columns={
@@ -1236,17 +1229,9 @@ elif menu == "보조대여 신청":
             "weapon_name": "대여 아이템"
         }, inplace=True)
 
-        # AgGrid 옵션 설정
-        gb = GridOptionsBuilder.from_dataframe(df_display[["ID", "대여자", "대여 아이템", "대표소유자", "대여기간"]])
-        gb.configure_column("대여기간", wrapText=True, autoHeight=True)  # 줄바꿈 활성화
-        grid_options = gb.build()
-
-        # 출력
         st.markdown("### 📄 보조무기 대여 현황")
-        AgGrid(df_display[["ID", "대여자", "대여 아이템", "대표소유자", "대여기간"]],
-            gridOptions=grid_options,
-            height=300,
-            theme="streamlit")
+        st.dataframe(df_display[["ID", "대여자", "대여 아이템", "대표소유자", "대여기간"]], use_container_width=True)
+
         excel_df = df_display[["대여자", "대여 아이템", "대표소유자", "대여기간"]].copy()
         excel_data = convert_df_to_excel(excel_df)
         st.download_button(
