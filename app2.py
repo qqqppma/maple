@@ -211,15 +211,12 @@ def get_weapon_range(time_slots_str):
     prev = slots[0]
 
     for current in slots[1:]:
-        # 2시간 단위라면 2시간 간격 유지 확인
         if current - prev != timedelta(hours=2):
             result.append(f"{start.strftime('%Y-%m-%d %H:%M')} ~ {prev + timedelta(hours=2):%Y-%m-%d %H:%M}")
             start = current
         prev = current
 
-    # 마지막 구간 추가
     result.append(f"{start.strftime('%Y-%m-%d %H:%M')} ~ {prev + timedelta(hours=2):%Y-%m-%d %H:%M}")
-
     return "\n".join(result)
     
 # ✅ 데이터 수정
@@ -1229,7 +1226,7 @@ elif menu == "보조대여 신청":
         df = pd.DataFrame(filtered).sort_values(by="id").reset_index(drop=True)
         df_display = df.copy()
         df_display["ID"] = df_display.index + 1
-        df_display["대여기간"] = df_display["time_slots"].apply(get_weapon_range)
+        df_display["대여기간"] = df_display["time_slots"].apply(lambda x: get_weapon_range(x).replace("\n", "<br>"))
         df_display["대표소유자"] = df_display["owner"].apply(
             lambda x: json.loads(x)[0] if isinstance(x, str) and x.startswith("[") else x
         )
@@ -1238,8 +1235,9 @@ elif menu == "보조대여 신청":
             "weapon_name": "대여 아이템"
         }, inplace=True)
 
+        #✅ HTML 기반 테이블 출력 (줄바꿈 적용)
         st.markdown("### 📄 보조무기 대여 현황")
-        st.dataframe(df_display[["ID", "대여자", "대여 아이템", "대표소유자", "대여기간"]], use_container_width=True)
+        st.write(df_display[["ID", "대여자", "대여 아이템", "대표소유자", "대여기간"]].to_html(escape=False, index=False), unsafe_allow_html=True)
 
         excel_df = df_display[["대여자", "대여 아이템", "대표소유자", "대여기간"]].copy()
         excel_data = convert_df_to_excel(excel_df)
