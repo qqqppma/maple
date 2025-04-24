@@ -640,6 +640,7 @@ if menu == "악마 길드원 정보 등록":
         st.download_button("📥 길드원 목록 다운로드", data=excel_data, file_name="길드원_목록.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
         if is_admin:
+            st.subheader("길드원 정보 수정")
             selected_name = st.selectbox("수정 또는 삭제할 닉네임 선택", df["nickname"])
             selected_row = df[df["nickname"] == selected_name].iloc[0]
             with st.form("edit_form"):
@@ -824,11 +825,7 @@ elif menu == "부캐릭터 관리":
         selected_main = st.selectbox("본캐 닉네임 선택", main_names)
         guild_name1 = st.text_input("길드 이름")
         sub_name = st.text_input("부캐 이름")
-        suro_text = st.selectbox("수로 참여", ["참여", "미참"])
-        suro = suro_text == "참여"
         suro_score = st.number_input("수로 점수", min_value=0, step=1)
-        flag_text = st.selectbox("플래그 참여", ["참여", "미참"])
-        flag = flag_text == "참여"
         flag_score = st.number_input("플래그 점수", min_value=0, step=1)
         mission_point = st.number_input("주간미션포인트", min_value=0, step=1)
         submit_sub = st.form_submit_button("부캐 등록")
@@ -840,19 +837,16 @@ elif menu == "부캐릭터 관리":
                 st.warning(f"⚠️ '{selected_main}'의 부캐 '{sub_name}'은 이미 등록되어 있습니다.")
             else:
                 data = {
-                    "sub_id": sub_id,
                     "guild_name1": guild_name1,
                     "sub_name": sub_name,
                     "main_name": selected_main,
-                    "suro": suro,
                     "suro_score": suro_score,
-                    "flag": flag,
                     "flag_score": flag_score,
                     "mission_point": mission_point,
                     "created_by": nickname
                 }
                 if insert_submember(data):
-                    st.success(f"✅ {sub_id} 등록 완료")
+                    st.success(f"✅ {sub_name} 등록 완료")
                     st.rerun()
                 else:
                     st.error("🚫 등록 실패")
@@ -867,17 +861,14 @@ elif menu == "부캐릭터 관리":
         df_sub["ID"] = df_sub.index + 1              # id 다시 부여
         display_all_df = df_sub.rename(columns={
             "ID": "ID",
-            "sub_id": "Sub ID",
             "guild_name1": "부캐 길드",
             "sub_name": "부캐 닉네임",
             "main_name": "본캐 닉네임",
-            "suro": "수로",
             "suro_score": "수로 점수",
-            "flag": "플래그",
             "flag_score": "플래그 점수",
             "mission_point": "주간미션포인트"
         })
-        st.dataframe(display_all_df[["ID", "Sub ID", "부캐 길드","부캐 닉네임", "본캐 닉네임","수로", "수로 점수", "플래그", "플래그 점수", "주간미션포인트"]].reset_index(drop=True), use_container_width=True)
+        st.dataframe(display_all_df[["ID", "부캐 길드","부캐 닉네임", "본캐 닉네임", "수로 점수", "플래그 점수", "주간미션포인트"]].reset_index(drop=True))
         excel_data = convert_df_to_excel(display_all_df)
         st.download_button("📥 부캐릭터 목록 다운로드", data=excel_data, file_name="부캐릭터_목록.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
@@ -906,15 +897,13 @@ elif menu == "부캐릭터 관리":
                 display_df = df_main.rename(columns={
                     "guild_name1": "부캐 길드",
                     "sub_name": "부캐 닉네임",
-                    "suro": "수로",
                     "suro_score": "수로 점수",
-                    "flag": "플래그",
                     "flag_score": "플래그 점수",
                     "mission_point": "주간미션포인트"
                 })
 
                 st.markdown(f"### 🔹 {main} - 부캐 {len(display_df)}개")
-                st.dataframe(display_df[["sub_id","부캐 길드", "부캐 닉네임", "수로", "수로 점수", "플래그", "플래그 점수", "주간미션포인트"]], use_container_width=True)
+                st.dataframe(display_df[["부캐 길드", "부캐 닉네임", "수로 점수", "플래그 점수", "주간미션포인트"]])
 
                 if is_admin:
                     with st.expander(f"✏️ {main} 부캐 수정"):
@@ -928,22 +917,14 @@ elif menu == "부캐릭터 관리":
 
                         # 🔽 이 아래부터는 수정 입력 영역
                         new_guild_name = st.text_input("부캐 길드", value=sub_row.get("guild_name1", ""), key=f"guild_{sub}")
-                        selected_suro = st.selectbox("수로 참여", ["참여", "미참여"], index=0 if sub_row["suro"] else 1, key=f"suro_select_{sub}")
-                        new_suro = selected_suro == "참여"
-
                         new_suro_score = st.number_input("수로 점수", min_value=0, step=1, value=sub_row.get("suro_score", 0), key=f"suro_score_{sub}")
-                        selected_flag = st.selectbox("플래그 참여", ["참여", "미참여"], index=0 if sub_row["flag"] else 1, key=f"flag_select_{sub}")
-                        new_flag = selected_flag == "참여"
-
                         new_flag_score = st.number_input("플래그 점수", min_value=0, step=1, value=sub_row.get("flag_score", 0), key=f"flag_score_{sub}")
                         new_mission = st.number_input("주간미션포인트", min_value=0, step=1, value=sub_row.get("mission_point", 0), key=f"mission_{sub}")
 
                         if st.button("저장", key=f"save_{sub}"):
                             update_data = {
                                 "guild_name1": new_guild_name,
-                                "suro": new_suro,
                                 "suro_score": new_suro_score,
-                                "flag": new_flag,
                                 "flag_score": new_flag_score,
                                 "mission_point": new_mission
                             }
