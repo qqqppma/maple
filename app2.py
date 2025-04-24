@@ -1031,7 +1031,7 @@ elif menu == "부캐릭터 등록":
     user_subs = df_sub[df_sub["main_name"] == nickname]
 
     if user_subs.empty:
-        pass
+        st.info("등록된 부캐릭터가 없습니다.")
     else:
         # ✅ 닉네임과 길드만 표시하는 표
         display_df = user_subs[["sub_name", "guild_name1"]].rename(columns={
