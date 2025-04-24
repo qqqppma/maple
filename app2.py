@@ -193,25 +193,34 @@ def get_drop_range(slots):
         return ""
 
 #✅ 보조무기 대여 계산함수
-def get_weapon_range(slots):
-    try:
-        from datetime import datetime
-
-        # 빈값 방지
-        slot_list = [s.strip() for s in slots.split(",") if s.strip()]
-        if not slot_list:
-            return ""
-
-        # 시작 시간 기준으로 정렬
-        sorted_slots = sorted(
-            slot_list,
-            key=lambda x: datetime.strptime(x.split("~")[0], "%Y-%m-%d %H:%M")
-        )
-
-        # 가장 처음과 마지막만 반환
-        return f"{sorted_slots[0]} ~ {sorted_slots[-1]}"
-    except Exception:
+def get_weapon_range(time_slots_str):
+    if not time_slots_str:
         return ""
+
+    slots = sorted([
+        datetime.strptime(s.strip(), "%Y-%m-%d %H:%M")
+        for s in time_slots_str.split(",")
+        if s.strip()
+    ])
+
+    if not slots:
+        return ""
+
+    result = []
+    start = slots[0]
+    prev = slots[0]
+
+    for current in slots[1:]:
+        # 2시간 단위라면 2시간 간격 유지 확인
+        if current - prev != timedelta(hours=2):
+            result.append(f"{start.strftime('%Y-%m-%d %H:%M')} ~ {prev + timedelta(hours=2):%Y-%m-%d %H:%M}")
+            start = current
+        prev = current
+
+    # 마지막 구간 추가
+    result.append(f"{start.strftime('%Y-%m-%d %H:%M')} ~ {prev + timedelta(hours=2):%Y-%m-%d %H:%M}")
+
+    return "\n".join(result)
     
 # ✅ 데이터 수정
 def update_dropitem_rental(row_id, data):
@@ -1081,7 +1090,7 @@ elif menu == "보조대여 신청":
 
     st.header("🛡️ 보조무기 대여 시스템")
     nickname = st.session_state["nickname"]
-    owner = ["자리스틸의왕", "죤냇", "새훨", "나영진", "o차월o"]
+    owner = ["자리스틸의왕", "죤냇", "나영진", "o차월o"]
 
     IMAGE_FOLDER = "보조무기 사진"
     CYGNUS_SHARED = ["나이트워커", "스트라이커", "플레임위자드", "윈드브레이커", "소울마스터"]
@@ -1250,30 +1259,31 @@ elif menu == "보조대여 신청":
             is_owner = nickname in owners_list
             is_borrower = nickname == borrower_name
 
-            with st.expander(f"🛡️ '{row['weapon_name']}' - 대여자: {borrower_name}"):
-                st.markdown(f"**📅 대여기간:** `{get_weapon_range(row['time_slots'])}`")
-                st.markdown(f"**소유자:** `{', '.join(owners_list)}`")
+            if is_owner or is_borrower:
+                with st.expander(f"🛡️ '{row['weapon_name']}' - 대여자: {borrower_name}"):
+                    st.markdown(f"**📅 대여기간:** `{get_weapon_range(row['time_slots'])}`")
+                    st.markdown(f"**소유자:** `{', '.join(owners_list)}`")
 
-                if is_owner:
-                    if st.button("🗑 반납 완료", key=f"weapon_return_{row['id']}"):
-                        if delete_weapon_rental(row["id"]):
-                            st.success("✅ 반납 완료되었습니다!")
-                            st.rerun()
-                        else:
-                            st.error("❌ 반납 실패! 다시 시도해주세요.")
-
-                if is_borrower:
-                    try:
-                        slot_times = [datetime.strptime(t.strip(), "%Y-%m-%d %H:%M") for t in row["time_slots"].split(",") if t.strip()]
-                        earliest_time = min(slot_times)
-                        now = datetime.now()
-                        if now < earliest_time:
-                            if st.button("✏️ 수정하기", key=f"edit_rental_{row['id']}"):
-                                st.session_state["edit_rental_id"] = row["id"]
-                                st.session_state["edit_time_slots"] = row["time_slots"].split(", ")
+                    if is_owner:
+                        if st.button("🗑 반납 완료", key=f"weapon_return_{row['id']}"):
+                            if delete_weapon_rental(row["id"]):
+                                st.success("✅ 반납 완료되었습니다!")
                                 st.rerun()
-                    except Exception as e:
-                        st.error(f"시간 파싱 오류: {e}")
+                            else:
+                                st.error("❌ 반납 실패! 다시 시도해주세요.")
+
+                    if is_borrower:
+                        try:
+                            slot_times = [datetime.strptime(t.strip(), "%Y-%m-%d %H:%M") for t in row["time_slots"].split(",") if t.strip()]
+                            earliest_time = min(slot_times)
+                            now = datetime.now()
+                            if now < earliest_time:
+                                if st.button("✏️ 수정하기", key=f"edit_rental_{row['id']}"):
+                                    st.session_state["edit_rental_id"] = row["id"]
+                                    st.session_state["edit_time_slots"] = row["time_slots"].split(", ")
+                                    st.rerun()
+                        except Exception as e:
+                            st.error(f"시간 파싱 오류: {e}")
 
 
 
