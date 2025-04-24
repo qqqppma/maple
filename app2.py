@@ -625,21 +625,14 @@ if menu == "악마 길드원 정보 등록":
         df_display = df.rename(columns={
             "nickname": "닉네임",
             "position": "직위",
-            "active": "활동 여부",
-            "resume_date": "활동 재개일",
-            "join_date": "가입일",
-            "note": "비고",
-            "guild_name": "길드명",
-            "withdrawn": "탈퇴 여부",
-            "withdraw_date": "탈퇴일"
+            "note": "비고"
             })
 
-        df_display["탈퇴 여부 ✅"] = df_display["탈퇴 여부"].apply(lambda x: "✅" if str(x).lower() == "true" else "")
 
         # ✅ 탈퇴 여부 대신 표시용 컬럼으로 보여주기
         st.dataframe(
             df_display[[
-                "ID", "닉네임", "직위", "활동 여부", "활동 재개일", "가입일", "비고", "길드명", "탈퇴 여부 ✅", "탈퇴일"
+                "ID", "닉네임", "직위", "비고", "길드명"
             ]].reset_index(drop=True),
             use_container_width=True
         )
@@ -653,15 +646,7 @@ if menu == "악마 길드원 정보 등록":
             with st.form("edit_form"):
                 nickname_edit = st.text_input("닉네임", selected_row["nickname"])
                 position_edit = st.text_input("직위", selected_row["position"])
-                active_edit = st.selectbox("활동 여부", ["활동중", "비활동"], index=0 if selected_row["active"] else 1)
-                active1 = True if active_edit == "활동중" else False
-                resume_date_edit = st.date_input("활동 재개일", value=pd.to_datetime(selected_row["resume_date"]).date() if selected_row["resume_date"] else None)
-                join_date_edit = st.date_input("가입일", value=pd.to_datetime(selected_row["join_date"]).date() if selected_row["join_date"] else None)
                 note_edit = st.text_input("비고", selected_row["note"])
-                guild_name_edit = st.text_input("길드명", selected_row["guild_name"])
-                withdrawn_edit_display = st.selectbox("탈퇴 여부", ["탈퇴함", "여기만한 길드 없다"], index=0 if selected_row["withdrawn"] else 1)
-                withdrawn_edit = True if withdrawn_edit_display == "탈퇴함" else False
-                withdraw_date_edit = st.date_input("탈퇴일", value=pd.to_datetime(selected_row["withdraw_date"]).date() if selected_row["withdraw_date"] else None)
 
                 update_btn = st.form_submit_button("✏️ 수정")
                 delete_btn = st.form_submit_button("🗑 삭제")
@@ -670,13 +655,7 @@ if menu == "악마 길드원 정보 등록":
                     updated_data = {
                         "nickname": nickname_edit,
                         "position": position_edit,
-                        "active": active1,
-                        "note": note_edit,
-                        "guild_name": guild_name_edit,
-                        "withdrawn": withdrawn_edit,
-                        "resume_date": resume_date_edit.isoformat() if resume_date_edit else None,
-                        "join_date": join_date_edit.isoformat() if join_date_edit else None,
-                        "withdraw_date": withdraw_date_edit.isoformat() if withdraw_date_edit else None
+                        "note": note_edit
                     }
                     if update_member(selected_row["id"], updated_data):
                         st.success("수정 완료!")
@@ -695,15 +674,8 @@ if menu == "악마 길드원 정보 등록":
     with st.form("add_member_form"):
         nickname_input = st.text_input("닉네임")
         position_input = st.text_input("직위")
-        active_edit1 = st.selectbox("활동 여부", ["활동중", "비활동"])
-        active2 = True if active_edit1 == "활동중" else False
-        resume_date = st.date_input("활동 재개일", value=None)
-        join_date = st.date_input("가입일", value=None)
         note = st.text_input("비고")
         guild_name = st.text_input("길드명")
-        withdrawn_display = st.selectbox("탈퇴 여부", ["탈퇴함", "여기만한 길드 없다"])
-        withdrawn =True if withdrawn_display == "탈퇴함" else False
-        withdraw_date = st.date_input("탈퇴일", value=None)
 
         submitted = st.form_submit_button("등록")
         if submitted:
@@ -713,13 +685,8 @@ if menu == "악마 길드원 정보 등록":
                 data = {
                     "nickname": nickname_input,
                     "position": position_input,
-                    "active": active2,
                     "note": note,
                     "guild_name": guild_name,
-                    "withdrawn": withdrawn,
-                    "resume_date": resume_date.isoformat() if resume_date else None,
-                    "join_date": join_date.isoformat() if join_date else None,
-                    "withdraw_date": withdraw_date.isoformat() if withdraw_date else None
                 }
                 if insert_member(data):
                     st.success("✅ 길드원이 등록되었습니다!")
@@ -895,7 +862,7 @@ elif menu == "부캐릭터 관리":
     st.markdown("---")
     st.subheader("📊 부캐릭터 요약")
 
-    # ✅ 부캐 전체 목록 테이블 추가 (이 위치!)
+    # ✅ 부캐 전체 목록 테이블 추가
     st.markdown("### 📑 등록된 전체 부캐릭터 목록")
     if not df_sub.empty:
         df_sub = df_sub.reset_index(drop=True)       # 인덱스 재정렬
