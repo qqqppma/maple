@@ -1135,9 +1135,27 @@ elif menu == "보조대여 신청":
         day_selected = {}
         for i, day in enumerate(days):
             label = f"{weekday_labels[day.weekday()]}<br>{day.strftime('%m/%d')}"
+            date_str = str(day)
+
+            # 해당 날짜에 가능한 슬롯이 1개라도 있는지 체크
+            available = False
+            for time_label, row in time_slot_grid.items():
+                for slot_time, _ in row:
+                    if date_str in slot_time:
+                        borrower = reserved_slots.get(slot_time)
+                        if not borrower or borrower == nickname:  # 빈 칸이거나 본인이면 선택 가능
+                            available = True
+                            break
+                if available:
+                    break
+
             with cols[i + 1]:
                 st.markdown(label, unsafe_allow_html=True)
-                day_selected[i] = st.checkbox("전체", key=f"day_select_{i}")
+                day_selected[i] = st.checkbox(
+                    "전체",
+                    key=f"day_select_{i}",
+                    disabled=not available  # 예약 가능한 칸이 하나도 없으면 비활성화
+                )
 
         # ✅ 시간표 행 렌더링
         selection = {}
@@ -1152,19 +1170,7 @@ elif menu == "보조대여 신청":
                     selection[slot_time] = row_cols[j + 1].checkbox(
                         "", value=day_selected[j], key=slot_key
                     )
-        if st.button("✏️ 등록 시간 수정"):
-            user_rental = supabase.table("Weapon_Rentals").select("*").eq("borrower", nickname).execute().data
-            if user_rental:
-                rental = user_rental[0]
-                rental_id = rental["id"]
-                original_slots = rental["time_slots"].split(", ")
-                start_time = datetime.strptime(original_slots[0], "%Y-%m-%d %H:%M")
-
-                if datetime.now() < start_time:
-                    st.success("📝 수정 모드가 활성화되었습니다.")
-                    st.session_state["edit_mode"] = True
-                else:
-                    st.warning("❌ 대여 시작 시간이 이미 지났습니다. 수정할 수 없습니다.")
+    
 
         selected_time_slots = [k for k, v in selection.items() if v]
         selected_dates = sorted({datetime.strptime(k.split()[0], "%Y-%m-%d").date() for k in selected_time_slots})
