@@ -1304,7 +1304,7 @@ elif menu == "드메템 대여 신청":
 
     with col_left:
         nickname_options = get_all_character_names(nickname)
-        selected_borrower = st.selectbox("대여자", nickname_options)
+        selected_borrower = st.selectbox("드메템 대여자", nickname_options)
         selected_dropitem = st.selectbox("드메템 세트", list(dropitem_image_map.keys()))
 
     with col_right:
@@ -1330,24 +1330,27 @@ elif menu == "드메템 대여 신청":
             if slot.strip()
         }
 
-        # 하루 단위 슬롯 생성
-        base = datetime.now(timezone.utc) + timedelta(hours=9)
-        days = [base.date() + timedelta(days=i) for i in range(7)]
-        day_slots = [(str(day), day.strftime("%Y-%m-%d 00:00")) for day in days]
+        # 날짜 생성
+        now = datetime.now(timezone.utc) + timedelta(hours=9)
+        days = [now.date() + timedelta(days=i) for i in range(7)]
+        day_slots = [(day.strftime("%a %m/%d"), day.strftime("%Y-%m-%d")) for day in days]
 
-        st.markdown(f"### 📆 `{selected_dropitem}` 대여 가능 날짜")
+        st.markdown(f"### ⏰ `{selected_dropitem}` 대여 시간표")
+        cols = st.columns(len(day_slots) + 1)
+        cols[0].markdown("**시간**")
+        cols[0].markdown("00:00~24:00")
         selection = {}
 
-        for label, slot_time in day_slots:
+        for i, (label, slot_time) in enumerate(day_slots):
             borrower = reserved_slots.get(slot_time)
             if borrower and (not editing_id or slot_time not in editing_slots):
-                st.checkbox(borrower, value=True, key=slot_time, disabled=True)
+                cols[i + 1].checkbox(borrower, value=True, key=slot_time, disabled=True)
             else:
                 default_checked = slot_time in editing_slots
-                selection[slot_time] = st.checkbox(label, value=default_checked, key=slot_time)
+                selection[slot_time] = cols[i + 1].checkbox("", value=default_checked, key=slot_time)
 
         selected_time_slots = [k for k, v in selection.items() if v]
-        selected_dates = sorted({datetime.strptime(k.split()[0], "%Y-%m-%d").date() for k in selected_time_slots})
+        selected_dates = sorted({datetime.strptime(k, "%Y-%m-%d").date() for k in selected_time_slots})
 
         if editing_id:
             st.info("✏️ 현재 대여 정보를 수정 중입니다. 원하는 날짜를 다시 선택 후 '수정 완료'를 눌러주세요.")
