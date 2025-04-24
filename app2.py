@@ -734,16 +734,15 @@ elif menu == "악마길드 길컨관리":
 
         # ✅ 표시용 ID 컬럼 추가
         df_main["ID"] = df_main.index + 1
-        # Supabase 업데이트용 id 따로 저장
+
+        # ✅ Supabase id 매핑용
         id_map = df_main.set_index("ID")["id"].to_dict()
 
-        # ✅ 수정 가능한 컬럼 설정
-        editable_cols = ["직위", "수로 점수", "플래그 점수", "주간미션포인트", "합계"]
-        df_editable = df_main[["ID", "닉네임"] + editable_cols].copy()
-        df_editable.set_index("ID", inplace=True)  # 보여지는 인덱스만 표시용 ID
+        # ✅ 한글로 표시할 컬럼 지정 (표시 전용)
+        editable_display_cols = ["직위", "수로 점수", "플래그 점수", "주간미션포인트", "합계"]
 
-        # ✅ 한글 컬럼 변환
-        df_display = df_main[["ID", "nickname"] + editable_cols].copy()
+        # ✅ df_display: 한글 컬럼명으로 변환된 표
+        df_display = df_main[["ID", "nickname", "position", "suro_score", "flag_score", "mission_point", "event_sum"]].copy()
         df_display.rename(columns={
             "nickname": "닉네임",
             "position": "직위",
@@ -754,7 +753,7 @@ elif menu == "악마길드 길컨관리":
         }, inplace=True)
         df_display.set_index("ID", inplace=True)
 
-        # ✅ 토글 버튼 상태
+        # ✅ 토글 버튼 상태 설정
         if "show_all_mainmembers" not in st.session_state:
             st.session_state["show_all_mainmembers"] = False
 
@@ -764,7 +763,7 @@ elif menu == "악마길드 길컨관리":
             st.session_state["show_all_mainmembers"] = not st.session_state["show_all_mainmembers"]
             st.rerun()
 
-        # ✅ 최종 표 표시 (중복 없이)
+        # ✅ 표 표시
         st.markdown("### 📋 악마 길드 길드컨트롤 등록현황 ")
         display_df_limited = df_display.head(row_limit)
         edited_df = st.data_editor(
@@ -775,20 +774,34 @@ elif menu == "악마길드 길컨관리":
             key="main_editor"
         )
 
-
+        # ✅ 한글 → 영문 컬럼 매핑 (업데이트용)
+        column_map = {
+            "직위": "position",
+            "수로 점수": "suro_score",
+            "플래그 점수": "flag_score",
+            "주간미션포인트": "mission_point",
+            "합계": "event_sum"
+        }
 
         if st.button("💾 수정 내용 저장"):
             for idx, row in edited_df.iterrows():
-                row_id = id_map.get(idx)  # 표시용 ID → 실제 Supabase id
-                updated = row[editable_cols].to_dict()
-                original = df_main[df_main["id"] == row_id][editable_cols].iloc[0]
+                row_id = id_map.get(idx)
+                if not row_id:
+                    continue  # ID가 매핑되지 않으면 건너뜀
+
+                # ✅ row는 한글 컬럼 → 영문 컬럼으로 변환
+                updated = {eng: row[kor] for kor, eng in column_map.items()}
+                original = df_main[df_main["id"] == row_id][list(column_map.values())].iloc[0]
 
                 if not original.equals(pd.Series(updated)):
                     if update_mainember(row_id, updated):
-                        st.success(f"✅ `{row['nickname']}` 수정 완료")
+                        st.success(f"✅ `{row['닉네임']}` 수정 완료")
                     else:
-                        st.error(f"❌ `{row['nickname']}` 수정 실패")
+                        st.error(f"❌ `{row['닉네임']}` 수정 실패")
             st.rerun()
+
+    else:
+        st.info("기록된 길드컨트롤 정보가 없습니다.")
 
     with st.form("main_member_add_form"):
         st.markdown("### ➕ 악마 길드원 길드컨트롤 등록")
