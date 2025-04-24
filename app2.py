@@ -756,7 +756,7 @@ elif menu == "악마길드 길컨관리":
 
         st.markdown("### 📋 악마 길드 길드컨트롤 등록현황 ")
         edited_df = st.data_editor(
-            df_editable,
+            df_display,
             use_container_width=True,
             disabled=["닉네임"],
             num_rows="dynamic",
