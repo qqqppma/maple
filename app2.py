@@ -218,6 +218,7 @@ def get_drop_range(time_slots_str):
     return f"{start_str} ~ {end_str}"
 
 
+
 #✅ 보조무기 대여 계산함수
 def get_weapon_range(time_slots_str):
     if not time_slots_str:
@@ -251,18 +252,21 @@ def get_weapon_range(time_slots_str):
 
     for current in slots[1:]:
         if current - prev != timedelta(hours=2):
-            start_day = f"{start.month}월 {start.day}일 ({weekday_map[start.weekday()]}) {format_time(start)}"
-            end_day = f"{prev.month}월 {prev.day}일 ({weekday_map[prev.weekday()]}) {format_time(prev + timedelta(hours=2))}"
-            result.append(f"{start_day} ~ {end_day}")
+            end = prev + timedelta(hours=2)
+            start_str = f"{start.month}월 {start.day}일 ({weekday_map[start.weekday()]}) {format_time(start)}"
+            end_str = f"{end.month}월 {end.day}일 ({weekday_map[end.weekday()]}) {format_time(end)}"
+            result.append(f"{start_str} ~ {end_str}")
             start = current
         prev = current
 
     # 마지막 구간 추가
-    start_day = f"{start.month}월 {start.day}일 ({weekday_map[start.weekday()]}) {format_time(start)}"
-    end_day = f"{prev.month}월 {prev.day}일 ({weekday_map[prev.weekday()]}) {format_time(prev + timedelta(hours=2))}"
-    result.append(f"{start_day} ~ {end_day}")
+    end = prev + timedelta(hours=2)
+    start_str = f"{start.month}월 {start.day}일 ({weekday_map[start.weekday()]}) {format_time(start)}"
+    end_str = f"{end.month}월 {end.day}일 ({weekday_map[end.weekday()]}) {format_time(end)}"
+    result.append(f"{start_str} ~ {end_str}")
 
     return "\n".join(result)
+
 
     
 # ✅ 데이터 수정
