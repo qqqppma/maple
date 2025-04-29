@@ -1466,62 +1466,62 @@ elif menu == "드메템 대여 신청":
     # 📊 대여 현황 테이블 표시
     if drop_data:
         # ✅ 필터링
-        filtered = [r for r in drop_data if r.get("dropitem_name") == selected_item]
+        filtered = [
+            r for r in drop_data
+            if r.get("dropitem_name") == selected_item and "time_slots" in r
+        ]
 
-        # ✅ drop_data가 있고, 'dropitem_name' & 'time_slots' 조건을 만족할 때만 필터링
-        if drop_data:
-            filtered = [
-                r for r in drop_data
-                if r.get("dropitem_name") == selected_item and "time_slots" in r
-            ]
+        if filtered:
+            # ✅ 이후 DataFrame 처리
+            df = pd.DataFrame(filtered).sort_values(by="id").reset_index(drop=True)
+            df["ID"] = df.index + 1
 
-            if filtered:
-                # ✅ 이후 DataFrame 처리
-                df = pd.DataFrame(filtered).sort_values(by="id").reset_index(drop=True)
-                df["ID"] = df.index + 1
+            # ✅ 대여기간 표시 (네가 만든 함수 사용!)
+            df["대여기간"] = df["time_slots"].apply(get_drop_range)
 
-                def get_drop_range(slots):
-                    try:
-                        times = sorted(set([s.split()[0] for s in slots.split(",")]))
-                        return f"{times[0]} ~ {times[-1]}" if times else ""
-                    except:
-                        return ""
+            # ✅ 대표소유자 추출
+            df["대표소유자"] = df["drop_owner"].apply(
+                lambda x: json.loads(x)[0] if isinstance(x, str) and x.startswith("[") else x
+            )
 
-                df["대여기간"] = df["time_slots"].apply(get_drop_range)
-                df["대표소유자"] = df["drop_owner"].apply(lambda x: json.loads(x)[0] if isinstance(x, str) and x.startswith("[") else x)
-                df.rename(columns={
-                    "drop_borrower": "대여자",
-                    "dropitem_name": "대여 아이템"
-                }, inplace=True)
+            # ✅ 컬럼명 정리
+            df.rename(columns={
+                "drop_borrower": "대여자",
+                "dropitem_name": "대여 아이템"
+            }, inplace=True)
 
-                st.markdown("### 📄 드메템 대여 현황")
-                st.dataframe(df[["ID", "대여자", "대여 아이템", "대표소유자", "대여기간"]], use_container_width=True)
+            st.markdown("### 📄 드메템 대여 현황")
+            st.dataframe(df[["ID", "대여자", "대여 아이템", "대표소유자", "대여기간"]], use_container_width=True)
 
-                # 엑셀용 DataFrame 준비
-                excel_df = df[["대여자", "대여 아이템", "대표소유자", "대여기간"]].copy()
+            # ✅ 엑셀용 데이터 저장
+            excel_df = df[["대여자", "대여 아이템", "대표소유자", "대여기간"]].copy()
+            excel_data = convert_df_to_excel(excel_df)
+            st.download_button(
+                "📥 드메템 대여 현황 다운로드",
+                data=excel_data,
+                file_name="드메템_대여현황.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
 
-                # 변환된 데이터로 엑셀 저장
-                excel_data = convert_df_to_excel(excel_df)
-                st.download_button("📥 드메템 대여 현황 다운로드", data=excel_data, file_name="드메템_대여현황.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-                # ✅ 반납 처리 UI
-                for _, row in df.iterrows():
-                    owners_list = json.loads(row["drop_owner"]) if isinstance(row["drop_owner"], str) and row["drop_owner"].startswith("[") else [row["drop_owner"]]
-                    borrower_name = row.get("대여자", "(이름 없음)")
-                    if not borrower_name or str(borrower_name).lower() == "nan":
-                        borrower_name = "(이름 없음)"
+            # ✅ 반납 처리
+            for _, row in df.iterrows():
+                owners_list = json.loads(row["drop_owner"]) if isinstance(row["drop_owner"], str) and row["drop_owner"].startswith("[") else [row["drop_owner"]]
+                borrower_name = row.get("대여자", "(이름 없음)")
+                if not borrower_name or str(borrower_name).lower() == "nan":
+                    borrower_name = "(이름 없음)"
 
-                    if nickname in owners_list:
-                        with st.expander(f"\U0001F4FF '{row['대여 아이템']}' - 대여자: {borrower_name}"):
-                            st.markdown(f"**📅 대여기간:** `{row['time_slots']}`")
-                            st.markdown(f"**소유자:** `{', '.join(owners_list)}`")
-                            if st.button("🗑 반납 완료", key=f"drop_return_{row['id']}"):
-                                if delete_dropitem_rental(row["id"]):
-                                    st.success("✅ 반납 완료되었습니다!")
-                                    st.rerun()
-                                else:
-                                    st.error("❌ 반납 실패! 다시 시도해주세요.")
-            else:
-                pass
+                if nickname in owners_list:
+                    with st.expander(f"\U0001F4FF '{row['대여 아이템']}' - 대여자: {borrower_name}"):
+                        st.markdown(f"**📅 대여기간:** `{row['대여기간']}`")
+                        st.markdown(f"**소유자:** `{', '.join(owners_list)}`")
+                        if st.button("🗑 반납 완료", key=f"drop_return_{row['id']}"):
+                            if delete_dropitem_rental(row["id"]):
+                                st.success("✅ 반납 완료되었습니다!")
+                                st.rerun()
+                            else:
+                                st.error("❌ 반납 실패! 다시 시도해주세요.")
+                else:
+                    pass
 
 elif menu == "캐릭터 정보 검색":
     show_character_viewer()
