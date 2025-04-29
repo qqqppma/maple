@@ -206,19 +206,39 @@ def get_weapon_range(time_slots_str):
     if not slots:
         return ""
 
+    weekday_map = ["월", "화", "수", "목", "금", "토", "일"]
+
+    def format_time(dt):
+        hour = dt.hour
+        if hour == 0:
+            display_hour = 12
+            ampm = "AM"
+        elif 1 <= hour < 12:
+            display_hour = hour
+            ampm = "AM"
+        elif hour == 12:
+            display_hour = 12
+            ampm = "PM"
+        else:
+            display_hour = hour - 12
+            ampm = "PM"
+        return f"{display_hour}시 ({ampm})"
+
     result = []
     start = slots[0]
     prev = slots[0]
 
     for current in slots[1:]:
-        # 2시간 단위라면 2시간 간격 유지 확인
         if current - prev != timedelta(hours=2):
-            result.append(f"{start.strftime('%Y-%m-%d %H:%M')} ~ {prev + timedelta(hours=2):%Y-%m-%d %H:%M}")
+            start_day = f"{start.month}월 {start.day}일 ({weekday_map[start.weekday()]}) {format_time(start)}"
+            end_day = f"{prev.month}월 {prev.day}일 ({weekday_map[prev.weekday()]}) {format_time(prev + timedelta(hours=2))}"
+            result.append(f"{start_day} ~ {end_day}")
             start = current
         prev = current
 
-    # 마지막 구간 추가
-    result.append(f"{start.strftime('%Y-%m-%d %H:%M')} ~ {prev + timedelta(hours=2):%Y-%m-%d %H:%M}")
+    start_day = f"{start.month}월 {start.day}일 ({weekday_map[start.weekday()]}) {format_time(start)}"
+    end_day = f"{prev.month}월 {prev.day}일 ({weekday_map[prev.weekday()]}) {format_time(prev + timedelta(hours=2))}"
+    result.append(f"{start_day} ~ {end_day}")
 
     return "\n".join(result)
     
@@ -1169,13 +1189,23 @@ elif menu == "보조대여 신청":
                 borrower = reserved_slots.get(slot_time)
                 default_checked = slot_time in editing_slots or day_selected.get(j, False)
 
-                if borrower and (not editing_id or slot_time not in editing_slots):
+                if editing_id and slot_time in editing_slots:
+                    if slot_time_obj < now:
+                        # 수정중인데, 이 슬롯이 이미 지났으면 수정 불가
+                        row_cols[j + 1].checkbox("지남", value=True, key=slot_key, disabled=True)
+                    else:
+                        # 수정중인데, 이 슬롯이 미래면 수정 가능
+                        selection[slot_time] = row_cols[j + 1].checkbox("", value=True, key=slot_key)
+                elif borrower and (not editing_id or slot_time not in editing_slots):
                     # 다른 사람 or 자기 다른 대여 기록에서 이미 예약된 시간
                     row_cols[j + 1].checkbox(borrower, value=True, key=slot_key, disabled=True)
                 elif now > slot_time_obj:
+                    # 아무도 대여 안했지만 이미 과거시간
                     row_cols[j + 1].checkbox("지남", value=False, key=slot_key, disabled=True)
                 else:
+                    # 아무 문제 없는 슬롯 (선택 가능)
                     selection[slot_time] = row_cols[j + 1].checkbox("", value=default_checked, key=slot_key)
+
 
         selected_time_slots = [k for k, v in selection.items() if v]
         selected_dates = sorted({datetime.strptime(k.split()[0], "%Y-%m-%d").date() for k in selected_time_slots})
@@ -1299,7 +1329,7 @@ elif menu == "드메템 대여 신청":
     # 드메템 이미지 폴더 지정
     DROP_IMAGE_FOLDER = "드메템 사진"
 
-    # 드메템 이미지 매핑 (파일명은 세트명 기준으로 미리 저장 필요)
+    # 드메템 이미지 매핑 
     dropitem_image_map = {
         "보스 드드셋": "보스 드드셋.jpg",
         "사냥 드메셋 I": "사냥 드메셋 I.jpg",
