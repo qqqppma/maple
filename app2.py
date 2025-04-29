@@ -184,16 +184,7 @@ def insert_dropitem_rental(drop_borrower, dropitem_name, drop_owner, start_date,
 
 #✅ 드메템 대여 계산함수
 def get_drop_range(time_slots_str):
-    if not time_slots_str:
-        return ""
-
-    slots = sorted([
-        datetime.strptime(s.strip(), "%Y-%m-%d %H:%M")
-        for s in time_slots_str.split(",")
-        if s.strip()
-    ])
-
-    if not slots:
+    if not time_slots_str or not isinstance(time_slots_str, str):
         return ""
 
     weekday_map = ["월", "화", "수", "목", "금", "토", "일"]
@@ -209,12 +200,26 @@ def get_drop_range(time_slots_str):
         else:
             return f"{hour - 12}시 (PM)"
 
+    slots = []
+    for s in time_slots_str.split(","):
+        s = s.strip()
+        try:
+            if len(s) == 16:  # 올바른 형식만 처리
+                dt = datetime.strptime(s, "%Y-%m-%d %H:%M")
+                slots.append(dt)
+        except Exception as e:
+            continue
+
+    slots = sorted(slots)
+    if not slots:
+        return ""
+
     result = []
     start = slots[0]
     prev = slots[0]
 
     for current in slots[1:]:
-        if current - prev != timedelta(hours=24):  # 드메셋은 하루 단위
+        if current - prev != timedelta(hours=24):
             end = prev + timedelta(hours=24)
             start_str = f"{start.month}월 {start.day}일 ({weekday_map[start.weekday()]}) {format_time(start)}"
             end_str = f"{end.month}월 {end.day}일 ({weekday_map[end.weekday()]}) {format_time(end)}"
@@ -222,13 +227,13 @@ def get_drop_range(time_slots_str):
             start = current
         prev = current
 
-    # 마지막 구간
     end = prev + timedelta(hours=24)
     start_str = f"{start.month}월 {start.day}일 ({weekday_map[start.weekday()]}) {format_time(start)}"
     end_str = f"{end.month}월 {end.day}일 ({weekday_map[end.weekday()]}) {format_time(end)}"
     result.append(f"{start_str} ~ {end_str}")
 
     return " / ".join(result)
+
 
 
 #✅ 보조무기 대여 계산함수
@@ -1465,7 +1470,7 @@ elif menu == "드메템 대여 신청":
 
     # 📊 대여 현황 테이블 표시
     if drop_data:
-    # ✅ 필터링
+        # ✅ 필터링
         filtered = [
             r for r in drop_data
             if r.get("dropitem_name") == selected_item and "time_slots" in r
@@ -1520,6 +1525,7 @@ elif menu == "드메템 대여 신청":
                                 st.rerun()
                             else:
                                 st.error("❌ 반납 실패! 다시 시도해주세요.")
+
             else:
                 pass
 
