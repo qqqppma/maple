@@ -209,14 +209,26 @@ def get_drop_range(time_slots_str):
         else:
             return f"{hour - 12}시 (PM)"
 
+    result = []
     start = slots[0]
-    end = slots[-1] + timedelta(hours=2)
+    prev = slots[0]
 
+    for current in slots[1:]:
+        if current - prev != timedelta(hours=24):  # 드메셋은 하루 단위
+            end = prev + timedelta(hours=24)
+            start_str = f"{start.month}월 {start.day}일 ({weekday_map[start.weekday()]}) {format_time(start)}"
+            end_str = f"{end.month}월 {end.day}일 ({weekday_map[end.weekday()]}) {format_time(end)}"
+            result.append(f"{start_str} ~ {end_str}")
+            start = current
+        prev = current
+
+    # 마지막 구간
+    end = prev + timedelta(hours=24)
     start_str = f"{start.month}월 {start.day}일 ({weekday_map[start.weekday()]}) {format_time(start)}"
     end_str = f"{end.month}월 {end.day}일 ({weekday_map[end.weekday()]}) {format_time(end)}"
+    result.append(f"{start_str} ~ {end_str}")
 
-    return f"{start_str} ~ {end_str}"
-
+    return " / ".join(result)
 
 
 #✅ 보조무기 대여 계산함수
