@@ -183,14 +183,40 @@ def insert_dropitem_rental(drop_borrower, dropitem_name, drop_owner, start_date,
     return res.status_code == 201
 
 #✅ 드메템 대여 계산함수
-def get_drop_range(slots):
-    try:
-        if not slots:
-            return ""
-        times = sorted(set([s.split()[0] for s in slots.split(",") if s.strip()]))
-        return f"{times[0]} ~ {times[-1]}" if times else ""
-    except:
+def get_drop_range(time_slots_str):
+    if not time_slots_str:
         return ""
+
+    slots = sorted([
+        datetime.strptime(s.strip(), "%Y-%m-%d %H:%M")
+        for s in time_slots_str.split(",")
+        if s.strip()
+    ])
+
+    if not slots:
+        return ""
+
+    weekday_map = ["월", "화", "수", "목", "금", "토", "일"]
+
+    def format_time(dt):
+        hour = dt.hour
+        if hour == 0:
+            return "0시 (AM)"
+        elif 1 <= hour < 12:
+            return f"{hour}시 (AM)"
+        elif hour == 12:
+            return "12시 (PM)"
+        else:
+            return f"{hour - 12}시 (PM)"
+
+    start = slots[0]
+    end = slots[-1] + timedelta(hours=2)
+
+    start_str = f"{start.month}월 {start.day}일 ({weekday_map[start.weekday()]}) {format_time(start)}"
+    end_str = f"{end.month}월 {end.day}일 ({weekday_map[end.weekday()]}) {format_time(end)}"
+
+    return f"{start_str} ~ {end_str}"
+
 
 #✅ 보조무기 대여 계산함수
 def get_weapon_range(time_slots_str):
@@ -211,18 +237,13 @@ def get_weapon_range(time_slots_str):
     def format_time(dt):
         hour = dt.hour
         if hour == 0:
-            display_hour = 12
-            ampm = "AM"
+            return "0시 (AM)"
         elif 1 <= hour < 12:
-            display_hour = hour
-            ampm = "AM"
+            return f"{hour}시 (AM)"
         elif hour == 12:
-            display_hour = 12
-            ampm = "PM"
+            return "12시 (PM)"
         else:
-            display_hour = hour - 12
-            ampm = "PM"
-        return f"{display_hour}시 ({ampm})"
+            return f"{hour - 12}시 (PM)"
 
     result = []
     start = slots[0]
@@ -236,11 +257,13 @@ def get_weapon_range(time_slots_str):
             start = current
         prev = current
 
+    # 마지막 구간 추가
     start_day = f"{start.month}월 {start.day}일 ({weekday_map[start.weekday()]}) {format_time(start)}"
     end_day = f"{prev.month}월 {prev.day}일 ({weekday_map[prev.weekday()]}) {format_time(prev + timedelta(hours=2))}"
     result.append(f"{start_day} ~ {end_day}")
 
     return "\n".join(result)
+
     
 # ✅ 데이터 수정
 def update_dropitem_rental(row_id, data):
