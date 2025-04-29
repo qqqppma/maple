@@ -896,38 +896,38 @@ elif menu == "악마길드 길컨관리":
     else:
         st.info("기록된 길드컨트롤 정보가 없습니다.")
 
-    with st.form("main_member_add_form"):
-        st.markdown("### ➕ 악마 길드원 길드컨트롤 등록")
+    # with st.form("main_member_add_form"):
+    #     st.markdown("### ➕ 악마 길드원 길드컨트롤 등록")
 
-        nickname_input = st.selectbox("닉네임", member_nicknames, key="nickname_input")
-        suro_score_input = st.number_input("수로 점수", min_value=0, step=1, key="suro_score_input")
-        flag_score_input = st.number_input("플래그 점수", min_value=0, step=1, key="flag_score_input")
-        mission_point_input = st.number_input("주간미션포인트", min_value=0, step=1, key="mission_point_input")
-        event_sum_input = st.number_input("합산", min_value=0, step=1, key="event_sum_input")
+    #     nickname_input = st.selectbox("닉네임", member_nicknames, key="nickname_input")
+    #     suro_score_input = st.number_input("수로 점수", min_value=0, step=1, key="suro_score_input")
+    #     flag_score_input = st.number_input("플래그 점수", min_value=0, step=1, key="flag_score_input")
+    #     mission_point_input = st.number_input("주간미션포인트", min_value=0, step=1, key="mission_point_input")
+    #     event_sum_input = st.number_input("합산", min_value=0, step=1, key="event_sum_input")
 
-        submitted = st.form_submit_button("등록")
+    #     submitted = st.form_submit_button("등록")
 
-        if submitted:
-            df_main = pd.DataFrame(mainmembers)
-            if nickname_input in df_main["nickname"].values:
-                st.warning(f"⚠️ '{nickname_input}' 닉네임은 이미 메인 캐릭터로 등록되어 있습니다.")
-            else:
-                position_value = member_dict.get(nickname_input, "길드원")
-                new_data = {
-                    "nickname": nickname_input,
-                    "position": position_value,
-                    "suro_score": suro_score_input,
-                    "flag_score": flag_score_input,
-                    "mission_point": mission_point_input,
-                    "event_sum": event_sum_input
-                }
-                res = requests.post(f"{SUPABASE_URL}/rest/v1/MainMembers", headers=HEADERS, json=new_data)
-                if res.status_code == 201:
-                    st.success("✅ 메인 캐릭터가 등록되었습니다!")
-                    st.rerun()
-                else:
-                    st.error(f"❌ 등록 실패! 에러 코드: {res.status_code}")
-                    st.code(res.text)
+    #     if submitted:
+    #         df_main = pd.DataFrame(mainmembers)
+    #         if nickname_input in df_main["nickname"].values:
+    #             st.warning(f"⚠️ '{nickname_input}' 닉네임은 이미 메인 캐릭터로 등록되어 있습니다.")
+    #         else:
+    #             position_value = member_dict.get(nickname_input, "길드원")
+    #             new_data = {
+    #                 "nickname": nickname_input,
+    #                 "position": position_value,
+    #                 "suro_score": suro_score_input,
+    #                 "flag_score": flag_score_input,
+    #                 "mission_point": mission_point_input,
+    #                 "event_sum": event_sum_input
+    #             }
+    #             res = requests.post(f"{SUPABASE_URL}/rest/v1/MainMembers", headers=HEADERS, json=new_data)
+    #             if res.status_code == 201:
+    #                 st.success("✅ 메인 캐릭터가 등록되었습니다!")
+    #                 st.rerun()
+    #             else:
+    #                 st.error(f"❌ 등록 실패! 에러 코드: {res.status_code}")
+    #                 st.code(res.text)
 
 
 
