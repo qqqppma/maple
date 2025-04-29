@@ -736,17 +736,24 @@ if menu == "악마 길드원 정보 등록":
 
                 if update_btn:
                     updated_data = {
-                        "nickname": nickname_edit,
-                        "position": position_edit,
-                        "note": note_edit
+                        "nickname": nickname_edit.strip(),
+                        "position": position_edit.strip(),
+                        "note": note_edit.strip()
                     }
                     if update_member(selected_row["id"], updated_data):
-                        # ✅ MainMembers에도 닉네임 업데이트
                         old_nickname = selected_row["nickname"]
                         new_nickname = nickname_edit.strip()
+
+                        # ✅ MainMembers에도 닉네임 + 직위 업데이트
                         if old_nickname != new_nickname:
-                            supabase.table("MainMembers").update({"nickname": new_nickname}) \
-                                .eq("nickname", old_nickname).execute()
+                            supabase.table("MainMembers").update({
+                                "nickname": new_nickname,
+                                "position": position_edit.strip() or "길드원"
+                            }).eq("nickname", old_nickname).execute()
+                        else:
+                            supabase.table("MainMembers").update({
+                                "position": position_edit.strip() or "길드원"
+                            }).eq("nickname", old_nickname).execute()
 
                         st.success("수정 완료!")
                         st.rerun()
@@ -754,10 +761,14 @@ if menu == "악마 길드원 정보 등록":
                         st.error("수정 실패!")
                 elif delete_btn:
                     if delete_member(selected_row["id"]):
+                        # ✅ MainMembers에서도 삭제
+                        supabase.table("MainMembers").delete().eq("nickname", selected_row["nickname"]).execute()
+
                         st.success("삭제 완료!")
                         st.rerun()
                     else:
                         st.error("삭제 실패!")
+
     else:
         st.info("아직 등록된 길드원이 없습니다.")
 
@@ -778,8 +789,21 @@ if menu == "악마 길드원 정보 등록":
                     "note": note,
                 }
                 if insert_member(data):
+                    # ✅ 먼저 Members에 정상 등록되었으면 MainMembers 중복 확인 후 추가
+                    existing_main = supabase.table("MainMembers").select("nickname").eq("nickname", nickname_input.strip()).execute()
+                    if not existing_main.data:
+                        supabase.table("MainMembers").insert({
+                            "nickname": nickname_input.strip(),
+                            "position": position_input or "길드원",
+                            "suro_score": 0,
+                            "flag_score": 0,
+                            "mission_point": 0,
+                            "event_sum": 0
+                        }).execute()
+
                     st.success("✅ 길드원이 등록되었습니다!")
                     st.rerun()
+
                 else:
                     st.error("🚫 등록에 실패했습니다. 데이터를 다시 확인해주세요.")
                     
@@ -1193,7 +1217,7 @@ elif menu == "보조대여 신청":
             if slot.strip()
         }
 
-        st.markdown(f"### ⏰ `{selected_job}` 시간표")
+        st.markdown(f"### ⏰ `{selected_job}`")
         time_slot_grid, days = generate_slot_table()
         weekday_labels = ["월", "화", "수", "목", "금", "토", "일"]
         cols = st.columns(len(days) + 1)
