@@ -265,7 +265,7 @@ def get_weapon_range(time_slots_str):
     end_str = f"{end.month}월 {end.day}일 ({weekday_map[end.weekday()]}) {format_time(end)}"
     result.append(f"{start_str} ~ {end_str}")
 
-    return "/".join(result)
+    return " / ".join(result)
 
 
     
