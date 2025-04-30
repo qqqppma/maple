@@ -633,9 +633,6 @@ if "user" not in st.session_state:
                             supabase.table("Members").insert({
                                 "nickname": new_nick.strip(),
                                 "position": "길드원",
-                                "active": True,
-                                "resume_date": None,
-                                "join_date": None,
                                 "note": None
                             }).execute()
 
