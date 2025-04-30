@@ -36,7 +36,14 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # ✅ Discord 클라이언트 설정
 intents = discord.Intents.default()
+intents.members = True  # 중요: 멤버 정보 접근을 위해 활성화
 client = discord.Client(intents=intents)
+
+def find_member_id_by_name(guild, name):
+    for member in guild.members:
+        if member.nick == name or member.name == name:
+            return member.id
+    return None
 
 # ✅ 상태 저장용
 last_weapon_ids = set()
@@ -163,32 +170,39 @@ async def polling_loop():
             new_rows = manitto_res.data
 
             for row in new_rows:
-                tutee = row.get("tutee_name", "Unknown")
-                tutor = row.get("tutor_name", "Unknown")
-                message = f"🎯 `{tutee}`님이 `{tutor}`님께 마니또 신청을 하였습니다!"
+                tutee = row.get("tutee_name")
+                tutor = row.get("tutor_name")
 
-                # ✅ 채널 알림
+                # ❗ None 방지
+                if not tutee or not tutor:
+                    print(f"❗ tutor 또는 tutee가 None이라 무시됨: tutor={tutor}, tutee={tutee}")
+                    continue
+
+                guild = discord.utils.get(client.guilds)
+                tutee_id = find_member_id_by_name(guild, tutee)
+                tutor_id = find_member_id_by_name(guild, tutor)
+
+                mention_tutee = f"<@{tutee_id}>" if tutee_id else f"`{tutee}`"
+                mention_tutor = f"<@{tutor_id}>" if tutor_id else f"`{tutor}`"
+
+                message = f"🎯 {mention_tutee}님이 {mention_tutor}님께 마니또 신청을 하였습니다!"
                 if manitto_channel:
                     await manitto_channel.send(message)
                     print(f"[Manitto 신청] {message}")
 
-                # ✅ 튜터와 튜티에게 DM 발송
-                guild = discord.utils.get(client.guilds)
-                if guild:
-                    # 닉네임 기반 유저 찾기 (정확한 Discord ID가 없으므로 닉네임 기반)
-                    for member in guild.members:
-                        if member.nick == tutee or member.name == tutee:
-                            try:
-                                await member.send(f"📩 당신은 `{tutor}`님에게 마니또를 신청하였습니다!")
-                            except:
-                                print(f"❗ {tutee}에게 DM 전송 실패")
-                        if member.nick == tutor or member.name == tutor:
-                            try:
-                                await member.send(f"📩 `{tutee}`님이 당신에게 마니또를 신청하였습니다!")
-                            except:
-                                print(f"❗ {tutor}에게 DM 전송 실패")
+                # ✅ DM 전송 (가능할 경우)
+                for member in guild.members:
+                    if member.id == tutee_id:
+                        try:
+                            await member.send(f"📩 당신은 `{tutor}`님에게 마니또를 신청하였습니다!")
+                        except:
+                            print(f"❗ {tutee}에게 DM 전송 실패")
+                    if member.id == tutor_id:
+                        try:
+                            await member.send(f"📩 `{tutee}`님이 당신에게 마니또를 신청하였습니다!")
+                        except:
+                            print(f"❗ {tutor}에게 DM 전송 실패")
 
-                # ✅ 전송 후 알림 처리 상태 업데이트
                 supabase.table("ManiddoRequests").update({"notified": True}).eq("id", row["id"]).execute()
 
         except Exception as e:
