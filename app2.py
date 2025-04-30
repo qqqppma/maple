@@ -94,7 +94,7 @@ def get_mainmembers():
         return res.json()
     return []
 
-def update_mainember(member_id, data):
+def update_mainmember(member_id, data):
     res = requests.patch(f"{SUPABASE_URL}/rest/v1/MainMembers?id=eq.{member_id}", headers=HEADERS, json=data)
     return res.status_code == 204
 
@@ -888,7 +888,7 @@ elif menu == "악마길드 길컨관리":
                 original = df_main[df_main["id"] == row_id][original_cols].iloc[0]
 
                 if not original.equals(pd.Series(updated)):
-                    if update_mainember(row_id, updated):
+                    if update_mainmember(row_id, updated):
                         st.success(f"✅ `{row['닉네임']}` 수정 완료")
                     else:
                         st.error(f"❌ `{row['닉네임']}` 수정 실패")
@@ -910,28 +910,28 @@ elif menu == "악마길드 길컨관리":
     with button_cols[3]:
         if st.button("🧹 수로 삭제"):
             for row in df_main.itertuples():
-                update_mainember(row.id, {"suro_score": 0})
+                update_maimnember(row.id, {"suro_score": 0})
             st.success("✅ 수로 점수가 초기화되었습니다.")
             st.rerun()
 
     with button_cols[4]:
         if st.button("🧹 플래그 삭제"):
             for row in df_main.itertuples():
-                update_mainember(row.id, {"flag_score": 0})
+                update_mainmember(row.id, {"flag_score": 0})
             st.success("✅ 플래그 점수가 초기화되었습니다.")
             st.rerun()
 
     with button_cols[5]:
         if st.button("🧹 주간미션 삭제"):
             for row in df_main.itertuples():
-                update_mainember(row.id, {"mission_point": 0})
+                update_mainmember(row.id, {"mission_point": 0})
             st.success("✅ 주간미션포인트가 초기화되었습니다.")
             st.rerun()
 
     with button_cols[6]:
         if st.button("🧹 합계 삭제"):
             for row in df_main.itertuples():
-                update_mainember(row.id, {"event_sum": 0})
+                update_mainmember(row.id, {"event_sum": 0})
             st.success("✅ 합계 점수가 초기화되었습니다.")
             st.rerun()
 
@@ -1029,7 +1029,7 @@ elif menu == "부캐릭터 관리":
         })
         st.dataframe(display_all_df[["ID", "부캐 길드","부캐 닉네임", "본캐 닉네임", "수로 점수", "플래그 점수", "주간미션포인트"]].reset_index(drop=True))
         excel_data = convert_df_to_excel(display_all_df)
-        button_cols = st.columns(8)
+        button_cols = st.columns(7)
 
         with button_cols[0]:
             st.empty()  # ID
@@ -1046,21 +1046,21 @@ elif menu == "부캐릭터 관리":
         with button_cols[4]:
             if st.button("🧹 수로 삭제"):
                 for row in df_sub.itertuples():
-                    update_mainember(row.id, {"suro_score": 0})
+                    update_submember(row.id, {"suro_score": 0})
                 st.success("✅ 수로 점수가 초기화되었습니다.")
                 st.rerun()
 
         with button_cols[5]:
             if st.button("🧹 플래그 삭제"):
                 for row in df_sub.itertuples():
-                    update_mainember(row.id, {"flag_score": 0})
+                    update_submember(row.id, {"flag_score": 0})
                 st.success("✅ 플래그 점수가 초기화되었습니다.")
                 st.rerun()
 
         with button_cols[6]:
             if st.button("🧹 주간미션 삭제"):
                 for row in df_sub.itertuples():
-                    update_mainember(row.id, {"mission_point": 0})
+                    update_submember(row.id, {"mission_point": 0})
                 st.success("✅ 주간미션포인트가 초기화되었습니다.")
                 st.rerun()
         st.download_button("📥 부캐릭터 목록 다운로드", data=excel_data, file_name="부캐릭터_목록.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
