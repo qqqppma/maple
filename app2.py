@@ -879,8 +879,28 @@ elif menu == "악마길드 길컨관리":
         # ✅ 버튼을 컬럼 순서에 맞게 정렬 (8칸)
         button_cols = st.columns(8)
 
-        with button_cols[0]:
-            if st.button("💾 수정 내용 저장", key="save_main_edit"):
+        with button_cols[0]:  # 체크박스
+            st.empty()
+        with button_cols[1]:  # ID
+            st.empty()
+        with button_cols[2]:  # 닉네임
+            st.empty()
+
+        # 직위 열 - 💾 수정 내용 저장 버튼 (한 줄 고정)
+        with button_cols[3]:
+            st.markdown(
+                """
+                <style>
+                .save-btn button {
+                    white-space: nowrap;
+                    width: 100%;
+                }
+                </style>
+                <div class="save-btn">
+                """,
+                unsafe_allow_html=True
+            )
+            if st.button("💾 저장", key="save_main_edit"):
                 for idx, row in edited_df.iterrows():
                     row_id = id_map.get(idx)
                     if not row_id:
@@ -894,41 +914,33 @@ elif menu == "악마길드 길컨관리":
                             st.error(f"❌ `{row['닉네임']}` 수정 실패")
                 st.rerun()
 
-        # 1~2번은 닉네임/직위 위치이므로 비워둠
-        for i in [1, 2]:
-            with button_cols[i]:
-                st.empty()
-
-        with button_cols[3]:
-            if st.button("🧹 수로 삭제"):
+        with button_cols[4]:  # 수로 점수
+            if st.button("🧹 수로", key="reset_suro"):
                 for row in df_main.itertuples():
                     update_mainmember(row.id, {"suro_score": 0})
-                st.success("✅ 수로 점수가 초기화되었습니다.")
+                st.success("✅ 수로 점수 초기화")
                 st.rerun()
 
-        with button_cols[4]:
-            if st.button("🧹 플래그 삭제"):
+        with button_cols[5]:  # 플래그 점수
+            if st.button("🧹 플래그", key="reset_flag"):
                 for row in df_main.itertuples():
                     update_mainmember(row.id, {"flag_score": 0})
-                st.success("✅ 플래그 점수가 초기화되었습니다.")
+                st.success("✅ 플래그 점수 초기화")
                 st.rerun()
 
-        with button_cols[5]:
-            if st.button("🧹 주간미션 삭제"):
+        with button_cols[6]:  # 주간미션
+            if st.button("🧹 주간미션", key="reset_mission"):
                 for row in df_main.itertuples():
                     update_mainmember(row.id, {"mission_point": 0})
-                st.success("✅ 주간미션포인트가 초기화되었습니다.")
+                st.success("✅ 주간미션 초기화")
                 st.rerun()
 
-        with button_cols[6]:
-            if st.button("🧹 합계 삭제"):
+        with button_cols[7]:  # 합계
+            if st.button("🧹 합계", key="reset_total"):
                 for row in df_main.itertuples():
                     update_mainmember(row.id, {"event_sum": 0})
-                st.success("✅ 합계 점수가 초기화되었습니다.")
+                st.success("✅ 합계 점수 초기화")
                 st.rerun()
-
-        with button_cols[7]:
-            st.empty()  # 마지막 열 여백 정렬
 
 
     # with st.form("main_member_add_form"):
