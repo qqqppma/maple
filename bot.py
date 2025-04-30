@@ -10,6 +10,7 @@ import discord
 from discord.ext import commands
 import asyncio
 from datetime import datetime
+from dotenv import load_dotenv
 
 # ✅ 환경 변수 불러오기
 SUPABASE_URL = os.getenv("SUPABASE_URL")
@@ -17,7 +18,8 @@ SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 CHANNEL_ID = int(os.getenv("CHANNEL_ID"))  # 보조무기 채널 ID
 DROPITEM_CHANNEL_ID = int(os.getenv("DROPITEM_CHANNEL_ID"))
-MANITTO_CHANNEL_ID = int(os.getenv("MANITTO_CHANNEL_ID"))  # 드메템 채널 ID
+MANITTO_CHANNEL_ID = int(os.getenv("MANITTO_CHANNEL_ID"))
+load_dotenv()
 
 # ✅ 멘션할 유저 ID 리스트
 MENTION_USERS_WEAPON = [380952595293929473, 339743306802135041]  # 보조무기 담당자
