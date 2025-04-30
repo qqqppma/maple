@@ -895,6 +895,45 @@ elif menu == "악마길드 길컨관리":
             st.rerun()
     else:
         st.info("기록된 길드컨트롤 정보가 없습니다.")
+        # 표 하단 점수 초기화 버튼 (각 점수 항목 바로 아래)
+    button_cols = st.columns(7)
+
+    with button_cols[0]:
+        st.empty()  # ID
+
+    with button_cols[1]:
+        st.empty()  # 닉네임
+
+    with button_cols[2]:
+        st.empty()  # 직위
+
+    with button_cols[3]:
+        if st.button("🧹 수로 삭제"):
+            for row in df_main.itertuples():
+                update_mainember(row.id, {"suro_score": 0})
+            st.success("✅ 수로 점수가 초기화되었습니다.")
+            st.rerun()
+
+    with button_cols[4]:
+        if st.button("🧹 플래그 삭제"):
+            for row in df_main.itertuples():
+                update_mainember(row.id, {"flag_score": 0})
+            st.success("✅ 플래그 점수가 초기화되었습니다.")
+            st.rerun()
+
+    with button_cols[5]:
+        if st.button("🧹 주간미션 삭제"):
+            for row in df_main.itertuples():
+                update_mainember(row.id, {"mission_point": 0})
+            st.success("✅ 주간미션포인트가 초기화되었습니다.")
+            st.rerun()
+
+    with button_cols[6]:
+        if st.button("🧹 합계 삭제"):
+            for row in df_main.itertuples():
+                update_mainember(row.id, {"event_sum": 0})
+            st.success("✅ 합계 점수가 초기화되었습니다.")
+            st.rerun()
 
     # with st.form("main_member_add_form"):
     #     st.markdown("### ➕ 악마 길드원 길드컨트롤 등록")
