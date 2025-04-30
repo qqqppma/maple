@@ -1170,12 +1170,16 @@ elif menu == "부캐릭터 관리":
             if not df_main.empty:
                 df_main = df_main.reset_index(drop=True)
                 df_main["ID"] = df_main.index + 1
-                display_df = df_main.rename(columns={...})
+                display_df = df_main.rename(columns={"guild_name1": "부캐 길드",
+                    "sub_name": "부캐 닉네임",
+                    "suro_score": "수로 점수",
+                    "flag_score": "플래그 점수",
+                    "mission_point": "주간미션포인트"})
 
                 st.markdown(f"### 🔹 {main} - 부캐 {len(display_df)}개")
 
                 editable_df = st.data_editor(
-                    display_df[[...]],
+                    display_df[["부캐 길드", "부캐 닉네임", "수로 점수", "플래그 점수", "주간미션포인트"]],
                     use_container_width=True,
                     disabled=["부캐 닉네임"],
                     key=f"editor_{main}"
@@ -1185,7 +1189,10 @@ elif menu == "부캐릭터 관리":
                     if st.button(f"💾 `{main}` 부캐 수정 저장", key=f"btn_save_{main}"):
                         for idx, row in editable_df.iterrows():
                             sub_id = df_main.iloc[idx]["sub_id"]
-                            update_data = {...}
+                            update_data = {"guild_name1": row["부캐 길드"],
+                                "suro_score": row["수로 점수"],
+                                "flag_score": row["플래그 점수"],
+                                "mission_point": row["주간미션포인트"]}
                             update_submember(sub_id, update_data)
                         st.success(f"✅ {main} 부캐 정보 수정 완료!")
                         st.rerun()
@@ -1203,11 +1210,15 @@ elif menu == "부캐릭터 관리":
             if not df_main.empty:
                 df_main = df_main.reset_index(drop=True)
                 df_main["ID"] = df_main.index + 1
-                display_df = df_main.rename(columns={...})
+                display_df = df_main.rename(columns={"guild_name1": "부캐 길드",
+                    "sub_name": "부캐 닉네임",
+                    "suro_score": "수로 점수",
+                    "flag_score": "플래그 점수",
+                    "mission_point": "주간미션포인트"})
 
                 st.markdown(f"### 🔹 {main} - 부캐 {len(display_df)}개")
                 editable_df = st.data_editor(
-                    display_df[[...]],
+                    display_df[["부캐 길드", "부캐 닉네임", "수로 점수", "플래그 점수", "주간미션포인트"]],
                     use_container_width=True,
                     disabled=["부캐 닉네임"],
                     key=f"editor2_{main}"  # <- 기존 editor_{main}과 구분
@@ -1216,7 +1227,10 @@ elif menu == "부캐릭터 관리":
                 if st.button(f"💾 `{main}` 부캐 수정 저장", key=f"btn_save2_{main}"):
                     for idx, row in editable_df.iterrows():
                         sub_id = df_main.iloc[idx]["sub_id"]
-                        update_data = {...}
+                        update_data = {"guild_name1": row["부캐 길드"],
+                        "suro_score": row["수로 점수"],
+                        "flag_score": row["플래그 점수"],
+                        "mission_point": row["주간미션포인트"]}
                         update_submember(sub_id, update_data)
                     st.success(f"✅ {main} 부캐 정보 수정 완료!")
                     st.rerun()
