@@ -911,7 +911,12 @@ elif menu == "악마길드 길컨관리":
                 st.rerun()
             st.markdown('</div>', unsafe_allow_html=True)
 
-        with button_cols[1]:
+        # 나머지 2칸은 정렬용 빈칸
+        for i in [1, 2]:
+            with button_cols[i]:
+                st.empty()
+
+        with button_cols[3]:
             st.markdown('<div class="uniform-btn">', unsafe_allow_html=True)
             if st.button("🧹 수로", key="reset_suro"):
                 for row in df_main.itertuples():
@@ -920,7 +925,7 @@ elif menu == "악마길드 길컨관리":
                 st.rerun()
             st.markdown('</div>', unsafe_allow_html=True)
 
-        with button_cols[2]:
+        with button_cols[4]:
             st.markdown('<div class="uniform-btn">', unsafe_allow_html=True)
             if st.button("🧹 플래그", key="reset_flag"):
                 for row in df_main.itertuples():
@@ -929,7 +934,7 @@ elif menu == "악마길드 길컨관리":
                 st.rerun()
             st.markdown('</div>', unsafe_allow_html=True)
 
-        with button_cols[3]:
+        with button_cols[5]:
             st.markdown('<div class="uniform-btn">', unsafe_allow_html=True)
             if st.button("🧹 주간미션", key="reset_mission"):
                 for row in df_main.itertuples():
@@ -938,7 +943,7 @@ elif menu == "악마길드 길컨관리":
                 st.rerun()
             st.markdown('</div>', unsafe_allow_html=True)
 
-        with button_cols[4]:
+        with button_cols[6]:
             st.markdown('<div class="uniform-btn">', unsafe_allow_html=True)
             if st.button("🧹 합계", key="reset_total"):
                 for row in df_main.itertuples():
@@ -947,10 +952,7 @@ elif menu == "악마길드 길컨관리":
                 st.rerun()
             st.markdown('</div>', unsafe_allow_html=True)
 
-        # 나머지 2칸은 정렬용 빈칸
-        for i in [5, 6]:
-            with button_cols[i]:
-                st.empty()
+        
 
 
     # with st.form("main_member_add_form"):
