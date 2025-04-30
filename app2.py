@@ -1711,23 +1711,34 @@ elif menu == "마니또 신청":
         st.info("아직 신청된 마니또가 없습니다.")
     else:
         if is_admin:
-            st.subheader(" 전체 신청 목록 (관리자)")
-            view_df = df.drop(columns=["timestamp"], errors="ignore").rename(columns={
-                "tutor_name": "튜터",
-                "tutee_name": "튜티",
-                "desired_tutor": "튜티가 선택한 튜터",
-                "note": "비고",
-                "memo": "기록"
-            })
-            st.dataframe(view_df.reset_index(drop=True), use_container_width=True)
+            st.subheader("전체 신청 목록 (관리자)")
 
-            excel_data = convert_df_to_excel(view_df)
-            st.download_button(
-                label="📥 마니또 신청 목록 다운로드",
-                data=excel_data,
-                file_name="마니또_신청목록.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            )
+            # ✅ 매칭된 쌍 기준으로 보기
+            matched_pairs = []
+            for tutor_row in df[df["tutor_name"].notna()].to_dict("records"):
+                for tutee_row in df[df["tutee_name"].notna()].to_dict("records"):
+                    if tutee_row.get("desired_tutor") == tutor_row.get("tutor_name"):
+                        pair = {
+                            "튜티": tutee_row["tutee_name"],
+                            "튜터": tutor_row["tutor_name"],
+                            "비고": tutee_row.get("note", ""),
+                            "기록": tutee_row.get("memo", "")
+                        }
+                        matched_pairs.append(pair)
+
+            if matched_pairs:
+                view_df = pd.DataFrame(matched_pairs)
+                st.dataframe(view_df, use_container_width=True)
+
+                excel_data = convert_df_to_excel(view_df)
+                st.download_button(
+                    label="📥 마니또 신청 목록 다운로드",
+                    data=excel_data,
+                    file_name="마니또_신청목록.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
+            else:
+                st.info("아직 매칭된 마니또가 없습니다.")
         else:
             st.subheader("📋 내 마니또 매칭 정보")
 
