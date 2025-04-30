@@ -1766,6 +1766,7 @@ elif menu == "마니또 신청":
 
             with tutor_col:
                 st.markdown("#### 튜터 목록")
+                st.markdown("🔷 신청한 튜터 목록")
                 tutors = df[df["tutor_name"].notna()].reset_index(drop=True)
                 st.dataframe(tutors[["tutor_name"]], use_container_width=True)
 
