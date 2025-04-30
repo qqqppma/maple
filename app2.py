@@ -1159,7 +1159,7 @@ elif menu == "부캐릭터 관리":
 
 
     # ✅ 본캐별 부캐 보기
-    selected_main_filter = st.selectbox("🔍 본캐 닉네임으로 검색", ["전체 보기"] + main_names, index=0)
+    selected_main_filter = st.selectbox("🔍 본캐 닉네임으로 검색", ["전체 보기"] + main_names, index=0, key="main_filter_1")
 
     if not df_sub.empty and "main_name" in df_sub.columns:
         for main in main_names:
@@ -1203,9 +1203,7 @@ elif menu == "부캐릭터 관리":
     else:
         st.info("등록된 부캐릭터가 없습니다.")
 
-    selected_main_filter = st.selectbox(
-        "🔍 본캐 닉네임으로 검색", ["전체 보기"] + main_names, index=0
-    )
+    selected_main_filter = st.selectbox("🔍 본캐 닉네임으로 검색", ["전체 보기"] + main_names, index=0, key="main_filter_2")
 
     if df_sub.empty or "main_name" not in df_sub.columns:
         st.info("등록된 부캐릭터가 없습니다.")
