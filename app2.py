@@ -1047,36 +1047,41 @@ elif menu == "부캐릭터 관리":
             key="submember_editor"
         )
 
-        if st.button("💾 수정 내용 저장", key="save_submembers"):
-            for idx, row in edited_df.iterrows():
-                sub_id = df_sub.iloc[idx]["sub_id"]
-                update_data = {
-                    "guild_name1": row["부캐 길드"],
-                    "suro_score": row["수로 점수"],
-                    "flag_score": row["플래그 점수"],
-                    "mission_point": row["주간미션포인트"]
-                }
-                update_submember(sub_id, update_data)
-            st.success("✅ 전체 부캐 수정 완료!")
-            st.rerun()
-
         button_cols = st.columns(7)
-        with button_cols[0]: st.empty()
-        with button_cols[1]: st.empty()
-        with button_cols[2]: st.empty()
-        with button_cols[3]: st.empty()
+        with button_cols[0]:
+            if st.button("💾 수정 내용 저장"):
+                for idx, row in edited_df.iterrows():
+                    sub_id = df_sub.iloc[idx]["sub_id"]
+                    update_data = {
+                        "guild_name1": row["부캐 길드"],
+                        "suro_score": row["수로 점수"],
+                        "flag_score": row["플래그 점수"],
+                        "mission_point": row["주간미션포인트"]
+                    }
+                    update_submember(sub_id, update_data)
+                st.success("✅ 전체 부캐 수정 완료!")
+                st.rerun()
+
+        # 1~3번 열은 비워둠
+        for i in [1, 2, 3]:
+            with button_cols[i]:
+                st.empty()
+
+        # 수로/플래그/미션 삭제 버튼은 해당 컬럼 위치에 정확히 맞춰 배치
         with button_cols[4]:
             if st.button("🧹 수로 삭제"):
                 for row in df_sub.itertuples():
                     update_submember(row.sub_id, {"suro_score": 0})
                 st.success("✅ 수로 점수가 초기화되었습니다.")
                 st.rerun()
+
         with button_cols[5]:
             if st.button("🧹 플래그 삭제"):
                 for row in df_sub.itertuples():
                     update_submember(row.sub_id, {"flag_score": 0})
                 st.success("✅ 플래그 점수가 초기화되었습니다.")
                 st.rerun()
+
         with button_cols[6]:
             if st.button("🧹 주간미션 삭제"):
                 for row in df_sub.itertuples():
