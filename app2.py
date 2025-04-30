@@ -594,7 +594,11 @@ if "user" not in st.session_state:
         st.stop()
 
     else:
-        
+        st.subheader("📝 회원가입")
+        new_id = st.text_input("아이디")
+        new_pw = st.text_input("비밀번호", type="password")
+        new_nick = st.text_input("본캐 닉네임")
+
         st.markdown("### 📢 회원가입 주의사항")
         st.info('''
         🔹 자주 사용하는 ID와 PW로 가입하지 마세요. 보안이 취약합니다. \n
@@ -602,7 +606,7 @@ if "user" not in st.session_state:
         🔹 보안에 취약하므로 자주 사용하는 비밀번호로 가입하지 마세요. \n
         🔹 악마길드에 가입한 캐릭터 닉네임으로 가입하세요. \n
         🔹 부길드에 본캐로 가입한 분들은 따로 연락 바랍니다. \n
-        🔹 가입하기 후 로그인 화면으로 가지지 않으면 돌아가기를 눌러주세요요.
+        🔹 가입하기 후 로그인 화면으로 되돌아 가지지 않는다면 돌아가기 버튼을 눌러주세요.
         ''')
 
         col1, col2 = st.columns(2)
