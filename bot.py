@@ -10,8 +10,8 @@ import discord
 from discord.ext import commands
 import asyncio
 from datetime import datetime
-from dotenv import load_dotenv
-load_dotenv()
+
+
 
 # ✅ 환경 변수 불러오기
 SUPABASE_URL = os.getenv("SUPABASE_URL")
