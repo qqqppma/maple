@@ -1174,6 +1174,18 @@ elif menu == "부캐릭터 등록":
                     "created_by": nickname
                 }
                 if insert_submember(new_sub_data):
+                    if guild_name1 == "악마":
+                        existing_main = supabase.table("MainMembers").select("nickname").eq("nickname", sub_name.strip()).execute()
+                        if not existing_main.data:
+                            supabase.table("MainMembers").insert({
+                                "nickname": sub_name.strip(),
+                                "position": "길드원",
+                                "suro_score": 0,
+                                "flag_score": 0,
+                                "mission_point": 0,
+                                "event_sum": 0
+                            }).execute()
+
                     st.success("✅ 부캐릭터가 등록되었습니다!")
                     st.rerun()
                 else:
