@@ -1757,52 +1757,59 @@ elif menu == "마니또 신청":
 
             if tutor_matches.empty and tutee_matches.empty:
                 st.info("🙅 아직 매칭된 마니또가 없습니다.")
+    # ✅ 마니또 관리 (튜터/관리자 전용)
     if is_admin or is_tutor:
-        # ✅ 마니또 관리 권한 조건 확인
-        nickname = st.session_state["nickname"]
-        is_admin = st.session_state.get("is_admin", False)
-
-        # 튜터 신청 여부 판단
-        is_tutor = any((r.get("tutor_name") == nickname) for r in all_requests)
-
         st.markdown("---")
-        st.subheader("🛠️ 마니또 관리 (튜터/관리자 전용)")
+        st.subheader("🔧 마니또 관리 (튜터/관리자 전용)")
 
-        if st.button("✏️ 수정하기"):
-            if is_admin:
-                # ✅ 관리자: 매칭된 튜터-튜티 목록 선택
-                editables = df[df["tutor_name"].notna() & df["tutee_name"].notna()]
-                edit_titles = [f"{r['tutor_name']} - {r['tutee_name']}" for r in editables.to_dict("records")]
-                selected_pair = st.selectbox("✍️ 수정할 마니또 선택", edit_titles)
-                selected_row = editables.iloc[edit_titles.index(selected_pair)]
+        if is_admin:
+            # ✅ 전체 매칭된 튜터-튜티 목록 가져오기
+            editables = df[df["tutor_name"].notna() & df["tutee_name"].notna()]
+            edit_titles = [f"{r['tutor_name']} - {r['tutee_name']}" for r in editables.to_dict("records")]
 
-                st.markdown(f"#### ✏️ {selected_row['tutor_name']} - {selected_row['tutee_name']} 메모 수정")
-                new_memo = st.text_area("기록", value=selected_row.get("memo", ""), key="admin_edit")
-                if st.button("💾 수정완료"):
-                    supabase.table("ManiddoRequests").update({"memo": new_memo}).eq("id", selected_row["id"]).execute()
-                    st.success("✅ 메모가 수정되었습니다.")
-                    st.rerun()
-                if st.button("❌ 마니또 종료"):
-                    supabase.table("ManiddoRequests").delete().eq("id", selected_row["id"]).execute()
-                    st.success("🗑️ 매칭이 종료되었습니다.")
-                    st.rerun()
-            else:
-                # ✅ 튜터 본인: 자신의 매칭된 튜티 목록만
-                matched = df[(df["tutor_name"] == nickname) & (df["tutee_name"].notna())]
-                if matched.empty:
-                    st.info("🙅 진행 중인 마니또가 없습니다.")
+            if edit_titles:
+                selected_pair = st.selectbox("🥜 수정할 마니또 선택", edit_titles)
+
+                if selected_pair in edit_titles:
+                    selected_row = editables.iloc[edit_titles.index(selected_pair)]
+
+                    st.markdown(f"#### ✏️ `{selected_pair}` 메모 수정")
+                    new_memo = st.text_area("기록", value=selected_row.get("memo", ""), key="admin_edit")
+
+                    if st.button("📏 수정완료"):
+                        supabase.table("ManiddoRequests").update({"memo": new_memo}).eq("id", selected_row["id"]).execute()
+                        st.success("✅ 메모가 수정되었습니다.")
+                        st.rerun()
+
+                    if st.button("❌ 마니또 종료"):
+                        supabase.table("ManiddoRequests").delete().eq("id", selected_row["id"]).execute()
+                        st.success("🗑️ 마니또가 종료되었습니다.")
+                        st.rerun()
                 else:
-                    for row in matched.itertuples():
-                        st.markdown(f"#### ✏️ {row.tutee_name}님과의 메모")
-                        updated_memo = st.text_area("기록", value=row.memo or "", key=f"memo_{row.id}")
-                        if st.button(f"💾 수정완료 - ID {row.id}"):
-                            supabase.table("ManiddoRequests").update({"memo": updated_memo}).eq("id", row.id).execute()
-                            st.success("✅ 메모가 저장되었습니다.")
-                            st.rerun()
-                        if st.button(f"❌ 마니또 종료 - ID {row.id}"):
-                            supabase.table("ManiddoRequests").delete().eq("id", row.id).execute()
-                            st.success("🗑️ 마니또가 종료되었습니다.")
-                            st.rerun()
+                    st.warning("⚠️ 선택한 마니또가 유효하지 않습니다.")
+            else:
+                st.info("🙅 현재 수정 가능한 마니또가 없습니다.")
+
+        elif is_tutor:
+            # ✅ 튜터가 보는 보기만 가능
+            matched = df[(df["tutor_name"] == nickname) & (df["tutee_name"].notna())]
+            if matched.empty:
+                st.info("🤝 진행 중인 마니또가 없습니다.")
+            else:
+                for row in matched.itertuples():
+                    st.markdown(f"#### ✏️ {row.tutee_name}님과의 기록")
+                    updated_memo = st.text_area("기록", value=row.memo or "", key=f"memo_{row.id}")
+
+                    if st.button(f"📏 수정완료 - ID {row.id}"):
+                        supabase.table("ManiddoRequests").update({"memo": updated_memo}).eq("id", row.id).execute()
+                        st.success("✅ 메모가 저장되었습니다.")
+                        st.rerun()
+
+                    if st.button(f"❌ 마니또 종료 - ID {row.id}"):
+                        supabase.table("ManiddoRequests").delete().eq("id", row.id).execute()
+                        st.success("🗑️ 마니또가 종료되었습니다.")
+                        st.rerun()
+
 
 
 
