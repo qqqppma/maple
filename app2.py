@@ -590,8 +590,10 @@ if "user" not in st.session_state:
             elif signup_btn:
                 st.session_state.signup_mode = True
                 st.rerun()
-                
-        st.markdown("4분기에 홈페이지 최적화 예정입니다.")
+
+        st.info(''' 
+                🔹4분기에 홈페이지 최적화 예정입니다.
+        ''')
 
         st.stop()
 
