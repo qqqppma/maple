@@ -696,36 +696,53 @@ if menu == "악마 길드원 정보 등록":
     st.subheader("👥 길드원 정보")
     members = get_members()
     df = pd.DataFrame(members)
+
     if not df.empty:
         df["position"] = df["position"].fillna("")
-        
         df = df.sort_values(by=["position", "nickname"],
                             key=lambda x: x.map(get_position_priority) if x.name == "position" else x.map(korean_first_sort))
-        
         df = df.reset_index(drop=True)
         df["ID"] = df.index + 1
+
         # ✅ 컬럼명을 한글로 바꾸기
         df_display = df.rename(columns={
             "nickname": "닉네임",
             "position": "직위",
             "note": "비고"
-            })
+        })
 
+        # ✅ 전체 보기 토글 상태 관리
+        if "show_all_guildmembers" not in st.session_state:
+            st.session_state["show_all_guildmembers"] = False
 
-        # ✅ 탈퇴 여부 대신 표시용 컬럼으로 보여주기
-        st.dataframe(
-            df_display[[
-                "ID", "닉네임", "직위", "비고"
-            ]].reset_index(drop=True)
+        show_all = st.session_state["show_all_guildmembers"]
+        btn_label = "🔽 전체 보기" if not show_all else "🔼 일부만 보기"
+        if st.button(btn_label, key="toggle_guildmembers"):
+            st.session_state["show_all_guildmembers"] = not show_all
+            st.rerun()
+
+        # ✅ 높이 설정
+        height_value = None if show_all else 210
+
+        # ✅ 표 표시 (수정 불가능하게 잠금)
+        st.data_editor(
+            df_display[["ID", "닉네임", "직위", "비고"]].reset_index(drop=True),
+            use_container_width=True,
+            height=height_value,
+            disabled=["ID", "닉네임", "직위", "비고"],
+            key="guild_view_editor"
         )
-        # ✅ 다운로드 버튼 추가
+
+        # ✅ 다운로드 버튼
         excel_data = convert_df_to_excel(df_display)
         st.download_button("📥 길드원 목록 다운로드", data=excel_data, file_name="길드원_목록.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
+        # ✅ 관리자 전용 수정/삭제
         if is_admin:
             st.subheader("길드원 정보 수정")
             selected_name = st.selectbox("수정 또는 삭제할 닉네임 선택", df["nickname"])
             selected_row = df[df["nickname"] == selected_name].iloc[0]
+
             with st.form("edit_form"):
                 nickname_edit = st.text_input("닉네임", selected_row["nickname"])
                 position_edit = st.text_input("직위", selected_row["position"])
@@ -744,7 +761,7 @@ if menu == "악마 길드원 정보 등록":
                         old_nickname = selected_row["nickname"]
                         new_nickname = nickname_edit.strip()
 
-                        # ✅ MainMembers에도 닉네임 + 직위 업데이트
+                        # ✅ MainMembers 테이블에도 반영
                         if old_nickname != new_nickname:
                             supabase.table("MainMembers").update({
                                 "nickname": new_nickname,
@@ -761,9 +778,7 @@ if menu == "악마 길드원 정보 등록":
                         st.error("수정 실패!")
                 elif delete_btn:
                     if delete_member(selected_row["id"]):
-                        # ✅ MainMembers에서도 삭제
                         supabase.table("MainMembers").delete().eq("nickname", selected_row["nickname"]).execute()
-
                         st.success("삭제 완료!")
                         st.rerun()
                     else:
@@ -772,6 +787,7 @@ if menu == "악마 길드원 정보 등록":
     else:
         st.info("아직 등록된 길드원이 없습니다.")
 
+    # ✅ 길드원 신규 등록
     st.subheader("길드원 정보 등록")
     with st.form("add_member_form"):
         nickname_input = st.text_input("닉네임")
@@ -789,7 +805,7 @@ if menu == "악마 길드원 정보 등록":
                     "note": note,
                 }
                 if insert_member(data):
-                    # ✅ 먼저 Members에 정상 등록되었으면 MainMembers 중복 확인 후 추가
+                    # ✅ MainMembers 테이블에도 추가
                     existing_main = supabase.table("MainMembers").select("nickname").eq("nickname", nickname_input.strip()).execute()
                     if not existing_main.data:
                         supabase.table("MainMembers").insert({
@@ -803,9 +819,9 @@ if menu == "악마 길드원 정보 등록":
 
                     st.success("✅ 길드원이 등록되었습니다!")
                     st.rerun()
-
                 else:
                     st.error("🚫 등록에 실패했습니다. 데이터를 다시 확인해주세요.")
+
                     
 elif menu == "악마길드 길컨관리":
     st.subheader("👥악마길드 길드컨트롤 관리")
@@ -877,12 +893,26 @@ elif menu == "악마길드 길컨관리":
         original_cols = list(column_map.values())
 
         st.markdown("""
-            <style>
-            .tight-space {
-                margin-top: -25px;
-            }
-            </style>
-        """, unsafe_allow_html=True)
+        <style>
+        /* 🔧 표 자체 아래 여백 제거 */
+        div[data-testid="stDataEditorContainer"] {
+            margin-bottom: 0px !important;
+        }
+
+        /* 🔧 버튼 상단 간격 줄이기 */
+        .tight-space {
+            margin-top: -40px;
+        }
+
+        /* 🔧 버튼 높이/폭/정렬 */
+        .uniform-btn button {
+            height: 38px !important;
+            width: 100%;
+            white-space: nowrap;
+            font-size: 14px;
+        }
+        </style>
+    """, unsafe_allow_html=True)
 
         # 🔽 버튼 위에 간격 줄이기 위한 div
         st.markdown('<div class="tight-space">', unsafe_allow_html=True)
