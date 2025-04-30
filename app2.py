@@ -16,6 +16,7 @@ from utils.time_grid import generate_slot_table
 import bcrypt
 import textwrap
 import codecs
+from postgrest.exceptions import APIError
 #=============위치고정=============================================#
 st.set_page_config(page_title="악마길드 관리 시스템", layout="wide")
 #=============위치고정=============================================#
@@ -617,44 +618,46 @@ if "user" not in st.session_state:
                 elif new_nick.strip() not in ALLOWED_NICKNAMES:
                     st.warning("⚠️ 해당 닉네임은 길드에 등록되어 있지 않습니다.")
                 else:
-                    # ✅ 비밀번호 해시 처리
-                    hashed_pw = bcrypt.hashpw(new_pw.strip().encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+                    try:
+                        hashed_pw = bcrypt.hashpw(new_pw.strip().encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
-                    res = supabase.table("Users").insert({
-                        "user_id": new_id.strip(),
-                        "password": hashed_pw,  # 🔐 해시된 비밀번호 저장
-                        "nickname": new_nick.strip()
-                    }).execute()
-                    already_member = supabase.table("Members").select("nickname").eq("nickname", new_nick.strip()).execute()
-                    if not already_member.data:
-                        if res.data:
-                            # ✅ Members 테이블에도 자동 등록
+                        res = supabase.table("Users").insert({
+                            "user_id": new_id.strip(),
+                            "password": hashed_pw,
+                            "nickname": new_nick.strip()
+                        }).execute()
+
+                        already_member = supabase.table("Members").select("nickname").eq("nickname", new_nick.strip()).execute()
+
+                        if not already_member.data and res.data:
                             supabase.table("Members").insert({
                                 "nickname": new_nick.strip(),
-                                "position": "길드원",  # 기본 직책
+                                "position": "길드원",
                                 "active": True,
                                 "resume_date": None,
                                 "join_date": None,
                                 "note": None
                             }).execute()
-                            # ✅ MainMembers 테이블 중복 검사
-                            existing_main = supabase.table("MainMembers").select("nickname").eq("nickname", new_nick.strip()).execute()
 
-                            if not existing_main.data:
-                                supabase.table("MainMembers").insert({
-                                    "nickname": new_nick.strip(),
-                                    "position": "길드원",  # 기본 직책
-                                    "suro_score": 0,
-                                    "flag_score": 0,
-                                    "mission_point": 0,
-                                    "event_sum": 0
-                                }).execute()
+                            supabase.table("MainMembers").insert({
+                                "nickname": new_nick.strip(),
+                                "position": "길드원",
+                                "suro_score": 0,
+                                "flag_score": 0,
+                                "mission_point": 0,
+                                "event_sum": 0
+                            }).execute()
 
                             st.success("✅ 회원가입 완료! 로그인으로 이동합니다.")
                             st.session_state.signup_mode = False
                             st.rerun()
-                        else:
-                            st.error("🚫 회원가입 실패")
+
+                    except APIError as e:
+                        error_info = e.args[0] if e.args else "No error details available"
+                        status_code = error_info.get("code", "No code") if isinstance(error_info, dict) else "Unknown"
+
+                        st.error(f"🚫 Supabase API 에러 발생 (상태코드: {status_code})")
+                        st.code(json.dumps(error_info, indent=2, ensure_ascii=False))
 
         with col2:
             if st.button("↩️ 돌아가기"):
@@ -1680,7 +1683,7 @@ elif menu == "마니또 신청":
         st.info("아직 신청된 마니또가 없습니다.")
     else:
         if is_admin:
-            st.subheader("👑 전체 신청 목록 (관리자)")
+            st.subheader(" 전체 신청 목록 (관리자)")
             view_df = df.drop(columns=["timestamp"], errors="ignore").rename(columns={
                 "tutor_name": "튜터",
                 "tutee_name": "튜티",
