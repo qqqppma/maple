@@ -1620,7 +1620,7 @@ elif menu == "드메템 대여 신청":
             else:
                 pass
 
-elif menu == "캐릭터 정보 검색":
-    show_character_viewer()
+# elif menu == "캐릭터 정보 검색":
+#     show_character_viewer()
 
           
