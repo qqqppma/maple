@@ -1619,12 +1619,12 @@ elif menu == "드메템 대여 신청":
                                     st.error("❌ 반납 실패! 다시 시도해주세요.")
             else:
                 pass
-
+##
 elif menu == "마니또 신청":
     st.header("마니또 신청")
     nickname = st.session_state["nickname"]
     owner = ["자리스틸의왕", "죤냇", "나영진", "o차월o"]
-    maniddo_options = get_mainmembers()
+    maniddo_options = get_members()
     maniddo_role = {
         "튜터" : "튜터",
         "튜티" : "튜티"
