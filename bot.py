@@ -19,13 +19,7 @@ SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 CHANNEL_ID = int(os.getenv("CHANNEL_ID"))  # 보조무기 채널 ID
 DROPITEM_CHANNEL_ID = int(os.getenv("DROPITEM_CHANNEL_ID"))
-
-manitto_channel_id_str = os.getenv("MANITTO_CHANNEL_ID")
-if not manitto_channel_id_str:
-    raise ValueError("환경변수 MANITTO_CHANNEL_ID가 설정되지 않았습니다.")
-
-MANITTO_CHANNEL_ID = int(manitto_channel_id_str)
-
+MANITTO_CHANNEL_ID = int(os.getenv("MANITTO_CHANNEL_ID"))
 
 
 # ✅ 멘션할 유저 ID 리스트
