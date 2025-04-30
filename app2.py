@@ -1619,13 +1619,10 @@ elif menu == "드메템 대여 신청":
                                     st.error("❌ 반납 실패! 다시 시도해주세요.")
             else:
                 pass
-##
+##333
 elif menu == "마니또 신청":
-    from datetime import datetime
-    import pandas as pd
-    import io
 
-    st.header("🎁 마니또 신청")
+    st.header("마니또 신청")
     nickname = st.session_state["nickname"]
     is_admin = st.session_state.get("is_admin", False)
 
@@ -1639,15 +1636,12 @@ elif menu == "마니또 신청":
     all_requests = res.data or []
     df = pd.DataFrame(all_requests)
 
-    # ✅ 튜티일 경우만 튜터 선택, 가능한 튜터 필터링
+    # ✅ 튜터 선택 필터 (튜티일 경우만)
     desired_tutor = None
     already_chosen_tutors = set(r["desired_tutor"] for r in all_requests if r.get("desired_tutor"))
-
     available_tutors = [
         r["tutor_name"] for r in all_requests
-        if r.get("tutor_name")
-        and r["tutor_name"] not in already_chosen_tutors
-        and r["tutor_name"] != selected_name
+        if r.get("tutor_name") and r["tutor_name"] not in already_chosen_tutors and r["tutor_name"] != selected_name
     ]
 
     if selected_role == "튜티":
@@ -1657,10 +1651,8 @@ elif menu == "마니또 신청":
         else:
             st.warning("⚠️ 현재 모든 튜터가 마니또를 진행 중입니다.")
 
-    # ✅ 비고 입력
     note_input = st.text_input("📝 비고 (선택사항)", placeholder="하고 싶은 말, 요청사항 등")
 
-    # ✅ 신청 처리
     if st.button("📥 신청하기"):
         now = datetime.now().isoformat()
         data = {
@@ -1680,22 +1672,21 @@ elif menu == "마니또 신청":
 
     st.markdown("---")
 
-    # ✅ 신청 결과 확인 (권한별)
+    # ✅ 신청 목록 보기
     if df.empty:
         st.info("아직 신청된 마니또가 없습니다.")
     else:
         if is_admin:
-            st.subheader("👑 전체 신청 목록 (관리자)")
-            view_df = df.drop(columns=["timestamp"], errors="ignore")
-            view_df = view_df.rename(columns={
+            st.subheader(" 전체 신청 목록 ")
+            view_df = df.drop(columns=["timestamp"], errors="ignore").rename(columns={
                 "tutor_name": "튜터",
                 "tutee_name": "튜티",
                 "desired_tutor": "튜티가 선택한 튜터",
-                "note": "비고"
+                "note": "비고",
+                "memo": "메모"
             })
             st.dataframe(view_df.reset_index(drop=True), use_container_width=True)
 
-            # ✅ 엑셀 다운로드
             excel_data = convert_df_to_excel(view_df)
             st.download_button(
                 label="📥 마니또 신청 목록 다운로드",
@@ -1706,33 +1697,69 @@ elif menu == "마니또 신청":
         else:
             st.subheader("📋 내 마니또 매칭 정보")
 
-            # 본인을 튜터로 선택한 튜티 목록 (튜터 시점)
             tutor_matches = df[
-                (df["desired_tutor"] == nickname) &
-                (df["tutor_name"] == nickname)  # 본인이 실제로 튜터 신청했을 때만 인정
-            ][["tutee_name", "note"]].rename(
-                columns={"tutee_name": "매칭된 튜티", "note": "비고"}
-            )
+                (df["desired_tutor"] == nickname) & (df["tutor_name"] == nickname)
+            ][["tutee_name", "note", "memo"]].rename(columns={
+                "tutee_name": "매칭된 튜티", "note": "비고", "memo": "메모"
+            })
 
-            # 본인이 튜티로 신청했고 선택한 튜터가 실제로 튜터 신청한 경우만 출력
             tutee_matches = df[
                 (df["tutee_name"] == nickname) &
-                (df["desired_tutor"].notna()) &
                 (df["desired_tutor"].isin(df["tutor_name"]))
-            ][["desired_tutor", "note"]].rename(
-                columns={"desired_tutor": "매칭된 튜터", "note": "비고"}
-            )
+            ][["desired_tutor", "note", "memo"]].rename(columns={
+                "desired_tutor": "매칭된 튜터", "note": "비고", "memo": "메모"
+            })
 
             if not tutor_matches.empty:
                 st.markdown("### 🎯 당신을 선택한 튜티")
                 st.dataframe(tutor_matches.reset_index(drop=True), use_container_width=True)
 
             if not tutee_matches.empty:
-                st.markdown("### 📬 당신이 매칭된 튜터")
+                st.markdown("### 📬 당신이 선택한 튜터")
                 st.dataframe(tutee_matches.reset_index(drop=True), use_container_width=True)
 
             if tutor_matches.empty and tutee_matches.empty:
                 st.info("🙅 아직 매칭된 마니또가 없습니다.")
+
+    st.markdown("---")
+    st.subheader("🛠️ 마니또 관리 (튜터/관리자 전용)")
+
+    if st.button("✏️ 수정하기"):
+        if is_admin:
+            # ✅ 관리자: 매칭된 튜터-튜티 목록 선택
+            editables = df[df["tutor_name"].notna() & df["tutee_name"].notna()]
+            edit_titles = [f"{r['tutor_name']} - {r['tutee_name']}" for r in editables.to_dict("records")]
+            selected_pair = st.selectbox("✍️ 수정할 마니또 선택", edit_titles)
+            selected_row = editables.iloc[edit_titles.index(selected_pair)]
+
+            st.markdown(f"#### ✏️ {selected_row['tutor_name']} - {selected_row['tutee_name']} 메모 수정")
+            new_memo = st.text_area("기록", value=selected_row.get("memo", ""), key="admin_edit")
+            if st.button("💾 수정완료"):
+                supabase.table("ManiddoRequests").update({"memo": new_memo}).eq("id", selected_row["id"]).execute()
+                st.success("✅ 메모가 수정되었습니다.")
+                st.rerun()
+            if st.button("❌ 마니또 종료"):
+                supabase.table("ManiddoRequests").delete().eq("id", selected_row["id"]).execute()
+                st.success("🗑️ 매칭이 종료되었습니다.")
+                st.rerun()
+        else:
+            # ✅ 튜터 본인: 자신의 매칭된 튜티 목록만
+            matched = df[(df["tutor_name"] == nickname) & (df["tutee_name"].notna())]
+            if matched.empty:
+                st.info("🙅 진행 중인 마니또가 없습니다.")
+            else:
+                for row in matched.itertuples():
+                    st.markdown(f"#### ✏️ {row.tutee_name}님과의 메모")
+                    updated_memo = st.text_area("기록", value=row.memo or "", key=f"memo_{row.id}")
+                    if st.button(f"💾 수정완료 - ID {row.id}"):
+                        supabase.table("ManiddoRequests").update({"memo": updated_memo}).eq("id", row.id).execute()
+                        st.success("✅ 메모가 저장되었습니다.")
+                        st.rerun()
+                    if st.button(f"❌ 마니또 종료 - ID {row.id}"):
+                        supabase.table("ManiddoRequests").delete().eq("id", row.id).execute()
+                        st.success("🗑️ 마니또가 종료되었습니다.")
+                        st.rerun()
+
 
 
 
