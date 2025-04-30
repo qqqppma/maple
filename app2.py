@@ -1652,9 +1652,8 @@ elif menu == "마니또 신청":
     nickname = st.session_state["nickname"]
     is_admin = st.session_state.get("is_admin", False)
 
-    members = get_members()
-    maniddo_options = [m["nickname"] for m in members if "nickname" in m]
-    selected_name = st.selectbox("신청자 닉네임", maniddo_options)
+    selected_name = st.session_state["nickname"]
+    st.markdown(f"**신청자 닉네임:** `{selected_name}`")
     selected_role = st.selectbox("🌟 신청 역할", ["튜터", "튜티"])
 
     # ✅ 모든 신청 데이터 조회
