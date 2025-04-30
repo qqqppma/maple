@@ -687,7 +687,7 @@ if st.session_state.get("is_admin"):
     menu_options.extend(["악마 길드원 정보 등록", "악마길드 길컨관리", "부캐릭터 관리"])
 
 # 모든 사용자에게 보이는 메뉴
-menu_options.extend(["부캐릭터 등록", "보조대여 신청", "드메템 대여 신청","캐릭터 정보 검색"])
+menu_options.extend(["부캐릭터 등록", "보조대여 신청", "드메템 대여 신청","마니또 신청"])
 
 menu = st.sidebar.radio("메뉴", menu_options)
 
@@ -1316,7 +1316,7 @@ elif menu == "보조대여 신청":
         selection = {}
         KST = timezone(timedelta(hours=9))
         now = datetime.now(KST)
-###
+
         for time_label, row in time_slot_grid.items():
             row_cols = st.columns(len(row) + 1)
             row_cols[0].markdown(f"**{time_label}**")
@@ -1619,6 +1619,24 @@ elif menu == "드메템 대여 신청":
                                     st.error("❌ 반납 실패! 다시 시도해주세요.")
             else:
                 pass
+
+elif menu == "마니또 신청":
+    st.header("마니또 신청")
+    nickname = st.session_state["nickname"]
+    owner = ["자리스틸의왕", "죤냇", "나영진", "o차월o"]
+    maniddo_options = get_mainmembers(nickname)
+    maniddo_role = {
+        "튜터" : "튜터",
+        "튜티" : "튜티"
+    }
+
+    selected_maniddo = st.selectbox("신청자 닉네임", maniddo_options)
+    maniddo_group = st.selectbox("\U0001F9E9 신청 역할", list(maniddo_role.keys()))
+
+    
+    st.markdown("### ")
+
+    
 
 # elif menu == "캐릭터 정보 검색":
 #     show_character_viewer()
