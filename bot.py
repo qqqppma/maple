@@ -60,27 +60,15 @@ async def auto_shutdown_during_sleep():
 
 # ✅ 폴링 루프
 async def polling_loop():
-    global last_weapon_ids, last_weapon_data
-    global last_dropitem_ids, last_dropitem_data
-
     await client.wait_until_ready()
-    weapon_channel = client.get_channel(CHANNEL_ID)
-    dropitem_channel = client.get_channel(DROPITEM_CHANNEL_ID)
-
-    if not weapon_channel or not dropitem_channel:
-        print("❌ 채널을 찾을 수 없습니다.")
-        return
-
-    print("✅ 채널 연결 완료")
+    # ✅ 디스코드 채널 선언 (channel_id는 .env에서)
+    weapon_channel = client.get_channel(int(os.getenv("CHANNEL_ID")))
+    dropitem_channel = client.get_channel(int(os.getenv("DROPITEM_CHANNEL_ID")))
+    manitto_channel = client.get_channel(int(os.getenv("MANITTO_CHANNEL_ID")))
 
     while not client.is_closed():
-        if not is_active_time():
-            print("⏰ 현재는 작동 시간이 아니므로 대기 중...")
-            await asyncio.sleep(300)
-            continue
-
         try:
-            # ✅ 보조무기 데이터 확인
+            # ✅ 보조무기 감시
             weapon_res = supabase.table("Weapon_Rentals").select("*").order("id", desc=True).limit(20).execute()
             current_weapon_ids = set()
             current_weapon_data = {}
@@ -95,35 +83,29 @@ async def polling_loop():
                 last_weapon_data = current_weapon_data
                 print("🚫 [Weapon] 첫 실행이므로 상태 초기화만 수행")
             else:
-                new_ids = current_weapon_ids - last_weapon_ids
-                for new_id in new_ids:
+                weapon_new_ids = current_weapon_ids - last_weapon_ids
+                for new_id in weapon_new_ids:
                     data = current_weapon_data[new_id]
                     if data.get("is_edit"):
                         msg = f"{get_mentions(MENTION_USERS_DROP)}📌 `{data['borrower']}`님이 신청한 `{data['weapon_name']}` 대여 정보가 수정되었습니다."
                     else:
                         msg = f"{get_mentions(MENTION_USERS_WEAPON)} 📥 `{data['borrower']}`님이 `{data['weapon_name']}` 을 대여 요청하였습니다."
-
                     await weapon_channel.send(msg)
                     print(f"[Weapon 등록] {msg}")
 
                 removed_ids = last_weapon_ids - current_weapon_ids
-
                 for removed_id in removed_ids:
                     deleted_data = last_weapon_data.get(removed_id, {})
-
-                    # ✅ 수정으로 인한 삭제인지 확인
                     was_edited = any(
-                        r["borrower"] == deleted_data.get("borrower")
-                        and r["weapon_name"] == deleted_data.get("weapon_name")
-                        and r.get("is_edit")  # 수정 등록임을 의미
+                        r["borrower"] == deleted_data.get("borrower") and
+                        r["weapon_name"] == deleted_data.get("weapon_name") and
+                        r.get("is_edit")
                         for r in current_weapon_data.values()
                     )
-
                     if was_edited:
-                        print(f"🔁 수정에 따른 삭제로 판단, 반납 메시지 생략: {deleted_data.get('borrower')} / {deleted_data.get('weapon_name')}")
+                        print(f"🔁 수정에 따른 삭제 생략: {deleted_data.get('borrower')} / {deleted_data.get('weapon_name')}")
                         continue
 
-                    # ✅ 진짜 반납일 경우
                     now = datetime.now(timezone.utc) + timedelta(hours=9)
                     msg = f"🗑 `{deleted_data.get('borrower', '?')}`님이 대여한 `{deleted_data.get('weapon_name', '?')}` 이/가 {now.strftime('%y-%m-%d %H:%M')} 반납되었습니다."
                     await weapon_channel.send(msg)
@@ -132,7 +114,7 @@ async def polling_loop():
                 last_weapon_ids = current_weapon_ids
                 last_weapon_data = current_weapon_data
 
-            # ✅ 드메템 데이터 확인
+            # ✅ 드메템 감시
             drop_res = supabase.table("DropItem_Rentals").select("*").order("id", desc=True).limit(20).execute()
             current_drop_ids = set()
             current_drop_data = {}
@@ -147,7 +129,8 @@ async def polling_loop():
                 last_dropitem_data = current_drop_data
                 print("🚫 [DropItem] 첫 실행이므로 상태 초기화만 수행")
             else:
-                for new_id in new_ids:
+                drop_new_ids = current_drop_ids - last_dropitem_ids
+                for new_id in drop_new_ids:
                     data = current_drop_data[new_id]
                     if data.get("is_edit"):
                         msg = f"{get_mentions(MENTION_USERS_DROP)}📌 `{data['drop_borrower']}`님이 신청한 `{data['dropitem_name']}` 대여 정보가 수정되었습니다."
@@ -167,10 +150,28 @@ async def polling_loop():
                 last_dropitem_ids = current_drop_ids
                 last_dropitem_data = current_drop_data
 
+            # ✅ 마니또 신청 감시
+            manitto_res = supabase.table("Manitto").select("*").eq("notified", False).execute()
+            new_rows = manitto_res.data
+
+            for row in new_rows:
+                tutee = row.get("tutee_name", "Unknown")
+                tutor = row.get("tutor_name", "Unknown")
+                message = f"🎯 `{tutee}`님이 `{tutor}`님께 마니또 신청을 하였습니다!"
+
+                channel = client.get_channel(int(os.getenv("MANITTO_CHANNEL_ID")))
+                if channel:
+                    await channel.send(message)
+                    print(f"[Manitto 신청] {message}")
+
+                # 전송 후 알림 처리 상태 업데이트
+                supabase.table("Manitto").update({"notified": True}).eq("id", row["id"]).execute()
+
         except Exception as e:
             print(f"❌ 오류 발생: {e}")
 
-        await asyncio.sleep(300)
+        await asyncio.sleep(300)  # 주기적으로 반복
+
 
 tree = app_commands.CommandTree(client)
 
