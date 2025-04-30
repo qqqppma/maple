@@ -6,6 +6,9 @@ on:
     - cron: '5 3 * * *'  # ✅ UTC 03:05 → KST 12:05
   workflow_dispatch:       # 수동 실행도 가능
 
+permissions:
+  contents: write
+
 jobs:
   redeploy:
     runs-on: ubuntu-latest
