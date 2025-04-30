@@ -159,7 +159,7 @@ async def polling_loop():
                 last_dropitem_data = current_drop_data
 
             # ✅ 마니또 신청 감시
-            manitto_res = supabase.table("Manitto").select("*").eq("notified", False).execute()
+            manitto_res = supabase.table("ManiddoRequests").select("*").eq("notified", False).execute()
             new_rows = manitto_res.data
 
             for row in new_rows:
@@ -173,7 +173,7 @@ async def polling_loop():
                     print(f"[Manitto 신청] {message}")
 
                 # 전송 후 알림 처리 상태 업데이트
-                supabase.table("Manitto").update({"notified": True}).eq("id", row["id"]).execute()
+                supabase.table("ManiddoRequests").update({"notified": True}).eq("id", row["id"]).execute()
 
         except Exception as e:
             print(f"❌ 오류 발생: {e}")
