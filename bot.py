@@ -26,7 +26,6 @@ if not manitto_channel_id_str:
 
 MANITTO_CHANNEL_ID = int(manitto_channel_id_str)
 
-MANITTO_CHANNEL_ID = int(os.getenv("MANITTO_CHANNEL_ID"))
 
 
 # ✅ 멘션할 유저 ID 리스트
