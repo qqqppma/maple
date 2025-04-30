@@ -881,13 +881,7 @@ elif menu == "악마길드 길컨관리":
 
         with button_cols[0]:  # 체크박스
             st.empty()
-        with button_cols[1]:  # ID
-            st.empty()
-        with button_cols[2]:  # 닉네임
-            st.empty()
-
-        # 직위 열 - 💾 수정 내용 저장 버튼 (한 줄 고정)
-        with button_cols[3]:
+        with button_cols[1]:
             st.markdown(
                 """
                 <style>
@@ -912,7 +906,14 @@ elif menu == "악마길드 길컨관리":
                             st.success(f"✅ `{row['닉네임']}` 수정 완료")
                         else:
                             st.error(f"❌ `{row['닉네임']}` 수정 실패")
-                st.rerun()
+                st.rerun()  # ID
+            
+        with button_cols[2]:  # 닉네임
+            st.empty()
+
+        # 직위 열 - 💾 수정 내용 저장 버튼 (한 줄 고정)
+        with button_cols[3]:
+            st.empty()            
 
         with button_cols[4]:  # 수로 점수
             if st.button("🧹 수로", key="reset_suro"):
