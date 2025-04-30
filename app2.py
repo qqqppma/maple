@@ -1274,8 +1274,13 @@ elif menu == "보조대여 신청":
 
     col_left, col_right = st.columns([1, 2])
     with col_left:
-        nickname_options = get_all_character_names(nickname)
-        selected_borrower = st.selectbox("보조무기 대여자", nickname_options)
+        main_check = supabase.table("MainMembers").select("nickname").eq("nickname", nickname).execute()
+        if main_check.data:
+            selected_borrower = nickname
+            st.markdown(f"#### 👤 대여자: `{selected_borrower}`")
+        else:
+            st.warning("⚠️ 닉네임이 등록되어 있지 않습니다.")
+            st.stop()
         job_group = st.selectbox("\U0001F9E9 직업군", list(job_data.keys()))
         selected_job = st.selectbox("\U0001F50D 직업", job_data[job_group])
 
@@ -1490,8 +1495,13 @@ elif menu == "드메템 대여 신청":
 
     with col_left:
         st.markdown("#### 👤 대여자 선택")
-        nickname_options = get_all_character_names(nickname)
-        selected_borrower = st.selectbox("드메템 대여자", nickname_options)
+        main_check = supabase.table("MainMembers").select("nickname").eq("nickname", nickname).execute()
+        if main_check.data:
+            selected_borrower = nickname
+            st.markdown(f"#### 👤 대여자: `{selected_borrower}`")
+        else:
+            st.warning("⚠️ 닉네임이 등록되어 있지 않습니다.")
+            st.stop()
 
         item_options = list(dropitem_image_map.keys())
         selected_item = st.selectbox("대여할 드메템 세트를 선택하세요", item_options)
