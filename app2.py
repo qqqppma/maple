@@ -1621,20 +1621,120 @@ elif menu == "드메템 대여 신청":
                 pass
 ##
 elif menu == "마니또 신청":
-    st.header("마니또 신청")
+    from datetime import datetime
+    import pandas as pd
+    import io
+
+    st.header("🎁 마니또 신청")
     nickname = st.session_state["nickname"]
-    owner = ["자리스틸의왕", "죤냇", "나영진", "o차월o"]
-    maniddo_options = [m["nickname"] for m in get_members() if "nickname" in m]
-    maniddo_role = {
-        "튜터" : "튜터",
-        "튜티" : "튜티"
-    }
+    is_admin = st.session_state.get("is_admin", False)
 
-    selected_maniddo = st.selectbox("신청자 닉네임", maniddo_options)
-    maniddo_group = st.selectbox("\U0001F9E9 신청 역할", list(maniddo_role.keys()))
+    members = get_members()
+    maniddo_options = [m["nickname"] for m in members if "nickname" in m]
+    selected_name = st.selectbox("신청자 닉네임", maniddo_options)
+    selected_role = st.selectbox("🌟 신청 역할", ["튜터", "튜티"])
 
-    
-    st.markdown("### ")
+    # ✅ 모든 신청 데이터 조회
+    res = supabase.table("ManiddoRequests").select("*").execute()
+    all_requests = res.data or []
+    df = pd.DataFrame(all_requests)
+
+    # ✅ 튜티일 경우만 튜터 선택, 가능한 튜터 필터링
+    desired_tutor = None
+    already_chosen_tutors = set(r["desired_tutor"] for r in all_requests if r.get("desired_tutor"))
+
+    available_tutors = [
+        r["tutor_name"] for r in all_requests
+        if r.get("tutor_name")
+        and r["tutor_name"] not in already_chosen_tutors
+        and r["tutor_name"] != selected_name
+    ]
+
+    if selected_role == "튜티":
+        st.markdown("### 🙋 함께하고 싶은 튜터 선택")
+        if available_tutors:
+            desired_tutor = st.selectbox("원하는 튜터", available_tutors)
+        else:
+            st.warning("⚠️ 현재 모든 튜터가 마니또를 진행 중입니다.")
+
+    # ✅ 비고 입력
+    note_input = st.text_input("📝 비고 (선택사항)", placeholder="하고 싶은 말, 요청사항 등")
+
+    # ✅ 신청 처리
+    if st.button("📥 신청하기"):
+        now = datetime.now().isoformat()
+        data = {
+            "tutor_name": selected_name if selected_role == "튜터" else None,
+            "tutee_name": selected_name if selected_role == "튜티" else None,
+            "desired_tutor": desired_tutor if selected_role == "튜티" else None,
+            "note": note_input.strip() if note_input else None,
+            "timestamp": now
+        }
+
+        res = supabase.table("ManiddoRequests").insert(data).execute()
+        if res.data:
+            st.success(f"✅ {selected_name}님이 '{selected_role}'로 신청되었습니다.")
+            st.rerun()
+        else:
+            st.error("❌ 신청 실패. 다시 시도해주세요.")
+
+    st.markdown("---")
+
+    # ✅ 신청 결과 확인 (권한별)
+    if df.empty:
+        st.info("아직 신청된 마니또가 없습니다.")
+    else:
+        if is_admin:
+            st.subheader("👑 전체 신청 목록 (관리자)")
+            view_df = df.drop(columns=["timestamp"], errors="ignore")
+            view_df = view_df.rename(columns={
+                "tutor_name": "튜터",
+                "tutee_name": "튜티",
+                "desired_tutor": "튜티가 선택한 튜터",
+                "note": "비고"
+            })
+            st.dataframe(view_df.reset_index(drop=True), use_container_width=True)
+
+            # ✅ 엑셀 다운로드
+            excel_data = convert_df_to_excel(view_df)
+            st.download_button(
+                label="📥 마니또 신청 목록 다운로드",
+                data=excel_data,
+                file_name="마니또_신청목록.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+        else:
+            st.subheader("📋 내 마니또 매칭 정보")
+
+            # 본인을 튜터로 선택한 튜티 목록 (튜터 시점)
+            tutor_matches = df[
+                (df["desired_tutor"] == nickname) &
+                (df["tutor_name"] == nickname)  # 본인이 실제로 튜터 신청했을 때만 인정
+            ][["tutee_name", "note"]].rename(
+                columns={"tutee_name": "매칭된 튜티", "note": "비고"}
+            )
+
+            # 본인이 튜티로 신청했고 선택한 튜터가 실제로 튜터 신청한 경우만 출력
+            tutee_matches = df[
+                (df["tutee_name"] == nickname) &
+                (df["desired_tutor"].notna()) &
+                (df["desired_tutor"].isin(df["tutor_name"]))
+            ][["desired_tutor", "note"]].rename(
+                columns={"desired_tutor": "매칭된 튜터", "note": "비고"}
+            )
+
+            if not tutor_matches.empty:
+                st.markdown("### 🎯 당신을 선택한 튜티")
+                st.dataframe(tutor_matches.reset_index(drop=True), use_container_width=True)
+
+            if not tutee_matches.empty:
+                st.markdown("### 📬 당신이 매칭된 튜터")
+                st.dataframe(tutee_matches.reset_index(drop=True), use_container_width=True)
+
+            if tutor_matches.empty and tutee_matches.empty:
+                st.info("🙅 아직 매칭된 마니또가 없습니다.")
+
+
 
     
 
