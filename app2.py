@@ -1798,7 +1798,7 @@ elif menu == "마니또 신청":
 
                 if matched_pairs:
                     df_matches = pd.DataFrame(matched_pairs)
-                    pair_titles = [f"{r['튜터']} - {r['튜티']}" for r in matched_pairs]
+                    pair_titles = [f"튜터: {r['튜터']} - 튜티: {r['튜티']}" for r in matched_pairs]
                     selected_pair = st.selectbox("🔷 수정할 마니또 선택", pair_titles)
 
                     if selected_pair in pair_titles:
