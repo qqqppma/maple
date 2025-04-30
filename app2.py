@@ -661,6 +661,8 @@ if "user" not in st.session_state:
                 st.session_state.signup_mode = False
                 st.rerun()
 
+        st.markdown("4분기에 홈페이지 최적화 예정입니다.")
+
         st.stop()
 
 # ✅ 로그인 이후 사이드바
