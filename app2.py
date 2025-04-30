@@ -1760,24 +1760,37 @@ elif menu == "마니또 신청":
         st.subheader("🔧 마니또 관리 (튜터/관리자 전용)")
 
         if is_admin:
-            # ✅ 전체 매칭된 튜터-튜티 목록 가져오기
-            editables = df[
-                df["tutor_name"].notna() & 
-                df["tutee_name"].notna() &  
-                df["desired_tutor"].notna() & 
-                (df["desired_tutor"] == df["tutor_name"])]
-            edit_titles = [f"{r['tutor_name']} - {r['tutee_name']}" for r in editables.to_dict("records")]
+            st.subheader("🔹 튜터/튜티 마니또 관리")
+            tutor_col, match_col = st.columns(2)
 
-            if edit_titles:
-                selected_pair = st.selectbox("🥜 수정할 마니또 선택", edit_titles)
+            # 튜터로 등록된 회원 목록
+            with tutor_col:
+                st.markdown("### 튜터 목록")
+                tutors = df[df["tutor_name"].notna()].reset_index(drop=True)
+                st.dataframe(tutors[["id", "tutor_name", "memo"]], use_container_width=True)
 
-                if selected_pair in edit_titles:
-                    selected_row = editables.iloc[edit_titles.index(selected_pair)]
+            # 매칭칭된 이어진 튜터-튜티 목록
+            with match_col:
+                st.markdown("### 매칭 목록")
+                matched_pairs = []
+                for tutor_row in df[df["tutor_name"].notna()].to_dict("records"):
+                    for tutee_row in df[df["tutee_name"].notna()].to_dict("records"):
+                        if tutee_row.get("desired_tutor") == tutor_row.get("tutor_name"):
+                            pair = {
+                                "id": tutee_row["id"],
+                                "tutor": tutor_row["tutor_name"],
+                                "tutee": tutee_row["tutee_name"],
+                                "memo": tutee_row.get("memo", ""),
+                            }
+                            matched_pairs.append(pair)
 
-                    st.markdown(f"#### ✏️ `{selected_pair}` 메모 수정")
+                if matched_pairs:
+                    df_matches = pd.DataFrame(matched_pairs)
+                    selected_pair = st.selectbox("🔹 수정할 마니또 선택", [f"{r['tutor']} - {r['tutee']}" for r in matched_pairs])
+                    selected_row = df_matches[[f"{r['tutor']} - {r['tutee']}" for r in matched_pairs].index(selected_pair)]
+
                     new_memo = st.text_area("기록", value=selected_row.get("memo", ""), key="admin_edit")
-
-                    if st.button("📏 수정완료"):
+                    if st.button("💾 수정완료"):
                         supabase.table("ManiddoRequests").update({"memo": new_memo}).eq("id", selected_row["id"]).execute()
                         st.success("✅ 메모가 수정되었습니다.")
                         st.rerun()
@@ -1787,9 +1800,7 @@ elif menu == "마니또 신청":
                         st.success("🗑️ 마니또가 종료되었습니다.")
                         st.rerun()
                 else:
-                    st.warning("⚠️ 선택한 마니또가 유효하지 않습니다.")
-            else:
-                st.info("🙅 현재 수정 가능한 마니또가 없습니다.")
+                    st.info("🙅 현재 매칭된 마니또가 없습니다.")
 
         elif is_tutor:
             # ✅ 튜터가 보는 보기만 가능
