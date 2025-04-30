@@ -1679,8 +1679,9 @@ elif menu == "마니또 신청":
     note_input = st.text_input("📝 비고 (선택사항)", placeholder="하고 싶은 말, 요청사항 등")
 
     if st.button("📥 신청하기"):
-        now = datetime.now().isoformat()
-        data = {
+        now = datetime.now()  # ✅ timestamptz에 맞게 datetime 객체 그대로 사용
+
+        raw_data = {
             "tutor_name": selected_name if selected_role == "튜터" else None,
             "tutee_name": selected_name if selected_role == "튜티" else None,
             "desired_tutor": desired_tutor if selected_role == "튜티" else None,
@@ -1688,12 +1689,17 @@ elif menu == "마니또 신청":
             "timestamp": now
         }
 
-        res = supabase.table("ManiddoRequests").insert(data).execute()
-        if res.data:
-            st.success(f"✅ {selected_name}님이 '{selected_role}'로 신청되었습니다.")
-            st.rerun()
-        else:
-            st.error("❌ 신청 실패. 다시 시도해주세요.")
+        data = {k: v for k, v in raw_data.items() if v is not None}
+
+        try:
+            res = supabase.table("ManiddoRequests").insert(data).execute()
+            if res.data:
+                st.success(f"✅ {selected_name}님이 '{selected_role}'로 신청되었습니다.")
+                st.rerun()
+            else:
+                st.error("❌ 신청 실패. 다시 시도해주세요.")
+        except Exception as e:
+            st.error(f"❌ Supabase 오류: {e}")
 
     st.markdown("---")
 
