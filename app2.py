@@ -1783,11 +1783,12 @@ elif menu == "마니또 신청":
                                 "memo": tutee_row.get("memo", ""),
                             }
                             matched_pairs.append(pair)
-
+###
                 if matched_pairs:
                     df_matches = pd.DataFrame(matched_pairs)
                     selected_pair = st.selectbox("🔹 수정할 마니또 선택", [f"{r['tutor']} - {r['tutee']}" for r in matched_pairs])
-                    selected_row = df_matches[[f"{r['tutor']} - {r['tutee']}" for r in matched_pairs].index(selected_pair)]
+                    selected_index = [f"{r['tutor']} - {r['tutee']}" for r in matched_pairs].index(selected_pair)
+                    selected_row = df_matches.iloc[selected_index]
 
                     new_memo = st.text_area("기록", value=selected_row.get("memo", ""), key="admin_edit")
                     if st.button("💾 수정완료"):
