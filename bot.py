@@ -190,18 +190,18 @@ async def polling_loop():
                     await manitto_channel.send(message)
                     print(f"[Manitto 신청] {message}")
 
-                #✅ DM 전송 (가능할 경우)
-                for member in guild.members:
-                    if member.id == tutee_id:
-                        try:
-                            await member.send(f"📩 당신은 `{tutor}`님에게 마니또를 신청하였습니다!")
-                        except:
-                            print(f"❗ {tutee}에게 DM 전송 실패")
-                    if member.id == tutor_id:
-                        try:
-                            await member.send(f"📩 `{tutee}`님이 당신에게 마니또를 신청하였습니다!")
-                        except:
-                            print(f"❗ {tutor}에게 DM 전송 실패")
+                # #✅ DM 전송 (가능할 경우)
+                # for member in guild.members:
+                #     if member.id == tutee_id:
+                #         try:
+                #             await member.send(f"📩 당신은 `{tutor}`님에게 마니또를 신청하였습니다!")
+                #         except:
+                #             print(f"❗ {tutee}에게 DM 전송 실패")
+                #     if member.id == tutor_id:
+                #         try:
+                #             await member.send(f"📩 `{tutee}`님이 당신에게 마니또를 신청하였습니다!")
+                #         except:
+                #             print(f"❗ {tutor}에게 DM 전송 실패")
 
                 supabase.table("ManiddoRequests").update({"notified": True}).eq("id", row["id"]).execute()
 
