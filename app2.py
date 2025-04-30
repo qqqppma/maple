@@ -32,7 +32,7 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 
 ADMIN_USERS = ["자리스틸의왕", "나영진", "죤냇", "o차월o"]
-guild_options = ["악질", "악먀"]  # 혹은 DB나 리스트에서 불러오기
+guild_options = ["악마","악질", "악먀"]  # 혹은 DB나 리스트에서 불러오기
 
 # ✅ 모든 캐릭터 닉네임 불러오기 함수 (Main + Sub)
 def get_all_character_names(nickname):
@@ -1152,7 +1152,7 @@ elif menu == "부캐릭터 등록":
 
     with st.form("simple_sub_register"):
         sub_name = st.text_input("부캐릭터 닉네임")
-        guild_name1 = st.text_input("부캐릭터 길드")
+        guild_name1 = st.selectbox("부캐릭터 길드", guild_options)
 
         submit_btn = st.form_submit_button("등록하기")
         if submit_btn:
