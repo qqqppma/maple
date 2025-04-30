@@ -163,16 +163,21 @@ async def polling_loop():
             new_rows = manitto_res.data
 
             for row in new_rows:
-                tutee = row.get("tutee_name", "Unknown")
-                tutor = row.get("tutor_name", "Unknown")
-                message = f"🎯 `{tutee}`님이 `{tutor}`님께 마니또 신청을 하였습니다!"
+                tutee = row.get("tutee_name")
+                tutor = row.get("tutor_name")
 
-                channel = client.get_channel(int(os.getenv("MANITTO_CHANNEL_ID")))
+                # ✅ 둘 다 있을 때만 전송 (불완전한 데이터는 제외)
+                if not tutee or not tutor:
+                    continue
+
+                message = f"🎯 `{tutee}`님이 `{tutor}`님께 마니또 신청을 하였습니다!"
+                channel = client.get_channel(MANITTO_CHANNEL_ID)
+
                 if channel:
                     await channel.send(message)
                     print(f"[Manitto 신청] {message}")
 
-                # 전송 후 알림 처리 상태 업데이트
+                # ✅ 전송 후 알림 처리 상태 업데이트
                 supabase.table("ManiddoRequests").update({"notified": True}).eq("id", row["id"]).execute()
 
         except Exception as e:
