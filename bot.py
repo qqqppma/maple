@@ -65,6 +65,10 @@ async def auto_shutdown_during_sleep():
 # ✅ 폴링 루프
 async def polling_loop():
     await client.wait_until_ready()
+    last_weapon_ids = set()
+    last_weapon_data = {}
+    last_dropitem_ids = set()
+    last_dropitem_data = {}
     # ✅ 디스코드 채널 선언 (channel_id는 .env에서)
     weapon_channel = client.get_channel(int(os.getenv("CHANNEL_ID")))
     dropitem_channel = client.get_channel(int(os.getenv("DROPITEM_CHANNEL_ID")))
