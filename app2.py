@@ -935,7 +935,7 @@ elif menu == "악마길드 길컨관리":
 
         with button_cols[4]:
             st.markdown('<div class="uniform-btn">', unsafe_allow_html=True)
-            if st.button("🧹 플래그 초기화화", key="reset_flag"):
+            if st.button("🧹 플래그 초기화", key="reset_flag"):
                 for row in df_main.itertuples():
                     update_mainmember(row.id, {"flag_score": 0})
                 st.success("✅ 플래그 점수 초기화")
