@@ -1165,6 +1165,7 @@ elif menu == "부캐릭터 등록":
                 st.warning(f"⚠️ '{sub_name}'은 이미 등록된 부캐입니다.")
             else:
                 new_sub_data = {
+                    "sub_id": sub_id,
                     "sub_name": sub_name,
                     "guild_name1": guild_name1,
                     "main_name": nickname,
