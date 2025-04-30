@@ -879,9 +879,7 @@ elif menu == "악마길드 길컨관리":
         # ✅ 버튼을 컬럼 순서에 맞게 정렬 (8칸)
         button_cols = st.columns(8)
 
-        with button_cols[0]:  # 체크박스
-            st.empty()
-        with button_cols[1]:
+        with button_cols[0]:
             st.markdown(
                 """
                 <style>
@@ -906,7 +904,10 @@ elif menu == "악마길드 길컨관리":
                             st.success(f"✅ `{row['닉네임']}` 수정 완료")
                         else:
                             st.error(f"❌ `{row['닉네임']}` 수정 실패")
-                st.rerun()  # ID
+                st.rerun()  # ID  # 체크박스
+            
+        with button_cols[1]:
+            st.empty()            
             
         with button_cols[2]:  # 닉네임
             st.empty()
