@@ -1621,8 +1621,11 @@ elif menu == "드메템 대여 신청":
                 pass
 ##333
 elif menu == "마니또 신청":
+    from datetime import datetime
+    import pandas as pd
+    import io
 
-    st.header("마니또 신청")
+    st.header("🎁 마니또 신청")
     nickname = st.session_state["nickname"]
     is_admin = st.session_state.get("is_admin", False)
 
@@ -1677,13 +1680,13 @@ elif menu == "마니또 신청":
         st.info("아직 신청된 마니또가 없습니다.")
     else:
         if is_admin:
-            st.subheader(" 전체 신청 목록 ")
+            st.subheader("👑 전체 신청 목록 (관리자)")
             view_df = df.drop(columns=["timestamp"], errors="ignore").rename(columns={
                 "tutor_name": "튜터",
                 "tutee_name": "튜티",
                 "desired_tutor": "튜티가 선택한 튜터",
                 "note": "비고",
-                "memo": "메모"
+                "memo": "기록"
             })
             st.dataframe(view_df.reset_index(drop=True), use_container_width=True)
 
@@ -1700,14 +1703,14 @@ elif menu == "마니또 신청":
             tutor_matches = df[
                 (df["desired_tutor"] == nickname) & (df["tutor_name"] == nickname)
             ][["tutee_name", "note", "memo"]].rename(columns={
-                "tutee_name": "매칭된 튜티", "note": "비고", "memo": "메모"
+                "tutee_name": "매칭된 튜티", "note": "비고", "memo": "기록"
             })
 
             tutee_matches = df[
                 (df["tutee_name"] == nickname) &
                 (df["desired_tutor"].isin(df["tutor_name"]))
             ][["desired_tutor", "note", "memo"]].rename(columns={
-                "desired_tutor": "매칭된 튜터", "note": "비고", "memo": "메모"
+                "desired_tutor": "매칭된 튜터", "note": "비고", "memo": "기록"
             })
 
             if not tutor_matches.empty:
@@ -1759,6 +1762,7 @@ elif menu == "마니또 신청":
                         supabase.table("ManiddoRequests").delete().eq("id", row.id).execute()
                         st.success("🗑️ 마니또가 종료되었습니다.")
                         st.rerun()
+
 
 
 
