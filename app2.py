@@ -1227,7 +1227,7 @@ elif menu == "부캐릭터 등록":
         # 수정 입력창
         new_sub_name = st.text_input("부캐 이름", value=sub_row["sub_name"], key="edit_subname")
         new_guild_name = st.selectbox(
-            "부캐 길드 선택",
+            "길드 선택",
             guild_options,
             index=guild_options.index(sub_row.get("guild_name1", guild_options[0])) if sub_row.get("guild_name1") in guild_options else 0,
             key="edit_guildname")
