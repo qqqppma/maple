@@ -978,7 +978,6 @@ elif menu == "부캐릭터 관리":
     submembers = get_submembers()
     df_sub = pd.DataFrame(submembers)
 
-    # 부캐 등록 폼
     with st.form("add_sub_form"):
         selected_main = st.selectbox("본캐 닉네임 선택", main_names)
         guild_name1 = st.selectbox("길드 이름", guild_options)
@@ -1014,17 +1013,16 @@ elif menu == "부캐릭터 관리":
     st.markdown("### 📑 등록된 전체 부캐릭터 목록")
 
     if not df_sub.empty:
-        # ✅ 보기 토글 상태 초기화
+        # ✅ 전체 보기 토글 상태 관리
         if "show_all_submembers" not in st.session_state:
             st.session_state["show_all_submembers"] = False
-
         show_all = st.session_state["show_all_submembers"]
         btn_label = "🔽 전체 보기" if not show_all else "🔼 일부만 보기"
         if st.button(btn_label, key="toggle_submember_display"):
             st.session_state["show_all_submembers"] = not show_all
             st.rerun()
 
-        # ✅ display_all_df 준비
+        # ✅ display_all_df 구성
         df_sub = df_sub.reset_index(drop=True)
         df_sub["ID"] = df_sub.index + 1
         display_all_df = df_sub.rename(columns={
@@ -1037,10 +1035,9 @@ elif menu == "부캐릭터 관리":
             "mission_point": "주간미션포인트"
         })
 
-        # ✅ 높이 설정 (210 고정 방식)
         height_value = None if show_all else 210
 
-        # ✅ 수정 가능한 표
+        # ✅ 수정 가능한 전체 표
         edited_df = st.data_editor(
             display_all_df[["ID", "부캐 길드", "부캐 닉네임", "본캐 닉네임", "수로 점수", "플래그 점수", "주간미션포인트"]],
             use_container_width=True,
@@ -1062,10 +1059,6 @@ elif menu == "부캐릭터 관리":
                 update_submember(sub_id, update_data)
             st.success("✅ 전체 부캐 수정 완료!")
             st.rerun()
-
-        # ✅ 다운로드 + 초기화 버튼
-        excel_data = convert_df_to_excel(display_all_df)
-        st.download_button("📥 부캐릭터 목록 다운로드", data=excel_data, file_name="부캐릭터_목록.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
         button_cols = st.columns(7)
         with button_cols[0]: st.empty()
@@ -1092,15 +1085,59 @@ elif menu == "부캐릭터 관리":
                 st.rerun()
     else:
         st.info("등록된 부캐릭터가 없습니다.")
+     # ✅ 다운로드 및 초기화 버튼
+    excel_data = convert_df_to_excel(display_all_df)
+    st.download_button("📥 부캐릭터 목록 다운로드", data=excel_data, file_name="부캐릭터_목록.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
 
+    # ✅ 본캐별 부캐 보기
+    selected_main_filter = st.selectbox("🔍 본캐 닉네임으로 검색", ["전체 보기"] + main_names, index=0)
 
+    if not df_sub.empty and "main_name" in df_sub.columns:
+        for main in main_names:
+            if selected_main_filter != "전체 보기" and main != selected_main_filter:
+                continue
+            df_main = df_sub[df_sub["main_name"] == main]
+            if not df_main.empty:
+                df_main = df_main.reset_index(drop=True)
+                df_main["ID"] = df_main.index + 1
+                display_df = df_main.rename(columns={
+                    "guild_name1": "부캐 길드",
+                    "sub_name": "부캐 닉네임",
+                    "suro_score": "수로 점수",
+                    "flag_score": "플래그 점수",
+                    "mission_point": "주간미션포인트"
+                })
+
+                st.markdown(f"### 🔹 {main} - 부캐 {len(display_df)}개")
+
+                editable_df = st.data_editor(
+                    display_df[["부캐 길드", "부캐 닉네임", "수로 점수", "플래그 점수", "주간미션포인트"]],
+                    use_container_width=True,
+                    disabled=["부캐 닉네임"],
+                    key=f"editor_{main}"
+                )
+
+                # ✅ 데이터가 있을 때만 저장 버튼 표시
+                if len(df_main) > 0:
+                    if st.button(f"💾 `{main}` 부캐 수정 저장", key=f"save_{main}"):
+                        for idx, row in editable_df.iterrows():
+                            sub_id = df_main.iloc[idx]["sub_id"]
+                            update_data = {
+                                "guild_name1": row["부캐 길드"],
+                                "suro_score": row["수로 점수"],
+                                "flag_score": row["플래그 점수"],
+                                "mission_point": row["주간미션포인트"]
+                            }
+                            update_submember(sub_id, update_data)
+                        st.success(f"✅ {main} 부캐 정보 수정 완료!")
+                        st.rerun()
+    else:
+        st.info("등록된 부캐릭터가 없습니다.")
 
     selected_main_filter = st.selectbox(
         "🔍 본캐 닉네임으로 검색", ["전체 보기"] + main_names, index=0
     )
-   
-
 
     if df_sub.empty or "main_name" not in df_sub.columns:
         st.info("등록된 부캐릭터가 없습니다.")
