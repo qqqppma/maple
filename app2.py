@@ -1159,6 +1159,7 @@ elif menu == "부캐릭터 관리":
 
 
     # ✅ 본캐별 부캐 보기
+    # ✅ 본캐별 부캐 보기 (1)
     selected_main_filter = st.selectbox("🔍 본캐 닉네임으로 검색", ["전체 보기"] + main_names, index=0, key="main_filter_1")
 
     if not df_sub.empty and "main_name" in df_sub.columns:
@@ -1169,40 +1170,27 @@ elif menu == "부캐릭터 관리":
             if not df_main.empty:
                 df_main = df_main.reset_index(drop=True)
                 df_main["ID"] = df_main.index + 1
-                display_df = df_main.rename(columns={
-                    "guild_name1": "부캐 길드",
-                    "sub_name": "부캐 닉네임",
-                    "suro_score": "수로 점수",
-                    "flag_score": "플래그 점수",
-                    "mission_point": "주간미션포인트"
-                })
+                display_df = df_main.rename(columns={...})
 
                 st.markdown(f"### 🔹 {main} - 부캐 {len(display_df)}개")
 
                 editable_df = st.data_editor(
-                    display_df[["부캐 길드", "부캐 닉네임", "수로 점수", "플래그 점수", "주간미션포인트"]],
+                    display_df[[...]],
                     use_container_width=True,
                     disabled=["부캐 닉네임"],
                     key=f"editor_{main}"
                 )
 
-                # ✅ 데이터가 있을 때만 저장 버튼 표시
                 if len(df_main) > 0:
-                    if st.button(f"💾 `{main}` 부캐 수정 저장", key=f"save_{main}"):
+                    if st.button(f"💾 `{main}` 부캐 수정 저장", key=f"btn_save_{main}"):
                         for idx, row in editable_df.iterrows():
                             sub_id = df_main.iloc[idx]["sub_id"]
-                            update_data = {
-                                "guild_name1": row["부캐 길드"],
-                                "suro_score": row["수로 점수"],
-                                "flag_score": row["플래그 점수"],
-                                "mission_point": row["주간미션포인트"]
-                            }
+                            update_data = {...}
                             update_submember(sub_id, update_data)
                         st.success(f"✅ {main} 부캐 정보 수정 완료!")
                         st.rerun()
-    else:
-        st.info("등록된 부캐릭터가 없습니다.")
 
+    # ✅ 본캐별 부캐 보기 (2)
     selected_main_filter = st.selectbox("🔍 본캐 닉네임으로 검색", ["전체 보기"] + main_names, index=0, key="main_filter_2")
 
     if df_sub.empty or "main_name" not in df_sub.columns:
@@ -1213,73 +1201,53 @@ elif menu == "부캐릭터 관리":
                 continue
             df_main = df_sub[df_sub["main_name"] == main]
             if not df_main.empty:
-                # ✅ ID 재정렬
-                df_main = df_main.reset_index(drop=True)  
+                df_main = df_main.reset_index(drop=True)
                 df_main["ID"] = df_main.index + 1
-                display_df = df_main.rename(columns={
-                    "guild_name1": "부캐 길드",
-                    "sub_name": "부캐 닉네임",
-                    "suro_score": "수로 점수",
-                    "flag_score": "플래그 점수",
-                    "mission_point": "주간미션포인트"
-                })
+                display_df = df_main.rename(columns={...})
 
                 st.markdown(f"### 🔹 {main} - 부캐 {len(display_df)}개")
                 editable_df = st.data_editor(
-                display_df[["부캐 길드", "부캐 닉네임", "수로 점수", "플래그 점수", "주간미션포인트"]],
-                use_container_width=True,
-                disabled=["부캐 닉네임"]
-            )
+                    display_df[[...]],
+                    use_container_width=True,
+                    disabled=["부캐 닉네임"],
+                    key=f"editor2_{main}"  # <- 기존 editor_{main}과 구분
+                )
 
-            if st.button(f"💾 `{main}` 부캐 수정 저장", key=f"save_{main}"):
-                for idx, row in editable_df.iterrows():
-                    sub_id = df_main.iloc[idx]["sub_id"]
-                    update_data = {
-                        "guild_name1": row["부캐 길드"],
-                        "suro_score": row["수로 점수"],
-                        "flag_score": row["플래그 점수"],
-                        "mission_point": row["주간미션포인트"]
-                    }
-                    update_submember(sub_id, update_data)
-                st.success(f"✅ {main} 부캐 정보 수정 완료!")
-                st.rerun()
-
+                if st.button(f"💾 `{main}` 부캐 수정 저장", key=f"btn_save2_{main}"):
+                    for idx, row in editable_df.iterrows():
+                        sub_id = df_main.iloc[idx]["sub_id"]
+                        update_data = {...}
+                        update_submember(sub_id, update_data)
+                    st.success(f"✅ {main} 부캐 정보 수정 완료!")
+                    st.rerun()
 
                 if is_admin:
                     with st.expander(f"✏️ {main} 부캐 수정"):
                         sub_names = df_main["sub_name"].tolist()
-                        selected_sub_filter = st.selectbox("🔍 수정할 부캐 선택", sub_names, key=f"select_{main}")
-
-                        # ✅ 선택된 부캐만 필터링
+                        selected_sub_filter = st.selectbox("🔍 수정할 부캐 선택", sub_names, key=f"select_sub_{main}")
                         df_main = df_main[df_main["sub_name"] == selected_sub_filter]
                         sub_row = df_main.iloc[0]
                         sub = sub_row["sub_id"]
 
-                        # 🔽 이 아래부터는 수정 입력 영역
-                        new_guild_name = st.selectbox(
-                            "부캐 길드",
-                            options=guild_options,
-                            index=guild_options.index(sub_row.get("guild_name1", "길드A")) if sub_row.get("guild_name1", "길드A") in guild_options else 0,
-                            key=f"guild_{sub}"
-                        )
-                        new_suro_score = st.number_input("수로 점수", min_value=0, step=1, value=sub_row.get("suro_score", 0), key=f"suro_score_{sub}")
-                        new_flag_score = st.number_input("플래그 점수", min_value=0, step=1, value=sub_row.get("flag_score", 0), key=f"flag_score_{sub}")
-                        new_mission = st.number_input("주간미션포인트", min_value=0, step=1, value=sub_row.get("mission_point", 0), key=f"mission_{sub}")
+                        new_guild_name = st.selectbox("부캐 길드", options=guild_options,
+                                                    index=guild_options.index(sub_row.get("guild_name1", "길드A")),
+                                                    key=f"guild_{sub}")
+                        new_suro_score = st.number_input("수로 점수", value=sub_row.get("suro_score", 0),
+                                                        min_value=0, step=1, key=f"suro_{sub}")
+                        new_flag_score = st.number_input("플래그 점수", value=sub_row.get("flag_score", 0),
+                                                        min_value=0, step=1, key=f"flag_{sub}")
+                        new_mission = st.number_input("주간미션포인트", value=sub_row.get("mission_point", 0),
+                                                    min_value=0, step=1, key=f"mission_{sub}")
 
-                        if st.button("저장", key=f"save_{sub}"):
-                            update_data = {
-                                "guild_name1": new_guild_name,
-                                "suro_score": new_suro_score,
-                                "flag_score": new_flag_score,
-                                "mission_point": new_mission
-                            }
+                        if st.button("저장", key=f"btn_save_individual_{sub}"):
+                            update_data = {...}
                             if update_submember(sub, update_data):
                                 st.success("✅ 수정 완료")
                                 st.rerun()
                             else:
-                                st.error("🚫 수정 실패")
+                                st.error("❌ 수정 실패")
 
-                        if st.button("삭제", key=f"delete_{sub}"):
+                        if st.button("삭제", key=f"btn_delete_{sub}"):
                             if delete_submember(sub):
                                 st.success("🗑 삭제 완료")
                                 st.rerun()
@@ -1641,7 +1609,6 @@ elif menu == "드메템 대여 신청":
     col_left, col_right = st.columns([1, 2])
 
     with col_left:
-        st.markdown("#### 👤 대여자 선택")
         main_check = supabase.table("MainMembers").select("nickname").eq("nickname", nickname).execute()
         if main_check.data:
             selected_borrower = nickname
