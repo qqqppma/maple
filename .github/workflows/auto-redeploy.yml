@@ -1,0 +1,26 @@
+# .github/workflows/auto-redeploy.yml
+name: Auto Redeploy (매일 12:05 KST)
+
+on:
+  schedule:
+    - cron: '5 3 * * *'  # ✅ UTC 03:05 → KST 12:05
+  workflow_dispatch:       # 수동 실행도 가능
+
+jobs:
+  redeploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Update keepalive file
+        run: echo "Triggered at $(date -u)" > .keepalive
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .keepalive
+          git commit -m "🤖 자동 재시작 트리거 - $(date -u)" || echo "No changes"
+          git push
