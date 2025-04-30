@@ -163,19 +163,30 @@ async def polling_loop():
             new_rows = manitto_res.data
 
             for row in new_rows:
-                tutee = row.get("tutee_name")
-                tutor = row.get("tutor_name")
-
-                # ✅ 둘 다 있을 때만 전송 (불완전한 데이터는 제외)
-                if not tutee or not tutor:
-                    continue
-
+                tutee = row.get("tutee_name", "Unknown")
+                tutor = row.get("tutor_name", "Unknown")
                 message = f"🎯 `{tutee}`님이 `{tutor}`님께 마니또 신청을 하였습니다!"
-                channel = client.get_channel(MANITTO_CHANNEL_ID)
 
-                if channel:
-                    await channel.send(message)
+                # ✅ 채널 알림
+                if manitto_channel:
+                    await manitto_channel.send(message)
                     print(f"[Manitto 신청] {message}")
+
+                # ✅ 튜터와 튜티에게 DM 발송
+                guild = discord.utils.get(client.guilds)
+                if guild:
+                    # 닉네임 기반 유저 찾기 (정확한 Discord ID가 없으므로 닉네임 기반)
+                    for member in guild.members:
+                        if member.nick == tutee or member.name == tutee:
+                            try:
+                                await member.send(f"📩 당신은 `{tutor}`님에게 마니또를 신청하였습니다!")
+                            except:
+                                print(f"❗ {tutee}에게 DM 전송 실패")
+                        if member.nick == tutor or member.name == tutor:
+                            try:
+                                await member.send(f"📩 `{tutee}`님이 당신에게 마니또를 신청하였습니다!")
+                            except:
+                                print(f"❗ {tutor}에게 DM 전송 실패")
 
                 # ✅ 전송 후 알림 처리 상태 업데이트
                 supabase.table("ManiddoRequests").update({"notified": True}).eq("id", row["id"]).execute()
