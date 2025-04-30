@@ -551,6 +551,9 @@ if "user" not in st.session_state:
 
     if not st.session_state.signup_mode:
         st.subheader("🔐 로그인")
+        st.info(''' 
+                🔹4분기에 홈페이지 최적화 예정입니다.
+        ''')
 
         col_center = st.columns([1, 2, 1])[1]  # 가운데 정렬
         with col_center:
@@ -591,9 +594,7 @@ if "user" not in st.session_state:
                 st.session_state.signup_mode = True
                 st.rerun()
 
-        st.info(''' 
-                🔹4분기에 홈페이지 최적화 예정입니다.
-        ''')
+        
 
         st.stop()
 
