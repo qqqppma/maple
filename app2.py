@@ -877,21 +877,25 @@ elif menu == "악마길드 길컨관리":
         original_cols = list(column_map.values())
 
         # ✅ 버튼을 컬럼 순서에 맞게 정렬 (8칸)
-        button_cols = st.columns(8)
+        st.markdown("&nbsp;", unsafe_allow_html=True)
+
+        # 7열 정렬용 버튼 행 생성
+        button_cols = st.columns(7)
+
+        # CSS 스타일 적용: 버튼 높이·폭 통일
+        st.markdown("""
+        <style>
+        .uniform-btn button {
+            height: 38px !important;
+            width: 100%;
+            white-space: nowrap;
+            font-size: 14px;
+        }
+        </style>
+        """, unsafe_allow_html=True)
 
         with button_cols[0]:
-            st.markdown(
-                """
-                <style>
-                .save-btn button {
-                    white-space: nowrap;
-                    width: 100%;
-                }
-                </style>
-                <div class="save-btn">
-                """,
-                unsafe_allow_html=True
-            )
+            st.markdown('<div class="uniform-btn">', unsafe_allow_html=True)
             if st.button("💾 저장", key="save_main_edit"):
                 for idx, row in edited_df.iterrows():
                     row_id = id_map.get(idx)
@@ -904,45 +908,49 @@ elif menu == "악마길드 길컨관리":
                             st.success(f"✅ `{row['닉네임']}` 수정 완료")
                         else:
                             st.error(f"❌ `{row['닉네임']}` 수정 실패")
-                st.rerun()  # ID  # 체크박스
-            
+                st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
+
         with button_cols[1]:
-            st.empty()            
-            
-        with button_cols[2]:  # 닉네임
-            st.empty()
-
-        # 직위 열 - 💾 수정 내용 저장 버튼 (한 줄 고정)
-        with button_cols[3]:
-            st.empty()            
-
-        with button_cols[4]:  # 수로 점수
+            st.markdown('<div class="uniform-btn">', unsafe_allow_html=True)
             if st.button("🧹 수로", key="reset_suro"):
                 for row in df_main.itertuples():
                     update_mainmember(row.id, {"suro_score": 0})
                 st.success("✅ 수로 점수 초기화")
                 st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
 
-        with button_cols[5]:  # 플래그 점수
+        with button_cols[2]:
+            st.markdown('<div class="uniform-btn">', unsafe_allow_html=True)
             if st.button("🧹 플래그", key="reset_flag"):
                 for row in df_main.itertuples():
                     update_mainmember(row.id, {"flag_score": 0})
                 st.success("✅ 플래그 점수 초기화")
                 st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
 
-        with button_cols[6]:  # 주간미션
+        with button_cols[3]:
+            st.markdown('<div class="uniform-btn">', unsafe_allow_html=True)
             if st.button("🧹 주간미션", key="reset_mission"):
                 for row in df_main.itertuples():
                     update_mainmember(row.id, {"mission_point": 0})
                 st.success("✅ 주간미션 초기화")
                 st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
 
-        with button_cols[7]:  # 합계
+        with button_cols[4]:
+            st.markdown('<div class="uniform-btn">', unsafe_allow_html=True)
             if st.button("🧹 합계", key="reset_total"):
                 for row in df_main.itertuples():
                     update_mainmember(row.id, {"event_sum": 0})
                 st.success("✅ 합계 점수 초기화")
                 st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
+
+        # 나머지 2칸은 정렬용 빈칸
+        for i in [5, 6]:
+            with button_cols[i]:
+                st.empty()
 
 
     # with st.form("main_member_add_form"):
