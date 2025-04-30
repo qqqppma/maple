@@ -944,7 +944,7 @@ elif menu == "악마길드 길컨관리":
 
         with button_cols[5]:
             st.markdown('<div class="uniform-btn">', unsafe_allow_html=True)
-            if st.button("🧹 주간미션 초기화화", key="reset_mission"):
+            if st.button("🧹 주간미션 초기화", key="reset_mission"):
                 for row in df_main.itertuples():
                     update_mainmember(row.id, {"mission_point": 0})
                 st.success("✅ 주간미션 초기화")
@@ -953,7 +953,7 @@ elif menu == "악마길드 길컨관리":
 
         with button_cols[6]:
             st.markdown('<div class="uniform-btn">', unsafe_allow_html=True)
-            if st.button("🧹 합계 초기화화", key="reset_total"):
+            if st.button("🧹 합계 초기화", key="reset_total"):
                 for row in df_main.itertuples():
                     update_mainmember(row.id, {"event_sum": 0})
                 st.success("✅ 합계 점수 초기화")
