@@ -878,6 +878,19 @@ elif menu == "악마길드 길컨관리":
 
         # ✅ 버튼을 컬럼 순서에 맞게 정렬 (8칸)
         st.markdown("&nbsp;", unsafe_allow_html=True)
+        st.markdown("""
+            <style>
+            div[data-testid="stDataEditorContainer"] {
+                margin-bottom: 0px;
+            }
+            .tight-space {
+                margin-top: -25px;
+            }
+            </style>
+        """, unsafe_allow_html=True)
+
+        # 🔽 버튼 위에 간격 줄이기 위한 div
+        st.markdown('<div class="tight-space">', unsafe_allow_html=True)
 
         # 7열 정렬용 버튼 행 생성
         button_cols = st.columns(7)
