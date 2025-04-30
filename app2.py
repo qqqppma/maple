@@ -1644,9 +1644,6 @@ elif menu == "드메템 대여 신청":
                 pass
 ##333
 elif menu == "마니또 신청":
-    from datetime import datetime
-    import pandas as pd
-    import io
 
     st.header("🎁 마니또 신청")
     nickname = st.session_state["nickname"]
