@@ -972,18 +972,17 @@ elif menu == "악마길드 길컨관리":
 
 elif menu == "부캐릭터 관리":
     st.subheader("👥 부캐릭터 등록 및 관리")
+
     members = get_members()
     main_names = [m['nickname'] for m in members]
     submembers = get_submembers()
     df_sub = pd.DataFrame(submembers)
 
+    # 부캐 등록 폼
     with st.form("add_sub_form"):
         selected_main = st.selectbox("본캐 닉네임 선택", main_names)
         guild_name1 = st.selectbox("길드 이름", guild_options)
         sub_name = st.text_input("부캐 이름")
-        # 선택된 본캐 기준으로 등록된 부캐 가져오기
-        # linked_subs = df_sub[df_sub["main_name"] == selected_main]["sub_name"].tolist()
-        # sub_name = st.selectbox("부캐 이름 선택", linked_subs) if linked_subs else st.warning("⚠️ 선택한 본캐에 등록된 부캐가 없습니다.")
         suro_score = st.number_input("수로 점수", min_value=0, step=1)
         flag_score = st.number_input("플래그 점수", min_value=0, step=1)
         mission_point = st.number_input("주간미션포인트", min_value=0, step=1)
@@ -1012,82 +1011,88 @@ elif menu == "부캐릭터 관리":
 
     st.markdown("---")
     st.subheader("📊 부캐릭터 요약")
-
-    # ✅ 부캐릭터 전체 목록 테이블
     st.markdown("### 📑 등록된 전체 부캐릭터 목록")
 
-    # 전체 보기 토글 상태 관리
-    if "show_all_submembers" not in st.session_state:
-        st.session_state["show_all_submembers"] = False
+    if not df_sub.empty:
+        # ✅ 보기 토글 상태 초기화
+        if "show_all_submembers" not in st.session_state:
+            st.session_state["show_all_submembers"] = False
 
-    btn_label = "🔽 전체 보기" if not st.session_state["show_all_submembers"] else "🔼 일부만 보기"
-    if st.button(btn_label, key="toggle_submember_display"):
-        st.session_state["show_all_submembers"] = not st.session_state["show_all_submembers"]
-        st.rerun()
+        show_all = st.session_state["show_all_submembers"]
+        btn_label = "🔽 전체 보기" if not show_all else "🔼 일부만 보기"
+        if st.button(btn_label, key="toggle_submember_display"):
+            st.session_state["show_all_submembers"] = not show_all
+            st.rerun()
 
-    # 표 높이 설정: 일부 보기일 때만 제한
-    height_value = 230 if not st.session_state["show_all_submembers"] else None
+        # ✅ display_all_df 준비
+        df_sub = df_sub.reset_index(drop=True)
+        df_sub["ID"] = df_sub.index + 1
+        display_all_df = df_sub.rename(columns={
+            "ID": "ID",
+            "guild_name1": "부캐 길드",
+            "sub_name": "부캐 닉네임",
+            "main_name": "본캐 닉네임",
+            "suro_score": "수로 점수",
+            "flag_score": "플래그 점수",
+            "mission_point": "주간미션포인트"
+        })
 
-    editable_df = st.data_editor(
-        display_all_df[["ID", "부캐 길드","부캐 닉네임", "본캐 닉네임", "수로 점수", "플래그 점수", "주간미션포인트"]],
-        num_rows="dynamic",
-        use_container_width=True,
-        height=height_value,
-        disabled=["ID", "부캐 닉네임", "본캐 닉네임"]
-    )
+        # ✅ 높이 설정 (210 고정 방식)
+        height_value = None if show_all else 210
 
-    if st.button("💾 수정 내용 저장", key="save_all_submembers"):
-        for idx, row in editable_df.iterrows():
-            sub_id = df_sub.iloc[idx]["sub_id"]
-            update_data = {
-                "guild_name1": row["부캐 길드"],
-                "suro_score": row["수로 점수"],
-                "flag_score": row["플래그 점수"],
-                "mission_point": row["주간미션포인트"]
-            }
-            update_submember(sub_id, update_data)
-        st.success("✅ 전체 부캐 수정 완료!")
-        st.rerun()
+        # ✅ 수정 가능한 표
+        edited_df = st.data_editor(
+            display_all_df[["ID", "부캐 길드", "부캐 닉네임", "본캐 닉네임", "수로 점수", "플래그 점수", "주간미션포인트"]],
+            use_container_width=True,
+            height=height_value,
+            disabled=["ID", "부캐 닉네임", "본캐 닉네임"],
+            num_rows="dynamic",
+            key="submember_editor"
+        )
 
+        if st.button("💾 수정 내용 저장", key="save_submembers"):
+            for idx, row in edited_df.iterrows():
+                sub_id = df_sub.iloc[idx]["sub_id"]
+                update_data = {
+                    "guild_name1": row["부캐 길드"],
+                    "suro_score": row["수로 점수"],
+                    "flag_score": row["플래그 점수"],
+                    "mission_point": row["주간미션포인트"]
+                }
+                update_submember(sub_id, update_data)
+            st.success("✅ 전체 부캐 수정 완료!")
+            st.rerun()
+
+        # ✅ 다운로드 + 초기화 버튼
         excel_data = convert_df_to_excel(display_all_df)
+        st.download_button("📥 부캐릭터 목록 다운로드", data=excel_data, file_name="부캐릭터_목록.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
         button_cols = st.columns(7)
-
-        with button_cols[0]:
-            st.empty()  # ID
-
-        with button_cols[1]:
-            st.empty()  # 닉네임
-
-        with button_cols[2]:
-            st.empty()  # 직위
-        
-        with button_cols[3]:
-            st.empty()  # 직위
-
+        with button_cols[0]: st.empty()
+        with button_cols[1]: st.empty()
+        with button_cols[2]: st.empty()
+        with button_cols[3]: st.empty()
         with button_cols[4]:
             if st.button("🧹 수로 삭제"):
                 for row in df_sub.itertuples():
                     update_submember(row.sub_id, {"suro_score": 0})
                 st.success("✅ 수로 점수가 초기화되었습니다.")
                 st.rerun()
-
         with button_cols[5]:
             if st.button("🧹 플래그 삭제"):
                 for row in df_sub.itertuples():
                     update_submember(row.sub_id, {"flag_score": 0})
                 st.success("✅ 플래그 점수가 초기화되었습니다.")
                 st.rerun()
-
         with button_cols[6]:
             if st.button("🧹 주간미션 삭제"):
                 for row in df_sub.itertuples():
                     update_submember(row.sub_id, {"mission_point": 0})
                 st.success("✅ 주간미션포인트가 초기화되었습니다.")
                 st.rerun()
-        st.download_button("📥 부캐릭터 목록 다운로드", data=excel_data, file_name="부캐릭터_목록.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-
     else:
         st.info("등록된 부캐릭터가 없습니다.")
+
 
 
 
