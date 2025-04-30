@@ -1679,7 +1679,7 @@ elif menu == "마니또 신청":
     note_input = st.text_input("📝 비고 (선택사항)", placeholder="하고 싶은 말, 요청사항 등")
 
     if st.button("📥 신청하기"):
-        now = datetime.now()  # ✅ timestamptz에 맞게 datetime 객체 그대로 사용
+        now = datetime.now().isoformat()  # ✅ timestamptz에 맞게 datetime 객체 그대로 사용
 
         raw_data = {
             "tutor_name": selected_name if selected_role == "튜터" else None,
