@@ -1013,21 +1013,42 @@ elif menu == "부캐릭터 관리":
     st.markdown("---")
     st.subheader("📊 부캐릭터 요약")
 
-    # ✅ 부캐 전체 목록 테이블 추가
+    # ✅ 부캐릭터 전체 목록 테이블
     st.markdown("### 📑 등록된 전체 부캐릭터 목록")
-    if not df_sub.empty:
-        df_sub = df_sub.reset_index(drop=True)       # 인덱스 재정렬
-        df_sub["ID"] = df_sub.index + 1              # id 다시 부여
-        display_all_df = df_sub.rename(columns={
-            "ID": "ID",
-            "guild_name1": "부캐 길드",
-            "sub_name": "부캐 닉네임",
-            "main_name": "본캐 닉네임",
-            "suro_score": "수로 점수",
-            "flag_score": "플래그 점수",
-            "mission_point": "주간미션포인트"
-        })
-        st.dataframe(display_all_df[["ID", "부캐 길드","부캐 닉네임", "본캐 닉네임", "수로 점수", "플래그 점수", "주간미션포인트"]].reset_index(drop=True))
+
+    # 전체 보기 토글 상태 관리
+    if "show_all_submembers" not in st.session_state:
+        st.session_state["show_all_submembers"] = False
+
+    btn_label = "🔽 전체 보기" if not st.session_state["show_all_submembers"] else "🔼 일부만 보기"
+    if st.button(btn_label, key="toggle_submember_display"):
+        st.session_state["show_all_submembers"] = not st.session_state["show_all_submembers"]
+        st.rerun()
+
+    # 표 높이 설정: 일부 보기일 때만 제한
+    height_value = 230 if not st.session_state["show_all_submembers"] else None
+
+    editable_df = st.data_editor(
+        display_all_df[["ID", "부캐 길드","부캐 닉네임", "본캐 닉네임", "수로 점수", "플래그 점수", "주간미션포인트"]],
+        num_rows="dynamic",
+        use_container_width=True,
+        height=height_value,
+        disabled=["ID", "부캐 닉네임", "본캐 닉네임"]
+    )
+
+    if st.button("💾 수정 내용 저장", key="save_all_submembers"):
+        for idx, row in editable_df.iterrows():
+            sub_id = df_sub.iloc[idx]["sub_id"]
+            update_data = {
+                "guild_name1": row["부캐 길드"],
+                "suro_score": row["수로 점수"],
+                "flag_score": row["플래그 점수"],
+                "mission_point": row["주간미션포인트"]
+            }
+            update_submember(sub_id, update_data)
+        st.success("✅ 전체 부캐 수정 완료!")
+        st.rerun()
+
         excel_data = convert_df_to_excel(display_all_df)
         button_cols = st.columns(7)
 
@@ -1096,7 +1117,25 @@ elif menu == "부캐릭터 관리":
                 })
 
                 st.markdown(f"### 🔹 {main} - 부캐 {len(display_df)}개")
-                st.dataframe(display_df[["부캐 길드", "부캐 닉네임", "수로 점수", "플래그 점수", "주간미션포인트"]])
+                editable_df = st.data_editor(
+                display_df[["부캐 길드", "부캐 닉네임", "수로 점수", "플래그 점수", "주간미션포인트"]],
+                use_container_width=True,
+                disabled=["부캐 닉네임"]
+            )
+
+            if st.button(f"💾 `{main}` 부캐 수정 저장", key=f"save_{main}"):
+                for idx, row in editable_df.iterrows():
+                    sub_id = df_main.iloc[idx]["sub_id"]
+                    update_data = {
+                        "guild_name1": row["부캐 길드"],
+                        "suro_score": row["수로 점수"],
+                        "flag_score": row["플래그 점수"],
+                        "mission_point": row["주간미션포인트"]
+                    }
+                    update_submember(sub_id, update_data)
+                st.success(f"✅ {main} 부캐 정보 수정 완료!")
+                st.rerun()
+
 
                 if is_admin:
                     with st.expander(f"✏️ {main} 부캐 수정"):
