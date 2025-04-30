@@ -171,7 +171,7 @@ async def polling_loop():
 
             for row in new_rows:
                 tutee = row.get("tutee_name")
-                tutor = row.get("tutor_name")
+                tutor = row.get("tutor_name") or row.get("desired_tutor")
 
                 # ❗ None 방지
                 if not tutee or not tutor:
