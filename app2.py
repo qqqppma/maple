@@ -1624,7 +1624,7 @@ elif menu == "마니또 신청":
     st.header("마니또 신청")
     nickname = st.session_state["nickname"]
     owner = ["자리스틸의왕", "죤냇", "나영진", "o차월o"]
-    maniddo_options = get_members()
+    maniddo_options = [m["nickname"] for m in get_members() if "nickname" in m]
     maniddo_role = {
         "튜터" : "튜터",
         "튜티" : "튜티"
