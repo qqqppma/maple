@@ -1761,7 +1761,11 @@ elif menu == "마니또 신청":
 
         if is_admin:
             # ✅ 전체 매칭된 튜터-튜티 목록 가져오기
-            editables = df[df["tutor_name"].notna() & df["tutee_name"].notna()]
+            editables = df[
+                df["tutor_name"].notna() & 
+                df["tutee_name"].notna() &  
+                df["desired_tutor"].notna() & 
+                (df["desired_tutor"] == df["tutor_name"])]
             edit_titles = [f"{r['tutor_name']} - {r['tutee_name']}" for r in editables.to_dict("records")]
 
             if edit_titles:
