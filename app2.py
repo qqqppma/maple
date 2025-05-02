@@ -1122,17 +1122,26 @@ elif menu == "부캐릭터 관리":
         button_cols = st.columns([1, 0.8, 0.8, 0.8, 0.8, 1, 1.1])
         with button_cols[0]:
             if st.button("💾 저장"):
+                invalid_found = False
                 for idx, row in edited_df.iterrows():
-                    sub_id = df_sub.iloc[idx]["sub_id"]
-                    update_data = {
-                        "guild_name1": row["부캐 길드"],
-                        "suro_score": row["수로 점수"],
-                        "flag_score": row["플래그 점수"],
-                        "mission_point": row["주간미션포인트"]
-                    }
-                    update_submember(sub_id, update_data)
-                st.success("✅ 전체 부캐 수정 완료!")
-                st.rerun()
+                    guild_name = row["부캐 길드"]
+                    if not guild_name or guild_name not in guild_options:
+                        st.warning(f"❌ `{row['부캐 닉네임']}`의 길드 이름이 잘못되었습니다. 확인해주세요.")
+                        invalid_found = True
+                        break
+
+                if not invalid_found:
+                    for idx, row in edited_df.iterrows():
+                        sub_id = df_sub.iloc[idx]["sub_id"]
+                        update_data = {
+                            "guild_name1": row["부캐 길드"],
+                            "suro_score": row["수로 점수"],
+                            "flag_score": row["플래그 점수"],
+                            "mission_point": row["주간미션포인트"]
+                        }
+                        update_submember(sub_id, update_data)
+                    st.success("✅ 수정 완료!")
+                    st.rerun()
 
         # 1~3번 열은 비워둠
         for i in [1, 2, 3]:
