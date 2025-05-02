@@ -1964,6 +1964,11 @@ elif menu == "마니또 신청":
                         supabase.table("ManiddoRequests").update({"memo": updated_memo}).eq("id", row.id).execute()
                         st.success("✅ 메모가 저장되었습니다.")
                         st.rerun()
+                    # ✅ 튜터 전용 마니또 종료 버튼
+                    if st.button("❌ 마니또 종료", key=f"delete_{row.id}"):
+                        supabase.table("ManiddoRequests").delete().eq("id", row.id).execute()
+                        st.success("🗑 매칭이 종료되었습니다.")
+                        st.rerun()
 
 
 
