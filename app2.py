@@ -1946,14 +1946,20 @@ elif menu == "마니또 신청":
             else:
                 st.subheader("📋 내 마니또 매칭 목록")
                 view_df = matched.copy().reset_index(drop=True)
+
+                # 튜터 컬럼 우선순위 로직: tutor_name이 없으면 desired_tutor 사용
+                view_df["튜터"] = view_df.apply(
+                    lambda row: row["tutor_name"] if pd.notna(row["tutor_name"]) else row["desired_tutor"], axis=1
+                )
+
                 view_df = view_df.rename(columns={
-                    "tutor_name": "튜터",
                     "tutee_name": "튜티",
-                    "desired_tutor": "희망 튜터",
                     "note": "비고",
                     "memo": "기록"
                 })
-                st.dataframe(view_df[["튜터", "튜티", "비고", "기록"]], use_container_width=True)
+
+                # ✅ 순서 지정하여 표 출력
+                st.dataframe(view_df[["튜티", "튜터", "비고", "기록"]], use_container_width=True)
 
                 # ✅ 개별 수정 폼
                 for row in matched.itertuples():
