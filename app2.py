@@ -1121,7 +1121,7 @@ elif menu == "부캐릭터 관리":
 
         button_cols = st.columns([1, 0.8, 0.8, 1, 1, 1, 1])
         with button_cols[0]:
-            if st.button("💾 수정 내용 저장"):
+            if st.button("💾 저장"):
                 for idx, row in edited_df.iterrows():
                     sub_id = df_sub.iloc[idx]["sub_id"]
                     update_data = {
