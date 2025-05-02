@@ -1060,12 +1060,13 @@ elif menu == "부캐릭터 관리":
         submit_sub = st.form_submit_button("부캐 등록")
 
         if submit_sub:
-            count = sum(df_sub['main_name'] == selected_main) + 1 if not df_sub.empty else 1
-            sub_id = f"{selected_main}_{count}"
+            sub_id = str(uuid.uuid4())
+
             if not df_sub[(df_sub["main_name"] == selected_main) & (df_sub["sub_name"] == sub_name)].empty:
                 st.warning(f"⚠️ '{selected_main}'의 부캐 '{sub_name}'은 이미 등록되어 있습니다.")
             else:
                 data = {
+                    "sub_id": sub_id,
                     "guild_name1": guild_name1,
                     "sub_name": sub_name,
                     "main_name": selected_main,
