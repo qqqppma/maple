@@ -932,7 +932,7 @@ elif menu == "악마길드 길컨관리":
         st.markdown('<div class="tight-space">', unsafe_allow_html=True)
 
         # 7열 정렬용 버튼 행 생성
-        button_cols = st.columns([1, 0.8, 0.8, 1.1, 1, 1.1, 1.2])
+        button_cols = st.columns([1, 0.8, 0.8, 1.1, 1, 1.2, 1.3])
 
         # CSS 스타일 적용: 버튼 높이·폭 통일
         st.markdown("""
