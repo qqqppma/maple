@@ -17,8 +17,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Update keepalive file
-        run: echo "Triggered at $(date -u)" > .keepalive
+      - name: Update keepalive file with timestamp
+        run: echo "Triggered at $(date -u +%s)" > .keepalive
 
       - name: Commit and push
         run: |
