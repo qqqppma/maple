@@ -1212,7 +1212,7 @@ elif menu == "부캐릭터 관리":
                     key=f"editor_{main}"
                 )
 
-                if st.button(f"💾 `{main}` 부캐 수정 저장", key=f"btn_save_{main}"):
+                if st.button(f"💾 `{main}` 수정 내용 저장", key=f"btn_save_{main}"):
                     for idx, row in editable_df.iterrows():
                         sub_id = df_main.iloc[idx]["sub_id"]
                         update_data = {
