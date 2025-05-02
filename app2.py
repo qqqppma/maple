@@ -979,7 +979,7 @@ elif menu == "악마길드 길컨관리":
 
         with button_cols[4]:
             st.markdown('<div class="uniform-btn">', unsafe_allow_html=True)
-            if st.button("🧹 플래그 초기화", key="reset_flag"):
+            if st.button("플래그 초기화", key="reset_flag"):
                 for row in df_main.itertuples():
                     update_mainmember(row.id, {"flag_score": 0})
                 st.success("✅ 플래그 점수 초기화")
@@ -988,7 +988,7 @@ elif menu == "악마길드 길컨관리":
 
         with button_cols[5]:
             st.markdown('<div class="uniform-btn">', unsafe_allow_html=True)
-            if st.button("🧹 주간미션 초기화", key="reset_mission"):
+            if st.button("주간미션 초기화", key="reset_mission"):
                 for row in df_main.itertuples():
                     update_mainmember(row.id, {"mission_point": 0})
                 st.success("✅ 주간미션 초기화")
@@ -997,7 +997,7 @@ elif menu == "악마길드 길컨관리":
 
         with button_cols[6]:
             st.markdown('<div class="uniform-btn">', unsafe_allow_html=True)
-            if st.button("🧹 합계 초기화", key="reset_total"):
+            if st.button("합계 초기화", key="reset_total"):
                 for row in df_main.itertuples():
                     update_mainmember(row.id, {"event_sum": 0})
                 st.success("✅ 합계 점수 초기화")
@@ -1142,7 +1142,7 @@ elif menu == "부캐릭터 관리":
         # 수로/플래그/미션 삭제 버튼은 해당 컬럼 위치에 정확히 맞춰 배치
         with button_cols[4]:
             st.markdown('<div class="small-button">', unsafe_allow_html=True)
-            if st.button("🧹 수로 초기화"):
+            if st.button("수로 초기화"):
                 for row in df_sub.itertuples():
                     update_submember(row.sub_id, {"suro_score": 0})
                 st.success("✅ 수로 점수가 초기화되었습니다.")
@@ -1151,7 +1151,7 @@ elif menu == "부캐릭터 관리":
 
         with button_cols[5]:
             st.markdown('<div class="small-button">', unsafe_allow_html=True)
-            if st.button("🧹 플래그 초기화"):
+            if st.button("플래그 초기화"):
                 for row in df_sub.itertuples():
                     update_submember(row.sub_id, {"flag_score": 0})
                 st.success("✅ 플래그 점수가 초기화되었습니다.")
@@ -1160,7 +1160,7 @@ elif menu == "부캐릭터 관리":
 
         with button_cols[6]:
             st.markdown('<div class="small-button">', unsafe_allow_html=True)
-            if st.button("🧹 주간미션 초기화"):
+            if st.button("주간미션 초기화"):
                 for row in df_sub.itertuples():
                     update_submember(row.sub_id, {"mission_point": 0})
                 st.success("✅ 주간미션포인트가 초기화되었습니다.")
