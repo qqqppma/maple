@@ -1119,7 +1119,7 @@ elif menu == "부캐릭터 관리":
             key="submember_editor"
         )
 
-        button_cols = st.columns([1, 0.8, 0.8, 0.8, 1, 1, 1.1])
+        button_cols = st.columns([1, 0.8, 0.8, 0.8, 0.9, 1, 1.1])
         with button_cols[0]:
             if st.button("💾 저장"):
                 for idx, row in edited_df.iterrows():
