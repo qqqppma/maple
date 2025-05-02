@@ -970,7 +970,7 @@ elif menu == "악마길드 길컨관리":
 
         with button_cols[3]:
             st.markdown('<div class="uniform-btn">', unsafe_allow_html=True)
-            if st.button("🧹 수로 초기화", key="reset_suro"):
+            if st.button("수로 초기화", key="reset_suro"):
                 for row in df_main.itertuples():
                     update_mainmember(row.id, {"suro_score": 0})
                 st.success("✅ 수로 점수 초기화")
