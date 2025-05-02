@@ -1940,7 +1940,7 @@ elif menu == "마니또 신청":
 
         elif is_tutor:
             # ✅ 튜터가 보는 보기만 가능
-            matched = df[(df["tutor_name"] == nickname) & (df["tutee_name"].notna())]
+            matched = df[((df["tutor_name"] == nickname) & df["tutee_name"].notna()) | (df["desired_tutor"] == nickname)]
             if matched.empty:
                 st.info("🤝 진행 중인 마니또가 없습니다.")
             else:
