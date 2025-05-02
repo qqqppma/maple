@@ -1931,9 +1931,9 @@ elif menu == "마니또 신청":
                             st.success("✅ 메모가 수정되었습니다.")
                             st.rerun()
 
-                        if st.button("❌ 마니또 종료"):
-                            supabase.table("ManiddoRequests").delete().eq("id", selected_row["id"]).execute()
-                            st.success("🗑️ 마니또가 종료되었습니다.")
+                        if st.button("❌ 마니또 종료", key=f"delete_{row.id}"):
+                            supabase.table("ManiddoRequests").delete().eq("id", row.id).execute()
+                            st.success("🗑 삭제 완료")
                             st.rerun()
                 else:
                     st.info("🙅 현재 매칭된 마니또가 없습니다.")
@@ -1944,20 +1944,26 @@ elif menu == "마니또 신청":
             if matched.empty:
                 st.info("🤝 진행 중인 마니또가 없습니다.")
             else:
+                st.subheader("📋 내 마니또 매칭 목록")
+                view_df = matched.copy().reset_index(drop=True)
+                view_df = view_df.rename(columns={
+                    "tutor_name": "튜터",
+                    "tutee_name": "튜티",
+                    "desired_tutor": "희망 튜터",
+                    "note": "비고",
+                    "memo": "기록"
+                })
+                st.dataframe(view_df[["튜터", "튜티", "비고", "기록"]], use_container_width=True)
+
+                # ✅ 개별 수정 폼
                 for row in matched.itertuples():
-                    st.markdown(f"#### ✏️ {row.tutee_name}님과의 기록")
+                    st.markdown(f"### 📝 {row.tutee_name}님과의 기록")
                     updated_memo = st.text_area("기록", value=row.memo or "", key=f"memo_{row.id}")
 
-                    if st.button(f"📏 수정완료 - ID {row.id}"):
+                    if st.button("✏️ 수정 완료", key=f"save_{row.id}"):
                         supabase.table("ManiddoRequests").update({"memo": updated_memo}).eq("id", row.id).execute()
                         st.success("✅ 메모가 저장되었습니다.")
                         st.rerun()
-
-                    if st.button(f"❌ 마니또 종료 - ID {row.id}"):
-                        supabase.table("ManiddoRequests").delete().eq("id", row.id).execute()
-                        st.success("🗑️ 마니또가 종료되었습니다.")
-                        st.rerun()
-
 
 
 
