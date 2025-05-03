@@ -19,6 +19,15 @@ import codecs
 from postgrest.exceptions import APIError
 #=============위치고정=============================================#
 st.set_page_config(page_title="악마길드 관리 시스템", layout="wide")
+st.markdown("""
+    <style>
+    .small-button > button {
+        font-size: 13px !important;
+        padding: 0.25rem 0.75rem;
+        margin-bottom: 4px;
+    }
+    </style>
+""", unsafe_allow_html=True)
 #=============위치고정=============================================#
 ##
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
@@ -929,7 +938,7 @@ elif menu == "악마길드 길컨관리":
         st.markdown('<div class="tight-space">', unsafe_allow_html=True)
 
         # 7열 정렬용 버튼 행 생성
-        button_cols = st.columns(7)
+        button_cols = st.columns([1, 0.8, 0.8, 1.1, 1.1, 1.1, 0.8])
 
         # CSS 스타일 적용: 버튼 높이·폭 통일
         st.markdown("""
@@ -967,7 +976,7 @@ elif menu == "악마길드 길컨관리":
 
         with button_cols[3]:
             st.markdown('<div class="uniform-btn">', unsafe_allow_html=True)
-            if st.button("🧹 수로 초기화", key="reset_suro"):
+            if st.button("수로 초기화", key="reset_suro"):
                 for row in df_main.itertuples():
                     update_mainmember(row.id, {"suro_score": 0})
                 st.success("✅ 수로 점수 초기화")
@@ -976,7 +985,7 @@ elif menu == "악마길드 길컨관리":
 
         with button_cols[4]:
             st.markdown('<div class="uniform-btn">', unsafe_allow_html=True)
-            if st.button("🧹 플래그 초기화", key="reset_flag"):
+            if st.button("플래그 초기화", key="reset_flag"):
                 for row in df_main.itertuples():
                     update_mainmember(row.id, {"flag_score": 0})
                 st.success("✅ 플래그 점수 초기화")
@@ -985,7 +994,7 @@ elif menu == "악마길드 길컨관리":
 
         with button_cols[5]:
             st.markdown('<div class="uniform-btn">', unsafe_allow_html=True)
-            if st.button("🧹 주간미션 초기화", key="reset_mission"):
+            if st.button("주간미션 초기화", key="reset_mission"):
                 for row in df_main.itertuples():
                     update_mainmember(row.id, {"mission_point": 0})
                 st.success("✅ 주간미션 초기화")
@@ -994,7 +1003,7 @@ elif menu == "악마길드 길컨관리":
 
         with button_cols[6]:
             st.markdown('<div class="uniform-btn">', unsafe_allow_html=True)
-            if st.button("🧹 합계 초기화", key="reset_total"):
+            if st.button("합계 초기화", key="reset_total"):
                 for row in df_main.itertuples():
                     update_mainmember(row.id, {"event_sum": 0})
                 st.success("✅ 합계 점수 초기화")
@@ -1057,12 +1066,13 @@ elif menu == "부캐릭터 관리":
         submit_sub = st.form_submit_button("부캐 등록")
 
         if submit_sub:
-            count = sum(df_sub['main_name'] == selected_main) + 1 if not df_sub.empty else 1
-            sub_id = f"{selected_main}_{count}"
+            sub_id = str(uuid.uuid4())
+
             if not df_sub[(df_sub["main_name"] == selected_main) & (df_sub["sub_name"] == sub_name)].empty:
                 st.warning(f"⚠️ '{selected_main}'의 부캐 '{sub_name}'은 이미 등록되어 있습니다.")
             else:
                 data = {
+                    "sub_id": sub_id,
                     "guild_name1": guild_name1,
                     "sub_name": sub_name,
                     "main_name": selected_main,
@@ -1116,20 +1126,29 @@ elif menu == "부캐릭터 관리":
             key="submember_editor"
         )
 
-        button_cols = st.columns(7)
+        button_cols = st.columns([1, 0.8, 0.8, 0.8, 0.8, 1, 1.1])
         with button_cols[0]:
-            if st.button("💾 수정 내용 저장"):
+            if st.button("💾 저장"):
+                invalid_found = False
                 for idx, row in edited_df.iterrows():
-                    sub_id = df_sub.iloc[idx]["sub_id"]
-                    update_data = {
-                        "guild_name1": row["부캐 길드"],
-                        "suro_score": row["수로 점수"],
-                        "flag_score": row["플래그 점수"],
-                        "mission_point": row["주간미션포인트"]
-                    }
-                    update_submember(sub_id, update_data)
-                st.success("✅ 전체 부캐 수정 완료!")
-                st.rerun()
+                    guild_name = row["부캐 길드"]
+                    if not guild_name or guild_name not in guild_options:
+                        st.warning(f"❌ `{row['부캐 닉네임']}`의 길드 이름이 잘못되었습니다. 확인해주세요.")
+                        invalid_found = True
+                        break
+
+                if not invalid_found:
+                    for idx, row in edited_df.iterrows():
+                        sub_id = df_sub.iloc[idx]["sub_id"]
+                        update_data = {
+                            "guild_name1": row["부캐 길드"],
+                            "suro_score": row["수로 점수"],
+                            "flag_score": row["플래그 점수"],
+                            "mission_point": row["주간미션포인트"]
+                        }
+                        update_submember(sub_id, update_data)
+                    st.success("✅ 수정 완료!")
+                    st.rerun()
 
         # 1~3번 열은 비워둠
         for i in [1, 2, 3]:
@@ -1138,25 +1157,31 @@ elif menu == "부캐릭터 관리":
 
         # 수로/플래그/미션 삭제 버튼은 해당 컬럼 위치에 정확히 맞춰 배치
         with button_cols[4]:
-            if st.button("🧹 수로 초기화"):
+            st.markdown('<div class="small-button">', unsafe_allow_html=True)
+            if st.button("수로 초기화"):
                 for row in df_sub.itertuples():
                     update_submember(row.sub_id, {"suro_score": 0})
                 st.success("✅ 수로 점수가 초기화되었습니다.")
                 st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
 
         with button_cols[5]:
-            if st.button("🧹 플래그 초기화"):
+            st.markdown('<div class="small-button">', unsafe_allow_html=True)
+            if st.button("플래그 초기화"):
                 for row in df_sub.itertuples():
                     update_submember(row.sub_id, {"flag_score": 0})
                 st.success("✅ 플래그 점수가 초기화되었습니다.")
                 st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
 
         with button_cols[6]:
-            if st.button("🧹 주간미션 초기화"):
+            st.markdown('<div class="small-button">', unsafe_allow_html=True)
+            if st.button("주간미션 초기화"):
                 for row in df_sub.itertuples():
                     update_submember(row.sub_id, {"mission_point": 0})
                 st.success("✅ 주간미션포인트가 초기화되었습니다.")
                 st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
     else:
         st.info("등록된 부캐릭터가 없습니다.")
      # ✅ 다운로드 및 초기화 버튼
@@ -1194,7 +1219,7 @@ elif menu == "부캐릭터 관리":
                     key=f"editor_{main}"
                 )
 
-                if st.button(f"💾 `{main}` 부캐 수정 저장", key=f"btn_save_{main}"):
+                if st.button(f"💾 `{main}` 수정 내용 저장", key=f"btn_save_{main}"):
                     for idx, row in editable_df.iterrows():
                         sub_id = df_main.iloc[idx]["sub_id"]
                         update_data = {
@@ -1356,9 +1381,9 @@ elif menu == "부캐릭터 등록":
     st.warning("⚠️ 허위정보 등록 적발 시 이용이 제한됩니다.")
     st.markdown("### ❗ 필독 ❗")
     st.info(''' 
-    🔹보조무기와 드메셋 대여를 위해 등록이 필요합니다.\n
-    🔹 미등록시 대여 기능에 이용이 제한될 수 있습니다.\n
-    🔹 부캐릭터로 대여 기능을 이용하려는 경우에만 해당합니다.    
+    🔹가입된 부캐릭터 미 등록시 이용이 제한될 수 있습니다.\n
+    🔹대충 아무렇게 적어놓은 공지사항\n
+    🔹대충 많이 이용해 달라는 글
     ''')
 
 
@@ -1922,33 +1947,50 @@ elif menu == "마니또 신청":
                             st.success("✅ 메모가 수정되었습니다.")
                             st.rerun()
 
-                        if st.button("❌ 마니또 종료"):
-                            supabase.table("ManiddoRequests").delete().eq("id", selected_row["id"]).execute()
-                            st.success("🗑️ 마니또가 종료되었습니다.")
+                        if st.button("❌ 마니또 종료", key=f"delete_{row.id}"):
+                            supabase.table("ManiddoRequests").delete().eq("id", row.id).execute()
+                            st.success("🗑 삭제 완료")
                             st.rerun()
                 else:
                     st.info("🙅 현재 매칭된 마니또가 없습니다.")
 
         elif is_tutor:
             # ✅ 튜터가 보는 보기만 가능
-            matched = df[(df["tutor_name"] == nickname) & (df["tutee_name"].notna())]
+            matched = df[((df["tutor_name"] == nickname) & df["tutee_name"].notna()) | (df["desired_tutor"] == nickname)]
             if matched.empty:
                 st.info("🤝 진행 중인 마니또가 없습니다.")
             else:
+                st.subheader("📋 내 마니또 매칭 목록")
+                view_df = matched.copy().reset_index(drop=True)
+
+                # 튜터 컬럼 우선순위 로직: tutor_name이 없으면 desired_tutor 사용
+                view_df["튜터"] = view_df.apply(
+                    lambda row: row["tutor_name"] if pd.notna(row["tutor_name"]) else row["desired_tutor"], axis=1
+                )
+
+                view_df = view_df.rename(columns={
+                    "tutee_name": "튜티",
+                    "note": "비고",
+                    "memo": "기록"
+                })
+
+                # ✅ 순서 지정하여 표 출력
+                st.dataframe(view_df[["튜티", "튜터", "비고", "기록"]], use_container_width=True)
+
+                # ✅ 개별 수정 폼
                 for row in matched.itertuples():
-                    st.markdown(f"#### ✏️ {row.tutee_name}님과의 기록")
+                    st.markdown(f"### 📝 {row.tutee_name}님과의 기록")
                     updated_memo = st.text_area("기록", value=row.memo or "", key=f"memo_{row.id}")
 
-                    if st.button(f"📏 수정완료 - ID {row.id}"):
+                    if st.button("✏️ 수정 완료", key=f"save_{row.id}"):
                         supabase.table("ManiddoRequests").update({"memo": updated_memo}).eq("id", row.id).execute()
                         st.success("✅ 메모가 저장되었습니다.")
                         st.rerun()
-
-                    if st.button(f"❌ 마니또 종료 - ID {row.id}"):
+                    # ✅ 튜터 전용 마니또 종료 버튼
+                    if st.button("❌ 마니또 종료", key=f"delete_{row.id}"):
                         supabase.table("ManiddoRequests").delete().eq("id", row.id).execute()
-                        st.success("🗑️ 마니또가 종료되었습니다.")
+                        st.success("🗑 매칭이 종료되었습니다.")
                         st.rerun()
-
 
 
 
