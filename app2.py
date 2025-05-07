@@ -862,6 +862,9 @@ elif menu == "악마길드 길컨관리":
         # 🔽 부캐 점수를 본캐에 합산
         submembers = get_submembers()
         df_sub = pd.DataFrame(submembers)
+        df_main["id"] = [m["id"] for m in mainmembers]  # 실제 id
+        df_main["ID"] = df_main.index + 1               # 표시용 ID
+        id_map = df_main.set_index("ID")["id"].to_dict()
 
         if not df_sub.empty:
             sub_sums = df_sub.groupby("main_name")[["suro_score", "flag_score", "mission_point"]].sum().reset_index()
@@ -965,14 +968,18 @@ elif menu == "악마길드 길컨관리":
                 for idx, row in edited_df.iterrows():
                     row_id = id_map.get(idx)
                     if not row_id:
+                        st.warning(f"❗ ID 매핑 실패: {idx}")
                         continue
+
                     updated = {eng: row[kor] for kor, eng in column_map.items()}
                     original = df_main[df_main["id"] == row_id][original_cols].iloc[0]
                     if not original.equals(pd.Series(updated)):
-                        if update_mainmember(row_id, updated):
+                        success = update_mainmember(row_id, updated)
+                        if success:
                             st.success(f"✅ `{row['닉네임']}` 수정 완료")
                         else:
-                            st.error(f"❌ `{row['닉네임']}` 수정 실패")
+                            st.error(f"❌ `{row['닉네임']}` 수정 실패: {updated}")
+                            st.code(f"패치 URL: {SUPABASE_URL}/rest/v1/MainMembers?id=eq.{row_id}")
                 st.rerun()
             st.markdown('</div>', unsafe_allow_html=True)
 
