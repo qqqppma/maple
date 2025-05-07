@@ -1841,12 +1841,24 @@ elif menu == "마니또 관리":
         st.dataframe(df_tutees[["tutee_name"]], use_container_width=True)
 
     # ✅ 튜터/튜티 선택해서 매칭 등록
-    tutors = df_tutors["tutor_name"].unique().tolist()
-    tutees = df_tutees["tutee_name"].unique().tolist()
+    # tutors = df_tutors["tutor_name"].unique().tolist()
+    # tutees = df_tutees["tutee_name"].unique().tolist()
+    # ✅ 튜터 / 튜티 목록 구분
+    df_tutors = df[df["tutor_name"].notna() & df["tutee_name"].isna()]
+    df_tutees = df[df["tutee_name"].notna() & df["tutor_name"].isna()]
+    df_matched = df[df["tutor_name"].notna() & df["tutee_name"].notna()]
+
+    # ✅ 매칭된 사람 목록 필터링
+    matched_tutors = df_matched["tutor_name"].unique()
+    matched_tutees = df_matched["tutee_name"].unique()
+
+    # ✅ 매칭되지 않은 사람만 선택지로
+    tutor_choices = [t for t in df_tutors["tutor_name"].unique() if t not in matched_tutors]
+    tutee_choices = [t for t in df_tutees["tutee_name"].unique() if t not in matched_tutees]
 
     st.markdown("### 🔗 튜터 - 튜티 매칭 등록")
-    selected_tutor = st.selectbox("튜터 선택", tutors, key="match_tutor")
-    selected_tutee = st.selectbox("튜티 선택", tutees, key="match_tutee")
+    selected_tutor = st.selectbox("튜터 선택", tutor_choices, key="match_tutor")
+    selected_tutee = st.selectbox("튜티 선택", tutee_choices, key="match_tutee")
 
     if st.button("📌 매칭 등록"):
         now = datetime.now().isoformat()
