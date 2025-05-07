@@ -847,7 +847,7 @@ if menu == "악마 길드원 정보 등록":
 
                     
 elif menu == "악마길드 길컨관리":
-    st.subheader("👥악마길드 길드컨트롤 관리")
+    st.subheader("👥 악마길드 길드컨트롤 관리")
 
     mainmembers = get_mainmembers()
     members = get_members()
@@ -857,36 +857,37 @@ elif menu == "악마길드 길컨관리":
 
     if mainmembers:
         df_main = pd.DataFrame(mainmembers)
+
         # 🔽 부캐 점수를 본캐에 합산
         submembers = get_submembers()
         df_sub = pd.DataFrame(submembers)
 
-        # 점수별 합산
         if not df_sub.empty:
-            # 각 본캐 기준으로 점수 합계 구하기
             sub_sums = df_sub.groupby("main_name")[["suro_score", "flag_score", "mission_point"]].sum().reset_index()
-
-            # 본캐 점수에 부캐 점수 추가
             df_main = df_main.merge(sub_sums, how="left", left_on="nickname", right_on="main_name")
 
-            # 합산 적용 (NaN은 0으로 처리)
-            for col in ["suro_score", "flag_score", "mission_point", "event_sum"]:
-                df_main[col + "_x"] = df_main[col + "_x"].fillna(0)
-                df_main[col + "_y"] = df_main[col + "_y"].fillna(0)
-                df_main[col] = df_main[col + "_x"] + df_main[col + "_y"]
+            # ✅ 컬럼이 존재할 때만 안전하게 합산
+            for col in ["suro_score", "flag_score", "mission_point"]:
+                if col + "_x" in df_main.columns and col + "_y" in df_main.columns:
+                    df_main[col + "_x"] = df_main[col + "_x"].fillna(0)
+                    df_main[col + "_y"] = df_main[col + "_y"].fillna(0)
+                    df_main[col] = df_main[col + "_x"] + df_main[col + "_y"]
 
-            # 불필요한 중간 열 제거
-            df_main.drop(columns=["main_name", "suro_score_x", "suro_score_y", 
-                                "flag_score_x", "flag_score_y", 
-                                "mission_point_x", "mission_point_y", 
-                                "event_sum_x", "event_sum_y"], inplace=True)
+            # ✅ 안전하게 불필요한 컬럼만 제거
+            drop_cols = [col for col in [
+                "main_name",
+                "suro_score_x", "suro_score_y",
+                "flag_score_x", "flag_score_y",
+                "mission_point_x", "mission_point_y"
+            ] if col in df_main.columns]
+            df_main.drop(columns=drop_cols, inplace=True)
 
-
+        # ✅ 최종 점수 기준으로 event_sum 계산
         df_main["event_sum"] = (
-        (df_main["suro_score"] // 5000) +
-        (df_main["flag_score"] // 1000) +
-        (df_main["mission_point"] // 10)
-    )
+            (df_main["suro_score"] // 5000) +
+            (df_main["flag_score"] // 1000) +
+            (df_main["mission_point"] // 10)
+        )
 
         # ✅ 정렬
         df_main = df_main.sort_values(
