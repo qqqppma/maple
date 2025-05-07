@@ -129,9 +129,15 @@ def get_submembers():
         return res.json()
     return []
 
+# def update_submember(sub_id, data):
+#     res = requests.patch(f"{SUPABASE_URL}/rest/v1/SubMembers?sub_id=eq.{sub_id}", headers=HEADERS, json=data)
+#     return res.status_code == 204
+
 def update_submember(sub_id, data):
-    res = requests.patch(f"{SUPABASE_URL}/rest/v1/SubMembers?sub_id=eq.{sub_id}", headers=HEADERS, json=data)
-    return res.status_code == 204
+    if not sub_id:
+        print("❗ sub_id is null, skipping update")
+        return False
+    return supabase.table("SubMembers").update(data).eq("sub_id", sub_id).execute()
 
 def delete_submember(sub_id):
     res = requests.delete(f"{SUPABASE_URL}/rest/v1/SubMembers?sub_id=eq.{sub_id}", headers=HEADERS)
