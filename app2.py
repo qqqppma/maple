@@ -1,7 +1,12 @@
 import streamlit as st
 import requests
 import pandas as pd
-from datetime import date,datetime
+import xlsxwriter
+import bcrypt
+import textwrap
+import codecs
+import json
+import uuid
 import re
 import urllib.parse
 import io
@@ -9,14 +14,12 @@ import os
 from PIL import Image
 from datetime import date, timezone, timedelta
 from supabase import create_client, Client
-import json
-import uuid
 from streamlit.components.v1 import html
 from utils.time_grid import generate_slot_table
-import bcrypt
-import textwrap
-import codecs
+from datetime import date,datetime
 from postgrest.exceptions import APIError
+from io import BytesIO
+
 #=============위치고정=============================================#
 st.set_page_config(page_title="악마길드 관리 시스템", layout="wide")
 st.markdown("""
@@ -848,6 +851,36 @@ elif menu == "악마길드 길컨관리":
 
     if mainmembers:
         df_main = pd.DataFrame(mainmembers)
+        # 🔽 부캐 점수를 본캐에 합산
+        submembers = get_submembers()
+        df_sub = pd.DataFrame(submembers)
+
+        # 점수별 합산
+        if not df_sub.empty:
+            # 각 본캐 기준으로 점수 합계 구하기
+            sub_sums = df_sub.groupby("main_name")[["suro_score", "flag_score", "mission_point"]].sum().reset_index()
+
+            # 본캐 점수에 부캐 점수 추가
+            df_main = df_main.merge(sub_sums, how="left", left_on="nickname", right_on="main_name")
+
+            # 합산 적용 (NaN은 0으로 처리)
+            for col in ["suro_score", "flag_score", "mission_point", "event_sum"]:
+                df_main[col + "_x"] = df_main[col + "_x"].fillna(0)
+                df_main[col + "_y"] = df_main[col + "_y"].fillna(0)
+                df_main[col] = df_main[col + "_x"] + df_main[col + "_y"]
+
+            # 불필요한 중간 열 제거
+            df_main.drop(columns=["main_name", "suro_score_x", "suro_score_y", 
+                                "flag_score_x", "flag_score_y", 
+                                "mission_point_x", "mission_point_y", 
+                                "event_sum_x", "event_sum_y"], inplace=True)
+
+
+        df_main["event_sum"] = (
+        (df_main["suro_score"] // 5000) +
+        (df_main["flag_score"] // 1000) +
+        (df_main["mission_point"] // 10)
+    )
 
         # ✅ 정렬
         df_main = df_main.sort_values(
@@ -1770,128 +1803,93 @@ elif menu == "드메템 대여 신청":
             else:
                 pass
 ##333
-elif menu == "마니또 신청":
+elif menu == "🛠 마니또 관리 (관리자)":
 
-    st.header("🎁 마니또 신청")
+    st.header("🛠 마니또 튜터-튜티 관리")
     nickname = st.session_state["nickname"]
     is_admin = st.session_state.get("is_admin", False)
 
-    selected_name = st.session_state["nickname"]
-    st.markdown(f"**신청자 닉네임:** `{selected_name}`")
-    selected_role = st.selectbox("🌟 신청 역할", ["튜터", "튜티"])
+    # ✅ 악마길드원 네이메 목록 가져오기
+    mainmembers = get_mainmembers()
+    guild_nicks = sorted([m["nickname"] for m in mainmembers if m.get("nickname")])
 
+    # ✅ 튜터 등록
+    with st.form("tutor_form"):
+        st.subheader("✅ 튜터 등록")
+        new_tutor = st.selectbox("튜터 선택 (악마길드원만)", guild_nicks, key="select_tutor")
+        submit_tutor = st.form_submit_button("튜터 등록")
+        if submit_tutor and new_tutor:
+            supabase.table("ManiddoRequests").insert({"tutor_name": new_tutor}).execute()
+            st.success(f"튜터 '{new_tutor}' 등록 완료!")
+
+    # ✅ 튜티 등록
+    with st.form("tutee_form"):
+        st.subheader("✅ 튜티 등록")
+        new_tutee = st.selectbox("튜티 선택 (악마길드원만)", guild_nicks, key="select_tutee")
+        submit_tutee = st.form_submit_button("튜티 등록")
+        if submit_tutee and new_tutee:
+            supabase.table("ManiddoRequests").insert({"tutee_name": new_tutee}).execute()
+            st.success(f"튜티 '{new_tutee}' 등록 완료!")
+
+    # ✅ 등록된 목록 보기
     res = supabase.table("ManiddoRequests").select("*").execute()
     all_requests = res.data or []
     df = pd.DataFrame(all_requests)
-
-    # ✅ 마니또 관리 권한 조건 확인
-    nickname = st.session_state["nickname"]
-    is_admin = st.session_state.get("is_admin", False)
-
-    # ✅ 튜터로 신청한 기록이 존재하는지 확인
     is_tutor = any((r.get("tutor_name") == nickname) for r in all_requests)
 
-    # ✅ 튜터 선택 필터 (튜티일 경우만)
-    desired_tutor = None
-    already_chosen_tutors = set(r["desired_tutor"] for r in all_requests if r.get("desired_tutor"))
-    available_tutors = [
-        r["tutor_name"] for r in all_requests
-        if r.get("tutor_name") and r["tutor_name"] not in already_chosen_tutors and r["tutor_name"] != selected_name
-    ]
+    tutors = df[df["tutor_name"].notna() & df["tutee_name"].isna()]["tutor_name"].unique().tolist()
+    tutees = df[df["tutee_name"].notna() & df["tutor_name"].isna()]["tutee_name"].unique().tolist()
 
-    if selected_role == "튜티":
-        st.markdown("### 🙋 함께하고 싶은 튜터 선택")
-        if available_tutors:
-            desired_tutor = st.selectbox("원하는 튜터", available_tutors)
-        else:
-            st.warning("⚠️ 현재 모든 튜터가 마니또를 진행 중입니다.")
+    st.markdown("### 👤 등록된 튜터 목록")
+    st.write(tutors)
 
-    note_input = st.text_input("📝 비고 (선택사항)", placeholder="하고 싶은 말, 요청사항 등")
+    st.markdown("### 👥 등록된 튜티 목록")
+    st.write(tutees)
 
-    if st.button("📥 신청하기"):
-        now = datetime.now().isoformat()  # ✅ timestamptz에 맞게 datetime 객체 그대로 사용
-
-        raw_data = {
-            "tutor_name": selected_name if selected_role == "튜터" else None,
-            "tutee_name": selected_name if selected_role == "튜티" else None,
-            "desired_tutor": desired_tutor if selected_role == "튜티" else None,
-            "note": note_input.strip() if note_input else None,
+    # ✅ 매칭
+    st.subheader("🔗 튜터 - 튜티 매칭")
+    selected_tutor = st.selectbox("튜터 선택", tutors, key="match_tutor")
+    selected_tutee = st.selectbox("튜티 선택", tutees, key="match_tutee")
+    if st.button("📌 매칭 등록"):
+        now = datetime.now().isoformat()
+        supabase.table("ManiddoRequests").insert({
+            "tutor_name": selected_tutor,
+            "tutee_name": selected_tutee,
             "timestamp": now
-        }
-
-        data = {k: v for k, v in raw_data.items() if v is not None}
-
-        try:
-            res = supabase.table("ManiddoRequests").insert(data).execute()
-            if res.data:
-                st.success(f"✅ {selected_name}님이 '{selected_role}'로 신청되었습니다.")
-                st.rerun()
-            else:
-                st.error("❌ 신청 실패. 다시 시도해주세요.")
-        except Exception as e:
-            st.error(f"❌ Supabase 오류: {e}")
+        }).execute()
+        st.success(f"매칭 완료: 튜터 {selected_tutor} - 튜티 {selected_tutee}")
+        st.rerun()
 
     st.markdown("---")
 
-    # ✅ 신청 목록 보기
-    if df.empty:
-        st.info("아직 신청된 마니또가 없습니다.")
+    # ✅ 매칭된 목록 + 에크셀 다운로드
+    st.subheader("📋 매칭된 마니또 목록")
+    matched_df = df[df["tutor_name"].notna() & df["tutee_name"].notna()]
+    if not matched_df.empty:
+        view_df = matched_df.copy().reset_index(drop=True)
+        view_df["\ud29c\ud130"] = view_df["tutor_name"]
+        view_df["\ud29c\ud2f0"] = view_df["tutee_name"]
+        view_df["\ube44\uace0"] = view_df.get("note", "")
+        view_df["\uae30\ub85d"] = view_df.get("memo", "")
+        display_df = view_df[["\ud29c\ud130", "\ud29c\ud2f0", "\ube44\uace0", "\uae30\ub85d"]]
+
+        st.dataframe(display_df, use_container_width=True)
+
+        def convert_df_to_excel(df):
+            output = BytesIO()
+            with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
+                df.to_excel(writer, index=False, sheet_name="\ub9e4\uce6d\ubaa9\ub85d")
+            return output.getvalue()
+
+        excel_data = convert_df_to_excel(display_df)
+        st.download_button(
+            label="📅 매칭 목록 다운로드",
+            data=excel_data,
+            file_name="마니또_매칭목록.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
     else:
-        if is_admin:
-            st.subheader("전체 신청 목록 (관리자)")
-
-            # ✅ 매칭된 쌍 기준으로 보기
-            matched_pairs = []
-            for tutor_row in df[df["tutor_name"].notna()].to_dict("records"):
-                for tutee_row in df[df["tutee_name"].notna()].to_dict("records"):
-                    if tutee_row.get("desired_tutor") == tutor_row.get("tutor_name"):
-                        pair = {
-                            "튜티": tutee_row["tutee_name"],
-                            "튜터": tutor_row["tutor_name"],
-                            "비고": tutee_row.get("note", ""),
-                            "기록": tutee_row.get("memo", "")
-                        }
-                        matched_pairs.append(pair)
-
-            if matched_pairs:
-                view_df = pd.DataFrame(matched_pairs)
-                st.dataframe(view_df, use_container_width=True)
-
-                excel_data = convert_df_to_excel(view_df)
-                st.download_button(
-                    label="📥 마니또 신청 목록 다운로드",
-                    data=excel_data,
-                    file_name="마니또_신청목록.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )
-            else:
-                st.info("아직 매칭된 마니또가 없습니다.")
-        else:
-            st.subheader("📋 내 마니또 매칭 정보")
-
-            tutor_matches = df[
-                (df["desired_tutor"] == nickname) & (df["tutor_name"] == nickname)
-            ][["tutee_name", "note", "memo"]].rename(columns={
-                "tutee_name": "매칭된 튜티", "note": "비고", "memo": "기록"
-            })
-
-            tutee_matches = df[
-                (df["tutee_name"] == nickname) &
-                (df["desired_tutor"].isin(df["tutor_name"]))
-            ][["desired_tutor", "note", "memo"]].rename(columns={
-                "desired_tutor": "매칭된 튜터", "note": "비고", "memo": "기록"
-            })
-
-            if not tutor_matches.empty:
-                st.markdown("### 🎯 당신을 선택한 튜티")
-                st.dataframe(tutor_matches.reset_index(drop=True), use_container_width=True)
-
-            if not tutee_matches.empty:
-                st.markdown("### 📬 당신이 선택한 튜터")
-                st.dataframe(tutee_matches.reset_index(drop=True), use_container_width=True)
-
-            if tutor_matches.empty and tutee_matches.empty:
-                st.info("🙅 아직 매칭된 마니또가 없습니다.")
+        st.info("아직 매칭된 마니또가 없습니다.")
     # ✅ 마니또 관리 (튜터/관리자 전용)
     if is_admin or is_tutor:
         st.markdown("---")
@@ -1981,8 +1979,8 @@ elif menu == "마니또 신청":
                         st.success("✅ 메모가 저장되었습니다.")
                         st.rerun()
                     # ✅ 튜터 전용 마니또 종료 버튼
-                    if st.button("❌ 마니또 종료", key=f"delete_{row.id}"):
-                        supabase.table("ManiddoRequests").delete().eq("id", row.id).execute()
+                    if st.button("❌ 마니또 종료", key=f"delete_{selected_row['id']}"):
+                        supabase.table("ManiddoRequests").delete().eq("id", selected_row["id"]).execute()
                         st.success("🗑 매칭이 종료되었습니다.")
                         st.rerun()
 
