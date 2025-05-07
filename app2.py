@@ -888,6 +888,8 @@ elif menu == "악마길드 길컨관리":
             (df_main["flag_score"] // 1000) +
             (df_main["mission_point"] // 10)
         )
+        for col in ["suro_score", "flag_score", "mission_point"]:
+            df_main[col] = df_main[col].fillna(0).astype(int)
 
         # ✅ 정렬
         df_main = df_main.sort_values(
