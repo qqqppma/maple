@@ -1822,19 +1822,32 @@ elif menu == "마니또 관리":
     df = pd.DataFrame(all_requests)
     is_tutor = any((r.get("tutor_name") == nickname) for r in all_requests)
 
-    tutors = df[df["tutor_name"].notna() & df["tutee_name"].isna()]["tutor_name"].unique().tolist()
-    tutees = df[df["tutee_name"].notna() & df["tutor_name"].isna()]["tutee_name"].unique().tolist()
+    # ✅ 튜터/튜티 목록 필터링
+    df_tutors = df[df["tutor_name"].notna() & df["tutee_name"].isna()].reset_index(drop=True)
+    df_tutees = df[df["tutee_name"].notna() & df["tutor_name"].isna()].reset_index(drop=True)
+    df_matched = df[df["tutor_name"].notna() & df["tutee_name"].notna()].reset_index(drop=True)
 
-    st.markdown("### 👤 등록된 튜터 목록")
-    st.write(tutors)
+    # ✅ 좌우 컬럼 배치
+    tutor_col, tutee_col = st.columns(2)
 
-    st.markdown("### 👥 등록된 튜티 목록")
-    st.write(tutees)
+    with tutor_col:
+        st.markdown("### 🧑‍🏫 튜터 목록")
+        st.markdown("🔷 신청한 튜터 목록")
+        st.dataframe(df_tutors[["tutor_name"]], use_container_width=True)
 
-    # ✅ 매칭
-    st.subheader("🔗 튜터 - 튜티 매칭")
+    with tutee_col:
+        st.markdown("### 🧑‍🎓 튜티 목록")
+        st.markdown("🔶 신청한 튜티 목록")
+        st.dataframe(df_tutees[["tutee_name"]], use_container_width=True)
+
+    # ✅ 튜터/튜티 선택해서 매칭 등록
+    tutors = df_tutors["tutor_name"].unique().tolist()
+    tutees = df_tutees["tutee_name"].unique().tolist()
+
+    st.markdown("### 🔗 튜터 - 튜티 매칭 등록")
     selected_tutor = st.selectbox("튜터 선택", tutors, key="match_tutor")
     selected_tutee = st.selectbox("튜티 선택", tutees, key="match_tutee")
+
     if st.button("📌 매칭 등록"):
         now = datetime.now().isoformat()
         supabase.table("ManiddoRequests").insert({
@@ -1847,23 +1860,22 @@ elif menu == "마니또 관리":
 
     st.markdown("---")
 
-    # ✅ 매칭된 목록 + 에크셀 다운로드
+    # ✅ 매칭된 목록 + 엑셀 다운로드
     st.subheader("📋 매칭된 마니또 목록")
-    matched_df = df[df["tutor_name"].notna() & df["tutee_name"].notna()]
-    if not matched_df.empty:
-        view_df = matched_df.copy().reset_index(drop=True)
-        view_df["\ud29c\ud130"] = view_df["tutor_name"]
-        view_df["\ud29c\ud2f0"] = view_df["tutee_name"]
-        view_df["\ube44\uace0"] = view_df.get("note", "")
-        view_df["\uae30\ub85d"] = view_df.get("memo", "")
-        display_df = view_df[["\ud29c\ud130", "\ud29c\ud2f0", "\ube44\uace0", "\uae30\ub85d"]]
+    if not df_matched.empty:
+        view_df = df_matched.copy()
+        view_df["튜터"] = view_df["tutor_name"]
+        view_df["튜티"] = view_df["tutee_name"]
+        view_df["비고"] = view_df.get("note", "")
+        view_df["기록"] = view_df.get("memo", "")
+        display_df = view_df[["튜터", "튜티", "비고", "기록"]]
 
         st.dataframe(display_df, use_container_width=True)
 
         def convert_df_to_excel(df):
             output = BytesIO()
             with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
-                df.to_excel(writer, index=False, sheet_name="\ub9e4\uce6d\ubaa9\ub85d")
+                df.to_excel(writer, index=False, sheet_name="매칭목록")
             return output.getvalue()
 
         excel_data = convert_df_to_excel(display_df)
