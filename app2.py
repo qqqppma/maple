@@ -857,6 +857,7 @@ elif menu == "악마길드 길컨관리":
 
     if mainmembers:
         df_main = pd.DataFrame(mainmembers)
+        df_main["id"] = [m["id"] for m in mainmembers]  # ✅ id 컬럼 명시적으로 설정
 
         # 🔽 부캐 점수를 본캐에 합산
         submembers = get_submembers()
@@ -866,14 +867,12 @@ elif menu == "악마길드 길컨관리":
             sub_sums = df_sub.groupby("main_name")[["suro_score", "flag_score", "mission_point"]].sum().reset_index()
             df_main = df_main.merge(sub_sums, how="left", left_on="nickname", right_on="main_name")
 
-            # ✅ 컬럼이 존재할 때만 안전하게 합산
             for col in ["suro_score", "flag_score", "mission_point"]:
                 if col + "_x" in df_main.columns and col + "_y" in df_main.columns:
                     df_main[col + "_x"] = df_main[col + "_x"].fillna(0)
                     df_main[col + "_y"] = df_main[col + "_y"].fillna(0)
                     df_main[col] = df_main[col + "_x"] + df_main[col + "_y"]
 
-            # ✅ 안전하게 불필요한 컬럼만 제거
             drop_cols = [col for col in [
                 "main_name",
                 "suro_score_x", "suro_score_y",
@@ -882,14 +881,16 @@ elif menu == "악마길드 길컨관리":
             ] if col in df_main.columns]
             df_main.drop(columns=drop_cols, inplace=True)
 
-        # ✅ 최종 점수 기준으로 event_sum 계산
+        # ✅ 점수 형변환
+        for col in ["suro_score", "flag_score", "mission_point"]:
+            df_main[col] = df_main[col].fillna(0).astype(int)
+
+        # ✅ 합계 계산
         df_main["event_sum"] = (
             (df_main["suro_score"] // 5000) +
             (df_main["flag_score"] // 1000) +
             (df_main["mission_point"] // 10)
         )
-        for col in ["suro_score", "flag_score", "mission_point"]:
-            df_main[col] = df_main[col].fillna(0).astype(int)
 
         # ✅ 정렬
         df_main = df_main.sort_values(
@@ -897,11 +898,9 @@ elif menu == "악마길드 길컨관리":
             key=lambda x: x.map(get_position_priority) if x.name == "position" else x.map(korean_first_sort)
         ).reset_index(drop=True)
 
-        # ✅ 표시용 ID 추가
         df_main["ID"] = df_main.index + 1
         id_map = df_main.set_index("ID")["id"].to_dict()
 
-        # ✅ 한글 컬럼 변환 (표시용)
         df_display = df_main[["ID", "nickname", "position", "suro_score", "flag_score", "mission_point", "event_sum"]].copy()
         df_display.rename(columns={
             "nickname": "닉네임",
@@ -913,21 +912,18 @@ elif menu == "악마길드 길컨관리":
         }, inplace=True)
         df_display.set_index("ID", inplace=True)
 
-        # ✅ 토글 상태
         if "show_all_mainmembers" not in st.session_state:
             st.session_state["show_all_mainmembers"] = False
 
         show_all = st.session_state["show_all_mainmembers"]
 
-        # ✅ 토글 버튼
         btn_label = "🔽 전체 보기" if not show_all else "🔼 일부만 보기"
         if st.button(btn_label, key="toggle_mainmember_display"):
             st.session_state["show_all_mainmembers"] = not show_all
             st.rerun()
 
-        # ✅ 높이만 조건부로 설정 (행 수 제한 없음!)
-        height_value = None if show_all else 210 
-        # ✅ 표 표시
+        height_value = None if show_all else 210
+
         st.markdown("### 📋 악마 길드 길드컨트롤 등록현황")
         edited_df = st.data_editor(
             df_display,
@@ -938,7 +934,6 @@ elif menu == "악마길드 길컨관리":
             key="main_editor"
         )
 
-        # ✅ 수정 저장 처리
         column_map = {
             "직위": "position",
             "수로 점수": "suro_score",
@@ -950,35 +945,8 @@ elif menu == "악마길드 길컨관리":
 
         st.markdown("""
         <style>
-        /* 🔧 표 자체 아래 여백 제거 */
-        div[data-testid="stDataEditorContainer"] {
-            margin-bottom: 0px !important;
-        }
-
-        /* 🔧 버튼 상단 간격 줄이기 */
-        .tight-space {
-            margin-top: -40px;
-        }
-
-        /* 🔧 버튼 높이/폭/정렬 */
-        .uniform-btn button {
-            height: 38px !important;
-            width: 100%;
-            white-space: nowrap;
-            font-size: 14px;
-        }
-        </style>
-    """, unsafe_allow_html=True)
-
-        # 🔽 버튼 위에 간격 줄이기 위한 div
-        st.markdown('<div class="tight-space">', unsafe_allow_html=True)
-
-        # 7열 정렬용 버튼 행 생성
-        button_cols = st.columns([1, 0.8, 0.8, 1.1, 1.1, 1.1, 0.8])
-
-        # CSS 스타일 적용: 버튼 높이·폭 통일
-        st.markdown("""
-        <style>
+        div[data-testid="stDataEditorContainer"] { margin-bottom: 0px !important; }
+        .tight-space { margin-top: -40px; }
         .uniform-btn button {
             height: 38px !important;
             width: 100%;
@@ -987,6 +955,9 @@ elif menu == "악마길드 길컨관리":
         }
         </style>
         """, unsafe_allow_html=True)
+
+        st.markdown('<div class="tight-space">', unsafe_allow_html=True)
+        button_cols = st.columns([1, 0.8, 0.8, 1.1, 1.1, 1.1, 0.8])
 
         with button_cols[0]:
             st.markdown('<div class="uniform-btn">', unsafe_allow_html=True)
@@ -1005,7 +976,6 @@ elif menu == "악마길드 길컨관리":
                 st.rerun()
             st.markdown('</div>', unsafe_allow_html=True)
 
-        # 나머지 2칸은 정렬용 빈칸
         for i in [1, 2]:
             with button_cols[i]:
                 st.empty()
@@ -1046,7 +1016,6 @@ elif menu == "악마길드 길컨관리":
                 st.rerun()
             st.markdown('</div>', unsafe_allow_html=True)
 
-        
 
 
     # with st.form("main_member_add_form"):
