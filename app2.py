@@ -1788,7 +1788,7 @@ elif menu == "드메템 대여 신청":
             else:
                 pass
 ##333
-elif menu == " 마니또 관리 ":
+elif menu == "마니또 관리":
 
     st.header("🛠 마니또 튜터-튜티 관리")
     nickname = st.session_state["nickname"]
