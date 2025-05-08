@@ -44,7 +44,7 @@ HEADERS = {
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 
-ADMIN_USERS = ["자리스틸의왕", "나영진", "죤냇", "o차월o"]
+ADMIN_USERS = ["자리스틸의왕", "나영진", "죤냇", "o차월o","랩핑"]
 guild_options = ["악마","악질", "악먀"]  # 혹은 DB나 리스트에서 불러오기
 
 # ✅ 모든 캐릭터 닉네임 불러오기 함수 (Main + Sub)
@@ -711,7 +711,7 @@ if st.session_state.get("is_admin"):
     menu_options.extend(["악마 길드원 정보 등록", "악마길드 길컨관리", "부캐릭터 관리","마니또 관리"])
 
 # 모든 사용자에게 보이는 메뉴
-menu_options.extend(["부캐릭터 등록", "보조대여 신청", "드메템 대여 신청",])
+menu_options.extend(["부캐릭터 등록", "보조대여 신청", "드메템 대여 신청","마니또 기록"])
 
 menu = st.sidebar.radio("메뉴", menu_options)
 
