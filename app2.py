@@ -1868,26 +1868,49 @@ elif menu == "마니또 관리":
     available_tutees = [t for t in unmatched_tutees if t not in matched_tutees]
 
     st.markdown("### 🔗 튜터 - 튜티 매칭 등록")
-    if available_tutors:
-        selected_tutor = st.selectbox("튜터 선택", available_tutors, key="match_tutor")
-    else:
-        st.warning("⚠️ 진행 가능한 튜터가 없습니다.")
+    left_col, right_col = st.columns([1, 1])
 
-    if available_tutees:
-        selected_tutee = st.selectbox("튜티 선택", available_tutees, key="match_tutee")
-    else:
-        st.warning("⚠️ 진행 가능한 튜티가 없습니다.")
+    with left_col:
+        st.markdown("### 🔗 튜터 - 튜티 매칭 등록")
+        if available_tutors:
+            selected_tutor = st.selectbox("튜터 선택", available_tutors, key="match_tutor")
+        else:
+            selected_tutor = None
+            st.warning("⚠️ 진행 가능한 튜터가 없습니다.")
 
+        if available_tutees:
+            selected_tutee = st.selectbox("튜티 선택", available_tutees, key="match_tutee")
+        else:
+            selected_tutee = None
+            st.warning("⚠️ 진행 가능한 튜티가 없습니다.")
 
-    if st.button("📌 매칭 등록"):
-        now = datetime.now().isoformat()
-        supabase.table("ManiddoRequests").insert({
-            "tutor_name": selected_tutor,
-            "tutee_name": selected_tutee,
-            "timestamp": now
-        }).execute()
-        st.success(f"매칭 완료: 튜터 {selected_tutor} - 튜티 {selected_tutee}")
-        st.rerun()
+        if selected_tutor and selected_tutee and st.button("📌 매칭 등록"):
+            now = datetime.now().isoformat()
+            supabase.table("ManiddoRequests").insert({
+                "tutor_name": selected_tutor,
+                "tutee_name": selected_tutee,
+                "timestamp": now
+            }).execute()
+            st.success(f"매칭 완료: 튜터 {selected_tutor} - 튜티 {selected_tutee}")
+            st.rerun()
+
+    with right_col:
+        st.markdown("### 🗑 정보 관리")
+        delete_target_type = st.radio("삭제할 대상 선택", ["튜터", "튜티"], horizontal=True)
+        if delete_target_type == "튜터":
+            tutor_names = df[df["tutor_name"].notna()]["tutor_name"].unique().tolist()
+            selected_delete = st.selectbox("삭제할 튜터 선택", tutor_names, key="delete_tutor")
+        else:
+            tutee_names = df[df["tutee_name"].notna()]["tutee_name"].unique().tolist()
+            selected_delete = st.selectbox("삭제할 튜티 선택", tutee_names, key="delete_tutee")
+
+        if st.button("❌ 삭제하기"):
+            if delete_target_type == "튜터":
+                supabase.table("ManiddoRequests").delete().eq("tutor_name", selected_delete).execute()
+            else:
+                supabase.table("ManiddoRequests").delete().eq("tutee_name", selected_delete).execute()
+            st.success(f"{delete_target_type} '{selected_delete}' 삭제 완료")
+            st.rerun()
 
     # 4. 매칭된 목록 출력 및 수정
     st.subheader("📋 매칭된 마니또 목록")
