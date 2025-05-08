@@ -20,6 +20,8 @@ from utils.time_grid import generate_slot_table
 from datetime import date,datetime
 from postgrest.exceptions import APIError
 from io import BytesIO
+from streamlit_pasteimage import paste_image
+from PIL import Image
 
 #=============위치고정=============================================#
 st.set_page_config(page_title="악마길드 관리 시스템", layout="wide")
@@ -1997,13 +1999,28 @@ elif menu == "마니또 기록":
         with st.form("write_form"):
             memo = st.text_area("기록", height=150)
             images = st.file_uploader("이미지 첨부", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
+            pasted_image = paste_image()
+            if pasted_image:
+                st.image(pasted_image, caption="붙여넣은 이미지")
             if st.form_submit_button("💾 등록"):
                 urls = []
+                # 업로드된 파일 처리
                 for img in images:
                     ext = img.name.split(".")[-1]
                     file_id = f"{uuid.uuid4()}.{ext}"
                     path = f"maniddo-images/{file_id}"
                     supabase.storage.from_("maniddo-images").upload(path, img)
+                    public_url = supabase.storage.from_("maniddo-images").get_public_url(path)
+                    urls.append(public_url)
+
+                # 붙여넣기 이미지 처리
+                if pasted_image:
+                    buffer = BytesIO()
+                    pasted_image.save(buffer, format="PNG")
+                    buffer.seek(0)
+                    img_id = f"{uuid.uuid4()}.png"
+                    path = f"maniddo-images/{img_id}"
+                    supabase.storage.from_("maniddo-images").upload(path, buffer)
                     public_url = supabase.storage.from_("maniddo-images").get_public_url(path)
                     urls.append(public_url)
 
@@ -2035,6 +2052,9 @@ elif menu == "마니또 기록":
                 for img_url in log.get("image_urls", []):
                     st.image(img_url, width=250)
                 new_imgs = st.file_uploader("이미지 추가 업로드", type=["png", "jpg", "jpeg"], accept_multiple_files=True, key=f"file_{log_id}")
+                pasted_edit = paste_image()
+                if pasted_edit:
+                    st.image(pasted_edit, caption="추가된 붙여넣기 이미지")
 
                 if st.button("✅ 수정 완료", key=f"submit_{log_id}"):
                     new_urls = log.get("image_urls", [])
@@ -2045,6 +2065,17 @@ elif menu == "마니또 기록":
                         supabase.storage.from_("maniddo-images").upload(path, img)
                         public_url = supabase.storage.from_("maniddo-images").get_public_url(path)
                         new_urls.append(public_url)
+
+                    if pasted_edit:
+                        buf = BytesIO()
+                        pasted_edit.save(buf, format="PNG")
+                        buf.seek(0)
+                        pasted_id = f"{uuid.uuid4()}.png"
+                        path = f"maniddo-images/{pasted_id}"
+                        supabase.storage.from_("maniddo-images").upload(path, buf)
+                        public_url = supabase.storage.from_("maniddo-images").get_public_url(path)
+                        new_urls.append(public_url)
+
                     supabase.table("ManiddoLogs").update({
                         "memo": edited_text,
                         "image_urls": new_urls,
@@ -2061,8 +2092,6 @@ elif menu == "마니또 기록":
                         st.image(url, width=300)
                     if st.button("✏ 수정하기", key=f"edit_button_{log_id}"):
                         st.session_state[edit_key] = True
-
-
 
 
     
