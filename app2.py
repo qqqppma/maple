@@ -2021,12 +2021,15 @@ elif menu == "마니또 기록":
             if st.form_submit_button("💾 등록"):
                 urls = []
                 for img in images:
-                    ext = img.name.split(".")[-1]
-                    file_id = f"{uuid.uuid4()}.{ext}"
-                    path = f"maniddo-images/{file_id}"
-                    supabase.storage.from_("maniddo-images").upload(path, img)
-                    public_url = supabase.storage.from_("maniddo-images").get_public_url(path)
-                    urls.append(public_url)
+                ext = img.name.split(".")[-1]
+                file_id = f"{uuid.uuid4()}.{ext}"
+                path = f"maniddo-images/{file_id}"
+
+                # ✅ 바이트로 읽어서 전달해야 Supabase가 처리 가능
+                supabase.storage.from_("maniddo-images").upload(path, img.read())
+
+                public_url = supabase.storage.from_("maniddo-images").get_public_url(path)
+                urls.append(public_url)
 
                 supabase.table("ManiddoLogs").insert({
                     "tutor_name": tutor,
@@ -2060,12 +2063,15 @@ elif menu == "마니또 기록":
                 if st.button("✅ 수정 완료", key=f"submit_{log_id}"):
                     new_urls = log.get("image_urls", [])
                     for img in new_imgs:
-                        ext = img.name.split(".")[-1]
-                        img_id = f"{uuid.uuid4()}.{ext}"
-                        path = f"maniddo-images/{img_id}"
-                        supabase.storage.from_("maniddo-images").upload(path, img)
-                        public_url = supabase.storage.from_("maniddo-images").get_public_url(path)
-                        new_urls.append(public_url)
+                    ext = img.name.split(".")[-1]
+                    img_id = f"{uuid.uuid4()}.{ext}"
+                    path = f"maniddo-images/{img_id}"
+
+                    # ✅ 파일 내용을 바이트로 읽어서 업로드
+                    supabase.storage.from_("maniddo-images").upload(path, img.read())
+
+                    public_url = supabase.storage.from_("maniddo-images").get_public_url(path)
+                    new_urls.append(public_url)
 
                     supabase.table("ManiddoLogs").update({
                         "memo": edited_text,
