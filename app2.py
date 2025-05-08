@@ -11,6 +11,7 @@ import re
 import urllib.parse
 import io
 import os
+import uuid
 from PIL import Image
 from datetime import date, timezone, timedelta
 from supabase import create_client, Client
@@ -1924,7 +1925,7 @@ elif menu == "마니또 관리":
         # 관리자 또는 튜터만 수정 가능
         if is_admin or is_tutor:
             st.markdown("---")
-            st.subheader("🔧 마니또 관리 (튜터/관리자 전용)")
+            st.subheader("🔧 마니또 관리 (관리자 전용)")
 
             if is_admin:
                 # 🔹 튜터/튜티 관리 selectbox 구성
@@ -1971,8 +1972,96 @@ elif menu == "마니또 관리":
                         st.rerun()
     else:
         st.info("🙅 현재 매칭된 마니또가 없습니다.")
-###
-###
+
+elif menu == "마니또 기록":
+    st.title("📘 마니또 기록 페이지")
+    nickname = st.session_state.get("nickname", "")
+    is_admin = nickname in ["관리자1", "관리자2"]
+
+    # ✅ 내가 속한 마니또 확인
+    res = supabase.table("ManiddoRequests").select("*").execute()
+    rows = res.data or []
+    my_match = [r for r in rows if r.get("tutor_name") == nickname or r.get("tutee_name") == nickname]
+
+    if not my_match:
+        if is_admin:
+            st.warning("🙅‍♂️ 마니또를 진행 중이 아닙니다. 마니또 관리 페이지로 이동해주세요.")
+        else:
+            st.warning("🙅‍♀️ 현재 마니또를 진행 중이 아닙니다.")
+    else:
+        match = my_match[0]
+        tutor, tutee = match["tutor_name"], match["tutee_name"]
+        st.subheader(f"🧑‍🏫 튜터: {tutor} - 🎓 튜티: {tutee} 마니또 진행중")
+
+        # ✅ 글 작성 폼
+        with st.form("write_form"):
+            memo = st.text_area("기록", height=150)
+            images = st.file_uploader("이미지 첨부", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
+            if st.form_submit_button("💾 등록"):
+                urls = []
+                for img in images:
+                    ext = img.name.split(".")[-1]
+                    file_id = f"{uuid.uuid4()}.{ext}"
+                    path = f"maniddo-images/{file_id}"
+                    supabase.storage.from_("maniddo-images").upload(path, img)
+                    public_url = supabase.storage.from_("maniddo-images").get_public_url(path)
+                    urls.append(public_url)
+
+                supabase.table("ManiddoLogs").insert({
+                    "tutor_name": tutor,
+                    "tutee_name": tutee,
+                    "memo": memo,
+                    "image_urls": urls,
+                    "created_at": datetime.now().isoformat(),
+                    "updated_at": datetime.now().isoformat()
+                }).execute()
+                st.success("✅ 기록이 저장되었습니다.")
+                st.rerun()
+
+        # ✅ 기존 기록 출력 + 수정 모드
+        logs = supabase.table("ManiddoLogs").select("*")\
+            .eq("tutor_name", tutor).eq("tutee_name", tutee).order("created_at", desc=True).execute().data
+
+        st.markdown("---")
+        st.markdown("### 📜 마니또 기록 목록")
+
+        for log in logs:
+            log_id = log["id"]
+            edit_key = f"edit_{log_id}"
+            if st.session_state.get(edit_key):
+                st.markdown(f"#### ✏ 수정 중 - 작성일 {log['created_at'][:19].replace('T',' ')}")
+                edited_text = st.text_area("기록 내용", value=log.get("memo", ""), key=f"memo_edit_{log_id}")
+                st.markdown("📷 기존 이미지:")
+                for img_url in log.get("image_urls", []):
+                    st.image(img_url, width=250)
+                new_imgs = st.file_uploader("이미지 추가 업로드", type=["png", "jpg", "jpeg"], accept_multiple_files=True, key=f"file_{log_id}")
+
+                if st.button("✅ 수정 완료", key=f"submit_{log_id}"):
+                    new_urls = log.get("image_urls", [])
+                    for img in new_imgs:
+                        ext = img.name.split(".")[-1]
+                        img_id = f"{uuid.uuid4()}.{ext}"
+                        path = f"maniddo-images/{img_id}"
+                        supabase.storage.from_("maniddo-images").upload(path, img)
+                        public_url = supabase.storage.from_("maniddo-images").get_public_url(path)
+                        new_urls.append(public_url)
+                    supabase.table("ManiddoLogs").update({
+                        "memo": edited_text,
+                        "image_urls": new_urls,
+                        "updated_at": datetime.now().isoformat()
+                    }).eq("id", log_id).execute()
+                    st.session_state[edit_key] = False
+                    st.success("✏ 수정 완료되었습니다.")
+                    st.rerun()
+
+            else:
+                with st.expander(f"🗓 {log['created_at'][:19].replace('T',' ')} 기록"):
+                    st.markdown(log.get("memo", ""))
+                    for url in log.get("image_urls", []):
+                        st.image(url, width=300)
+                    if st.button("✏ 수정하기", key=f"edit_button_{log_id}"):
+                        st.session_state[edit_key] = True
+
 
 
 
