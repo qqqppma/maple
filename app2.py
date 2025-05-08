@@ -1903,7 +1903,7 @@ elif menu == "마니또 관리":
 
                 if selected_pair:
                     sel_row = matched_df.iloc[pair_titles.index(selected_pair)]
-                    st.dataframe(pd.DataFrame([sel_row])[['튜터', '튜티', '기록']], use_container_width=True)
+                    st.dataframe(pd.DataFrame([sel_row])[['tutor_name', 'tutee_name', 'memo']], use_container_width=True)
 
                     new_memo = st.text_area("기록", value=sel_row.get("memo", ""))
                     if st.button("💾 수정완료"):
