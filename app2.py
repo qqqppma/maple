@@ -1990,9 +1990,8 @@ elif menu == "마니또 관리":
 elif menu == "마니또 기록":
     st.title("📘 마니또 기록 페이지")
     nickname = st.session_state.get("nickname", "")
-    is_admin = nickname in ["관리자1", "관리자2"]
+    is_admin = nickname in ADMIN_USERS
 
-    # ✅ 내가 속한 마니또 로그 존재 여부 확인
     res = supabase.table("ManiddoLogs").select("*").execute()
     all_logs = res.data or []
     my_logs = [log for log in all_logs if log.get("tutor_name") == nickname or log.get("tutee_name") == nickname]
@@ -2003,7 +2002,6 @@ elif menu == "마니또 기록":
         else:
             st.warning("🙅‍♀️ 현재 마니또를 진행 중이 아닙니다.")
     else:
-        # ✅ 가장 최신 로그 기준으로 내 튜터/튜티 확인
         latest_log = my_logs[0]
         if nickname == latest_log.get("tutor_name"):
             tutor = nickname
@@ -2014,7 +2012,6 @@ elif menu == "마니또 기록":
 
         st.subheader(f"🧑‍🏫 튜터: {tutor} - 🎓 튜티: {tutee} 마니또 진행중")
 
-        # ✅ 글 작성 폼
         with st.form("write_form"):
             memo = st.text_area("기록", height=150)
             images = st.file_uploader("이미지 첨부", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
@@ -2040,51 +2037,71 @@ elif menu == "마니또 기록":
                 st.success("✅ 기록이 저장되었습니다.")
                 st.rerun()
 
-        # ✅ 기존 기록 출력 + 수정 모드
-        logs = supabase.table("ManiddoLogs").select("*")\
-            .eq("tutor_name", tutor).eq("tutee_name", tutee).order("created_at", desc=True).execute().data
-
         st.markdown("---")
-        st.markdown("### 📜 마니또 기록 목록")
+        st.markdown("### 📚 마니또 기록 목록")
 
-        for log in logs:
-            log_id = log["id"]
-            edit_key = f"edit_{log_id}"
+        log_options = {
+            f"[{log['created_at'][:10]}] {log['memo'][:20]}...": log for log in my_logs[::-1]
+        }
+
+        selected_title = st.selectbox("🔍 확인할 기록 선택", ["선택하지 않음"] + list(log_options.keys()))
+        if selected_title != "선택하지 않음":
+            log = log_options[selected_title]
+            st.markdown(f"#### 🗓 작성일시: {log['created_at'][:19].replace('T',' ')}")
+
+            edit_key = f"edit_{log['id']}"
             if st.session_state.get(edit_key):
-                st.markdown(f"#### ✏ 수정 중 - 작성일 {log['created_at'][:19].replace('T',' ')}")
-                edited_text = st.text_area("기록 내용", value=log.get("memo", ""), key=f"memo_edit_{log_id}")
+                new_memo = st.text_area("기록 내용", value=log.get("memo", ""), key=f"memo_edit_{log['id']}")
                 st.markdown("📷 기존 이미지:")
                 for img_url in log.get("image_urls", []):
                     st.image(img_url, width=250)
-                new_imgs = st.file_uploader("이미지 추가 업로드", type=["png", "jpg", "jpeg"], accept_multiple_files=True, key=f"file_{log_id}")
+                new_imgs = st.file_uploader("이미지 추가 업로드", type=["png", "jpg", "jpeg"], accept_multiple_files=True, key=f"newimg_{log['id']}")
+                if new_imgs:
+                    st.markdown("🆕 추가 업로드 이미지 미리보기:")
+                    for img in new_imgs:
+                        st.image(img, width=250)
 
-                if st.button("✅ 수정 완료", key=f"submit_{log_id}"):
-                    new_urls = log.get("image_urls", [])
+                if st.button("✅ 수정 완료", key=f"submit_edit_{log['id']}"):
+                    updated_urls = log.get("image_urls", [])
                     for img in new_imgs:
                         ext = img.name.split(".")[-1]
-                        img_id = f"{uuid.uuid4()}.{ext}"
-                        path = f"maniddo-images/{img_id}"
+                        file_id = f"{uuid.uuid4()}.{ext}"
+                        path = f"maniddo-images/{file_id}"
                         content = img.read()
                         supabase.storage.from_("maniddo-images").upload(path, content)
                         public_url = supabase.storage.from_("maniddo-images").get_public_url(path)
-                        new_urls.append(public_url)
+                        updated_urls.append(public_url)
 
                     supabase.table("ManiddoLogs").update({
-                        "memo": edited_text,
-                        "image_urls": new_urls,
+                        "memo": new_memo,
+                        "image_urls": updated_urls,
                         "updated_at": datetime.now().isoformat()
-                    }).eq("id", log_id).execute()
+                    }).eq("id", log["id"]).execute()
+                    st.success("✅ 수정 완료되었습니다.")
                     st.session_state[edit_key] = False
-                    st.success("✏ 수정 완료되었습니다.")
                     st.rerun()
-
             else:
-                with st.expander(f"🗓 {log['created_at'][:19].replace('T',' ')} 기록"):
-                    st.markdown(log.get("memo", ""))
-                    for url in log.get("image_urls", []):
-                        st.image(url, width=300)
-                    if st.button("✏ 수정하기", key=f"edit_button_{log_id}"):
+                st.markdown(log.get("memo", ""))
+                for url in log.get("image_urls", []):
+                    st.image(url, width=300)
+                col1, col2 = st.columns(2)
+                with col1:
+                    if st.button("✏ 수정하기", key=f"edit_button_{log['id']}"):
                         st.session_state[edit_key] = True
+                with col2:
+                    if st.button("🗑 삭제하기", key=f"delete_button_{log['id']}"):
+                        supabase.table("ManiddoLogs").delete().eq("id", log["id"]).execute()
+                        st.success("🗑 삭제 완료되었습니다.")
+                        st.rerun()
+
+        else:
+            cols = st.columns(2)
+            for idx, log in enumerate(my_logs[::-1]):
+                with cols[idx % 2]:
+                    st.markdown(f"##### 🗓 {log['created_at'][:10]}")
+                    st.markdown(f"{log['memo'][:30]}...")
+                    if log.get("image_urls"):
+                        st.image(log["image_urls"][0], width=150)
 
 
 
