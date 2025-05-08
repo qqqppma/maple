@@ -1868,8 +1868,16 @@ elif menu == "마니또 관리":
     available_tutees = [t for t in unmatched_tutees if t not in matched_tutees]
 
     st.markdown("### 🔗 튜터 - 튜티 매칭 등록")
-    selected_tutor = st.selectbox("튜터 선택", available_tutors, key="match_tutor")
-    selected_tutee = st.selectbox("튜티 선택", available_tutees, key="match_tutee")
+    if available_tutors:
+        selected_tutor = st.selectbox("튜터 선택", available_tutors, key="match_tutor")
+    else:
+        st.warning("⚠️ 진행 가능한 튜터가 없습니다.")
+
+    if available_tutees:
+        selected_tutee = st.selectbox("튜티 선택", available_tutees, key="match_tutee")
+    else:
+        st.warning("⚠️ 진행 가능한 튜티가 없습니다.")
+
 
     if st.button("📌 매칭 등록"):
         now = datetime.now().isoformat()
