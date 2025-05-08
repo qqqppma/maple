@@ -1867,7 +1867,6 @@ elif menu == "마니또 관리":
     available_tutors = [t for t in unmatched_tutors if t not in matched_tutors]
     available_tutees = [t for t in unmatched_tutees if t not in matched_tutees]
 
-    st.markdown("### 🔗 튜터 - 튜티 매칭 등록")
     left_col, right_col = st.columns([1, 1])
 
     with left_col:
