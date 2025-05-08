@@ -1884,13 +1884,27 @@ elif menu == "마니또 관리":
             selected_tutee = None
             st.warning("⚠️ 진행 가능한 튜티가 없습니다.")
 
+        # ✅ 매칭 등록 버튼 누르면 ManiddoRequests + ManiddoLogs 동시 등록
         if selected_tutor and selected_tutee and st.button("📌 매칭 등록"):
             now = datetime.now().isoformat()
+
+            # 1. ManiddoRequests에 등록
             supabase.table("ManiddoRequests").insert({
                 "tutor_name": selected_tutor,
                 "tutee_name": selected_tutee,
                 "timestamp": now
             }).execute()
+
+            # 2. ManiddoLogs에도 초기 로그 생성
+            supabase.table("ManiddoLogs").insert({
+                "tutor_name": selected_tutor,
+                "tutee_name": selected_tutee,
+                "memo": "",  # 초기 메모 없음
+                "image_urls": [],
+                "created_at": now,
+                "updated_at": now
+            }).execute()
+
             st.success(f"매칭 완료: 튜터 {selected_tutor} - 튜티 {selected_tutee}")
             st.rerun()
 
@@ -1978,27 +1992,25 @@ elif menu == "마니또 기록":
     nickname = st.session_state.get("nickname", "")
     is_admin = nickname in ["관리자1", "관리자2"]
 
-    # ✅ 내가 속한 마니또 확인
-    res = supabase.table("ManiddoRequests").select("*").execute()
-    rows = res.data or []
-    my_match = [r for r in rows if r.get("tutor_name") == nickname or r.get("tutee_name") == nickname]
+    # ✅ 내가 속한 마니또 로그 존재 여부 확인
+    res = supabase.table("ManiddoLogs").select("*").execute()
+    all_logs = res.data or []
+    my_logs = [log for log in all_logs if log.get("tutor_name") == nickname or log.get("tutee_name") == nickname]
 
-    if not my_match:
+    if not my_logs:
         if is_admin:
-            st.warning("🙅‍♂️ 마니또를 진행 중이 아닙니다. 마니또 관리 페이지로 이동해주세요.")
+            st.warning("🙅‍♂️ 마니또 기록이 없습니다. 마니또 관리 페이지에서 매칭을 먼저 등록해주세요.")
         else:
             st.warning("🙅‍♀️ 현재 마니또를 진행 중이 아닙니다.")
     else:
-        match = my_match[0]
-
-        # 🛠 tutor, tutee 이름 정확히 판별
-        tutor = match.get("tutor_name")
-        tutee = match.get("tutee_name")
-        if nickname == tutee and tutor is None:
-            # 튜티로 등록돼 있으나 아직 튜터가 배정되지 않은 경우
-            tutor = "(미정)"
-        if nickname == tutor and tutee is None:
-            tutee = "(미정)"
+        # ✅ 가장 최신 로그 기준으로 내 튜터/튜티 확인
+        latest_log = my_logs[0]
+        if nickname == latest_log.get("tutor_name"):
+            tutor = nickname
+            tutee = latest_log.get("tutee_name", "")
+        else:
+            tutor = latest_log.get("tutor_name", "")
+            tutee = nickname
 
         st.subheader(f"🧑‍🏫 튜터: {tutor} - 🎓 튜티: {tutee} 마니또 진행중")
 
@@ -2071,7 +2083,6 @@ elif menu == "마니또 기록":
                         st.image(url, width=300)
                     if st.button("✏ 수정하기", key=f"edit_button_{log_id}"):
                         st.session_state[edit_key] = True
-
 
 
 
