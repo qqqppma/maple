@@ -1990,12 +1990,16 @@ elif menu == "마니또 기록":
             st.warning("🙅‍♀️ 현재 마니또를 진행 중이 아닙니다.")
     else:
         match = my_match[0]
-        if nickname == match.get("tutor_name"):
-            tutor = nickname
-            tutee = match.get("tutee_name", "")
-        else:
-            tutor = match.get("tutor_name", "")
-            tutee = nickname
+
+        # 🛠 tutor, tutee 이름 정확히 판별
+        tutor = match.get("tutor_name")
+        tutee = match.get("tutee_name")
+        if nickname == tutee and tutor is None:
+            # 튜티로 등록돼 있으나 아직 튜터가 배정되지 않은 경우
+            tutor = "(미정)"
+        if nickname == tutor and tutee is None:
+            tutee = "(미정)"
+
         st.subheader(f"🧑‍🏫 튜터: {tutor} - 🎓 튜티: {tutee} 마니또 진행중")
 
         # ✅ 글 작성 폼
@@ -2050,6 +2054,7 @@ elif menu == "마니또 기록":
                         supabase.storage.from_("maniddo-images").upload(path, img)
                         public_url = supabase.storage.from_("maniddo-images").get_public_url(path)
                         new_urls.append(public_url)
+
                     supabase.table("ManiddoLogs").update({
                         "memo": edited_text,
                         "image_urls": new_urls,
