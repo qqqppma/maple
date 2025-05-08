@@ -2024,10 +2024,8 @@ elif menu == "마니또 기록":
                     ext = img.name.split(".")[-1]
                     file_id = f"{uuid.uuid4()}.{ext}"
                     path = f"maniddo-images/{file_id}"
-
-                    # ✅ 바이트로 읽어서 전달해야 Supabase가 처리 가능
-                    supabase.storage.from_("maniddo-images").upload(path, img.read())
-
+                    content = img.read()
+                    supabase.storage.from_("maniddo-images").upload(path, content)
                     public_url = supabase.storage.from_("maniddo-images").get_public_url(path)
                     urls.append(public_url)
 
@@ -2066,10 +2064,8 @@ elif menu == "마니또 기록":
                         ext = img.name.split(".")[-1]
                         img_id = f"{uuid.uuid4()}.{ext}"
                         path = f"maniddo-images/{img_id}"
-
-                        # ✅ 파일 내용을 바이트로 읽어서 업로드
-                        supabase.storage.from_("maniddo-images").upload(path, img.read())
-
+                        content = img.read()
+                        supabase.storage.from_("maniddo-images").upload(path, content)
                         public_url = supabase.storage.from_("maniddo-images").get_public_url(path)
                         new_urls.append(public_url)
 
