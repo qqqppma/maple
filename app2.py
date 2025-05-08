@@ -1789,32 +1789,44 @@ elif menu == "드메템 대여 신청":
                 pass
 ##333
 elif menu == "마니또 관리":
+    st.subheader("🎯 마니또 관리 페이지")
 
-    st.header("🛠 마니또 튜터-튜티 관리")
-    nickname = st.session_state["nickname"]
-    is_admin = st.session_state.get("is_admin", False)
+    # ✅ 전체 신청 데이터 불러오기
+    res = supabase.table("ManiddoRequests").select("*").execute()
+    all_requests = res.data or []
+    df = pd.DataFrame(all_requests)
 
-    # ✅ 악마길드원 네이메 목록 가져오기
+    # ✅ 여기 ↓↓↓ 아래에 이 코드 넣기
     mainmembers = get_mainmembers()
     guild_nicks = sorted([m["nickname"] for m in mainmembers if m.get("nickname")])
 
-    # ✅ 튜터 등록
+    # 중복/매칭된 인원 제외
+    registered_tutors = df[df["tutor_name"].notna()]["tutor_name"].unique().tolist()
+    registered_tutees = df[df["tutee_name"].notna()]["tutee_name"].unique().tolist()
+    matched_tutors = df[df["tutor_name"].notna() & df["tutee_name"].notna()]["tutor_name"].unique().tolist()
+    matched_tutees = df[df["tutor_name"].notna() & df["tutee_name"].notna()]["tutee_name"].unique().tolist()
+
+    available_tutors = [n for n in guild_nicks if n not in registered_tutors and n not in matched_tutors]
+    available_tutees = [n for n in guild_nicks if n not in registered_tutees and n not in matched_tutees]
+
+    # ✅ 기존 튜터/튜티 등록 폼에 적용
     with st.form("tutor_form"):
         st.subheader("✅ 튜터 등록")
-        new_tutor = st.selectbox("튜터 선택 (악마길드원만)", guild_nicks, key="select_tutor")
+        new_tutor = st.selectbox("튜터 선택 (악마길드원만)", available_tutors, key="select_tutor")
         submit_tutor = st.form_submit_button("튜터 등록")
         if submit_tutor and new_tutor:
             supabase.table("ManiddoRequests").insert({"tutor_name": new_tutor}).execute()
             st.success(f"튜터 '{new_tutor}' 등록 완료!")
+            st.rerun()
 
-    # ✅ 튜티 등록
     with st.form("tutee_form"):
         st.subheader("✅ 튜티 등록")
-        new_tutee = st.selectbox("튜티 선택 (악마길드원만)", guild_nicks, key="select_tutee")
+        new_tutee = st.selectbox("튜티 선택 (악마길드원만)", available_tutees, key="select_tutee")
         submit_tutee = st.form_submit_button("튜티 등록")
         if submit_tutee and new_tutee:
             supabase.table("ManiddoRequests").insert({"tutee_name": new_tutee}).execute()
             st.success(f"튜티 '{new_tutee}' 등록 완료!")
+            st.rerun()
 
     # ✅ 등록된 목록 보기
     res = supabase.table("ManiddoRequests").select("*").execute()
