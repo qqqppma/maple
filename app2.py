@@ -1936,50 +1936,46 @@ elif menu == "마니또 관리":
         display_df = view_df[["튜터", "튜티", "기록"]]
         st.dataframe(display_df, use_container_width=True)
 
-        # 관리자 또는 튜터만 수정 가능
+        # 관리자만 수정 가능
         if is_admin:
             st.markdown("### 📂 확인할 마니또 기록 열람")
 
-            # ✅ 관리자: 튜터-튜티 쌍 선택
+            # ✅ 1. 튜터-튜티 쌍 선택
             pair_options = [
-                f"튜터: {r['tutor_name']} - 튜티: {r['tutee_name']}" 
-                for r in all_requests 
-                if r.get("tutor_name") and r.get("tutee_name")
+                f"{r['tutor_name']} - {r['tutee_name']}"
+                for r in all_requests if r.get("tutor_name") and r.get("tutee_name")
             ]
-            selected_pair = st.selectbox("👀 열람할 마니또 선택", ["선택하지 않음"] + pair_options)
+            selected_pair = st.selectbox("📌 확인할 기록 선택", ["선택하지 않음"] + pair_options)
 
             if selected_pair != "선택하지 않음":
-                selected_tutor, selected_tutee = selected_pair.replace("튜터: ", "").replace("튜티: ", "").split(" - ")
-                
-                # ✅ 해당 쌍의 로그 불러오기
-                res_logs = supabase.table("ManiddoLogs").select("*").execute()
-                all_logs = res_logs.data or []
+                tutor_name, tutee_name = selected_pair.split(" - ")
+
+                # ✅ 2. 로그 조회
                 logs = [
                     log for log in all_logs
-                    if log.get("tutor_name") == selected_tutor and log.get("tutee_name") == selected_tutee
-                    and (log.get("title") or log.get("memo") or log.get("image_urls"))
+                    if log.get("tutor_name") == tutor_name and log.get("tutee_name") == tutee_name
                 ]
-                logs = [log for log in logs if "created_at" in log and log["created_at"]]
-                logs = sorted(logs, key=lambda x: x["created_at"], reverse=True)
+                logs = sorted(logs, key=lambda x: x.get("created_at", ""), reverse=True)
 
-                st.markdown("---")
-                st.markdown("### 📚 마니또 기록 목록 (관리자 전용)")
+                if logs:
+                    log_titles = [f"{log.get('title') or '(무제목)'} ({log['created_at'][:19].replace('T',' ')})" for log in logs]
+                    selected_title = st.selectbox("🔍 열람할 기록 선택", ["선택하지 않음"] + log_titles)
 
-                if not logs:
-                    st.info("🗂 해당 마니또의 기록이 없습니다.")
-                else:
-                    for idx, log in enumerate(logs):
-                        st.markdown(f"##### 📌 {log.get('title', '(무제목)')}")
-                        st.markdown(f"🕒 {log['created_at'][:19].replace('T',' ')}")
-                        st.markdown(log.get("memo", ""))
-                        for url in log.get("image_urls", []):
+                    if selected_title != "선택하지 않음":
+                        selected_log = logs[log_titles.index(selected_title)]
+
+                        st.markdown(f"#### 📌 {selected_log.get('title', '')}")
+                        st.markdown(f"🕒 {selected_log['created_at'][:19].replace('T',' ')}")
+                        st.markdown(selected_log.get("memo", ""))
+                        for url in selected_log.get("image_urls", []):
                             st.image(url, width=200)
                             st.markdown(f"[🔍 원본 보기]({url})", unsafe_allow_html=True)
 
-                        if st.button("🗑 삭제하기", key=f"delete_admin_{log['id']}"):
-                            supabase.table("ManiddoLogs").delete().eq("id", log["id"]).execute()
+                        if st.button("🗑 삭제하기", key=f"delete_admin_{selected_log['id']}"):
+                            supabase.table("ManiddoLogs").delete().eq("id", selected_log["id"]).execute()
                             st.success("🧹 삭제 완료")
                             st.rerun()
+
     else:
         st.info("🙅 현재 매칭된 마니또가 없습니다.")
 
