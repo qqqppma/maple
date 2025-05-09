@@ -1418,8 +1418,7 @@ elif menu == "이벤트 이미지 등록":
             try:
                 upload_res = supabase.storage.from_("event-banners").upload(file_id, file_bytes)
 
-                # 성공하면 UploadResponse 객체 반환됨. .path 또는 .full_path 속성 있음
-                if hasattr(upload_res, "path") or hasattr(upload_res, "full_path"):
+                if hasattr(upload_res, "full_path"):
                     public_url = f"{SUPABASE_URL}/storage/v1/object/public/event-banners/{upload_res.full_path}"
 
                     insert_res = supabase.table("EventBanners").insert({
@@ -1427,18 +1426,17 @@ elif menu == "이벤트 이미지 등록":
                         "image_url": public_url
                     }).execute()
 
-                    if insert_res.status_code == 201:
+                    if insert_res.data:
                         st.success("✅ 이벤트 등록 완료!")
                         st.image(public_url, width=300)
                     else:
-                        st.error("❌ Supabase 테이블 저장 실패")
+                        st.error(f"❌ Supabase 테이블 저장 실패: {insert_res.error}")
 
                 else:
-                    st.error("❌ 업로드 실패: 응답에 full_path 없음")
+                    st.error("❌ 업로드 실패: full_path 없음")
 
             except Exception as e:
                 st.error(f"❌ 예외 발생: {e}")
-
 
 
 elif menu == "부캐릭터 등록":
