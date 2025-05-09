@@ -724,13 +724,14 @@ if "user" in st.session_state:
             events.append({"title": title, "base64": encoded})
         return events
 
+    # ✅ 먼저 이벤트 목록을 불러옴
+    events = get_event_images()
+
     # ✅ 세션 상태 초기화
-    if "random_event" not in st.session_state:
-        events = get_event_images()
-        if events:
-            st.session_state["random_event"] = random.choice(events)
     if "hide_today_popup" not in st.session_state:
         st.session_state["hide_today_popup"] = False
+    if "random_event" not in st.session_state and events:
+        st.session_state["random_event"] = random.choice(events)
 
     # ✅ 로그인된 사용자 정보 출력
     nickname = st.session_state.get("nickname", "")
