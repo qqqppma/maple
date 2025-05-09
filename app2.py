@@ -1401,37 +1401,43 @@ elif menu == "부캐릭터 관리":
 
 
 elif menu == "이벤트 이미지 등록":
-    st.subheader("이벤트 배너 자동 등록")
+    st.subheader("이벤트 배너 등록")
 
     title = st.text_input("이벤트 제목을 입력하세요")
     uploaded_file = st.file_uploader("이벤트 이미지를 업로드하세요", type=["png", "jpg", "jpeg"])
+    register = st.button("📤 등록하기")
 
-    if uploaded_file and title:
-        ext = uploaded_file.name.split(".")[-1]
-        file_id = f"{uuid.uuid4()}.{ext}"
-        file_bytes = uploaded_file.read()
-
-        # 1️⃣ Supabase Storage에 이미지 업로드
-        res = supabase.storage.from_("event-banners").upload(file_id, file_bytes)
-
-        if res.status_code == 200:
-            public_url = f"{SUPABASE_URL}/storage/v1/object/public/event-banners/{file_id}"
-
-            # 2️⃣ Supabase Table(EventBanners)에 정보 저장
-            insert_res = supabase.table("EventBanners").insert({
-                "title": title,
-                "image_url": public_url
-            }).execute()
-
-            if insert_res.status_code == 201:
-                st.success("✅ 이벤트 등록 완료!")
-                st.image(public_url, width=300)
-            else:
-                st.error("❌ 테이블 저장 실패")
+    if register:
+        if not uploaded_file or not title:
+            st.warning("제목과 이미지를 모두 입력해주세요.")
         else:
-            st.error("❌ 이미지 업로드 실패")
-    else:
-        st.info("이벤트 제목과 이미지를 모두 입력하세요.")
+            ext = uploaded_file.name.split(".")[-1]
+            file_id = f"{uuid.uuid4()}.{ext}"
+            file_bytes = uploaded_file.read()
+
+            try:
+                # ✅ Storage 업로드
+                res = supabase.storage.from_("event-banners").upload(file_id, file_bytes)
+
+                if res.status_code == 200:
+                    public_url = f"{SUPABASE_URL}/storage/v1/object/public/event-banners/{file_id}"
+
+                    # ✅ DB 저장
+                    insert_res = supabase.table("EventBanners").insert({
+                        "title": title,
+                        "image_url": public_url
+                    }).execute()
+
+                    if insert_res.status_code == 201:
+                        st.success("✅ 이벤트 등록 완료!")
+                        st.image(public_url, width=300)
+                    else:
+                        st.error("❌ DB 저장 실패")
+                else:
+                    st.error("❌ 이미지 업로드 실패: 버킷 public 설정 및 정책 확인 필요")
+            except Exception as e:
+                st.error(f"❌ 예외 발생: {e}")
+
 
 
 elif menu == "부캐릭터 등록":
