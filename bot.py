@@ -173,34 +173,34 @@ async def polling_loop():
                 last_dropitem_ids = current_drop_ids
                 last_dropitem_data = current_drop_data
 
-            # ✅ 마니또 신청 감시
-            manitto_res = supabase.table("ManiddoRequests")\
-                .select("*")\
-                .eq("notified", False)\
-                .gte("timestamp", start_time.isoformat())\
-                .execute()
-            new_rows = manitto_res.data
+            # # ✅ 마니또 신청 감시
+            # manitto_res = supabase.table("ManiddoRequests")\
+            #     .select("*")\
+            #     .eq("notified", False)\
+            #     .gte("timestamp", start_time.isoformat())\
+            #     .execute()
+            # new_rows = manitto_res.data
 
-            for row in new_rows:
-                tutee = row.get("tutee_name")
-                tutor = row.get("tutor_name") or row.get("desired_tutor")
+            # for row in new_rows:
+            #     tutee = row.get("tutee_name")
+            #     tutor = row.get("tutor_name") or row.get("desired_tutor")
 
-                # ❗ None 방지
-                if not tutee or not tutor:
-                    print(f"❗ tutor 또는 tutee가 None이라 무시됨: tutor={tutor}, tutee={tutee}")
-                    continue
+            #     # ❗ None 방지
+            #     if not tutee or not tutor:
+            #         print(f"❗ tutor 또는 tutee가 None이라 무시됨: tutor={tutor}, tutee={tutee}")
+            #         continue
 
-                guild = discord.utils.get(client.guilds)
-                tutee_id = find_member_id_by_name(guild, tutee)
-                tutor_id = find_member_id_by_name(guild, tutor)
+            #     guild = discord.utils.get(client.guilds)
+            #     tutee_id = find_member_id_by_name(guild, tutee)
+            #     tutor_id = find_member_id_by_name(guild, tutor)
 
-                mention_tutee = f"<@{tutee_id}>" if tutee_id else f"`{tutee}`"
-                mention_tutor = f"<@{tutor_id}>" if tutor_id else f"`{tutor}`"
+            #     mention_tutee = f"<@{tutee_id}>" if tutee_id else f"`{tutee}`"
+            #     mention_tutor = f"<@{tutor_id}>" if tutor_id else f"`{tutor}`"
 
-                message = f"🎯 {mention_tutee}님이 {mention_tutor}님께 마니또 신청을 하였습니다!"
-                if manitto_channel:
-                    await manitto_channel.send(message)
-                    print(f"[Manitto 신청] {message}")
+            #     message = f"🎯 {mention_tutee}님이 {mention_tutor}님께 마니또 신청을 하였습니다!"
+            #     if manitto_channel:
+            #         await manitto_channel.send(message)
+            #         print(f"[Manitto 신청] {message}")
 
             
 
