@@ -1992,81 +1992,36 @@ elif menu == "마니또 기록":
     nickname = st.session_state.get("nickname", "")
     is_admin = nickname in ADMIN_USERS
 
-    res = supabase.table("ManiddoLogs").select("*").execute()
-    all_logs = res.data or []
-    my_logs = [log for log in all_logs
-        if (log.get("tutor_name") == nickname or log.get("tutee_name") == nickname)
-        and (log.get("memo") or log.get("image_urls") or log.get("title"))]
-    my_logs = sorted(my_logs, key=lambda x: x["created_at"], reverse=True)
+    # ✅ 매칭 여부를 ManiddoRequests 기준으로 판단
+    res_req = supabase.table("ManiddoRequests").select("*").execute()
+    all_requests = res_req.data or []
+    matched = next(
+        (r for r in all_requests if r.get("tutor_name") == nickname or r.get("tutee_name") == nickname),
+        None
+    )
 
-    if not my_logs:
-        st.warning("🙅‍♀️ 현재 마니또를 진행 중이 아닙니다." if not is_admin else "🙅‍♂️ 마니또 기록이 없습니다. 마니또 관리 페이지에서 매칭을 먼저 등록해주세요.")
+    if not matched:
+        st.warning("🙅‍♀️ 현재 마니또를 진행 중이 아닙니다.")
     else:
-        latest_log = my_logs[0]
-        tutor, tutee = (nickname, latest_log.get("tutee_name")) if nickname == latest_log.get("tutor_name") else (latest_log.get("tutor_name"), nickname)
+        tutor = matched.get("tutor_name", "")
+        tutee = matched.get("tutee_name", "")
+        if nickname == tutee:
+            tutor, tutee = tutor, tutee
+        else:
+            tutor, tutee = nickname, tutee
 
-        st.subheader(f"🡩‍🏫 튜터: {tutor} - 🎓 튜티: {tutee} 마니또 진행중")
+        st.subheader(f"🧑‍🏫 튜터: {tutor} - 🎓 튜티: {tutee} 마니또 진행중")
 
         with st.form("write_form"):
             title = st.text_input("제목")
             memo = st.text_area("기록", height=150)
             images = st.file_uploader("이미지 채널", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
             if st.form_submit_button("💾 등록"):
-                urls = []
-                for img in images:
-                    try:
-                        ext = img.name.split(".")[-1]
-                        file_id = f"{uuid.uuid4()}.{ext}"
-                        path = f"{file_id}"
-                        content = img.read()
-                        supabase.storage.from_("maniddo-images").upload(path, content)
-                        public_url = f"{SUPABASE_URL}/storage/v1/object/public/maniddo-images/{path}"
-                        urls.append(public_url)
-                    except Exception as e:
-                        st.error(f"\u274c \uc774\ubbf8\uc9c0 \uc5c5\ub85c\ub4dc \uc2e4\ud328: {e}")
-
-                supabase.table("ManiddoLogs").insert({
-                    "title": title,
-                    "tutor_name": tutor,
-                    "tutee_name": tutee,
-                    "memo": memo,
-                    "image_urls": urls,
-                    "created_at": datetime.now().isoformat(),
-                    "updated_at": datetime.now().isoformat()
-                }).execute()
-                st.success("✅ 기록이 저장되었습니다.")
-                st.rerun()
-
-        st.markdown("---")
-        st.markdown("### 📚 마니또 기록 목록")
-
-        log_options = {
-            f"{log.get('title', '(무제목)')}": log for log in my_logs
-        }
-        selected_title = st.selectbox("🔍 확인할 기록 선택", ["선택하지 않음"] + list(log_options.keys()))
-
-        if selected_title != "선택하지 않음":
-            log = log_options[selected_title]
-            st.markdown(f"#### 🕒 작성일시: {log['created_at'][:19].replace('T',' ')}")
-            edit_key = f"edit_{log['id']}"
-
-            if st.session_state.get(edit_key):
-                new_title = st.text_input("제목 수정", value=log.get("title", ""), key=f"title_edit_{log['id']}")
-                new_memo = st.text_area("기록 내용", value=log.get("memo", ""), key=f"memo_edit_{log['id']}")
-                st.markdown("📷 기존 이미지:")
-                for img_url in log.get("image_urls", []):
-                    st.image(img_url, width=250)
-                    st.markdown(f"[🔍 원본 보기]({img_url})", unsafe_allow_html=True)
-
-                new_imgs = st.file_uploader("이미지 추가", type=["png", "jpg", "jpeg"], accept_multiple_files=True, key=f"newimg_{log['id']}")
-                if new_imgs:
-                    st.markdown("🔄 새 이미지:")
-                    for img in new_imgs:
-                        st.image(img, width=250)
-
-                if st.button("✅ 수정 완료", key=f"submit_edit_{log['id']}"):
-                    updated_urls = log.get("image_urls", [])
-                    for img in new_imgs:
+                if not title.strip() and not memo.strip() and not images:
+                    st.warning("📌 제목, 내용 또는 이미지를 입력해주세요.")
+                else:
+                    urls = []
+                    for img in images:
                         try:
                             ext = img.name.split(".")[-1]
                             file_id = f"{uuid.uuid4()}.{ext}"
@@ -2074,39 +2029,62 @@ elif menu == "마니또 기록":
                             content = img.read()
                             supabase.storage.from_("maniddo-images").upload(path, content)
                             public_url = f"{SUPABASE_URL}/storage/v1/object/public/maniddo-images/{path}"
-                            updated_urls.append(public_url)
+                            urls.append(public_url)
                         except Exception as e:
-                            st.error(f"\u274c \uc774\ubbf8\uc9c0 \uc5c5\ub85c\ub4dc \uc2e4\ud328: {e}")
+                            st.error(f"❌ 이미지 업로드 실패: {e}")
 
-                    supabase.table("ManiddoLogs").update({
-                        "title": new_title,
-                        "memo": new_memo,
-                        "image_urls": updated_urls,
+                    supabase.table("ManiddoLogs").insert({
+                        "title": title,
+                        "tutor_name": tutor,
+                        "tutee_name": tutee,
+                        "memo": memo,
+                        "image_urls": urls,
+                        "created_at": datetime.now().isoformat(),
                         "updated_at": datetime.now().isoformat()
-                    }).eq("id", log["id"]).execute()
-                    st.success("✅ 수정 완료되었습니다.")
-                    st.session_state[edit_key] = False
+                    }).execute()
+                    st.success("✅ 기록이 저장되었습니다.")
                     st.rerun()
-            else:
-                st.markdown(f"#### 🔖 {log.get('title', '')}")
-                st.markdown(log.get("memo", ""))
-                for url in log.get("image_urls", []):
-                    st.image(url, width=250)
-                    st.markdown(f"[🔍 원본 보기]({url})", unsafe_allow_html=True)
-                col1, col2 = st.columns(2)
-                with col1:
-                    if st.button("✏ 수정하기", key=f"edit_button_{log['id']}"):
-                        st.session_state[edit_key] = True
-                with col2:
-                    if st.button("🗑 삭제하기", key=f"delete_button_{log['id']}"):
-                        supabase.table("ManiddoLogs").delete().eq("id", log["id"]).execute()
-                        st.success("🗑 삭제 완료")
-                        st.rerun()
+
+        # ✅ 나의 로그 필터링 (빈 로그 제외)
+        res_logs = supabase.table("ManiddoLogs").select("*").execute()
+        all_logs = res_logs.data or []
+        my_logs = [
+            log for log in all_logs
+            if (log.get("tutor_name") == nickname or log.get("tutee_name") == nickname)
+            and (log.get("memo") or log.get("image_urls") or log.get("title"))
+        ]
+        my_logs = sorted(my_logs, key=lambda x: x["created_at"], reverse=True)
+
+        st.markdown("---")
+        st.markdown("### 📚 마니또 기록 목록")
+
+        log_options = {
+            f"{log.get('title') or '(무제목)'}": log for log in my_logs
+        }
+        selected_title = st.selectbox("🔍 확인할 기록 선택", ["선택하지 않음"] + list(log_options.keys()))
+
+        if selected_title != "선택하지 않음":
+            log = log_options[selected_title]
+            st.markdown(f"#### 🕒 작성일시: {log['created_at'][:19].replace('T',' ')}")
+            st.markdown(f"#### 📌 {log.get('title', '')}")
+            st.markdown(log.get("memo", ""))
+            for url in log.get("image_urls", []):
+                st.image(url, width=250)
+                st.markdown(f"[🔍 원본 보기]({url})", unsafe_allow_html=True)
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("✏ 수정하기", key=f"edit_button_{log['id']}"):
+                    st.session_state[f"edit_{log['id']}"] = True
+            with col2:
+                if st.button("🗑 삭제하기", key=f"delete_button_{log['id']}"):
+                    supabase.table("ManiddoLogs").delete().eq("id", log["id"]).execute()
+                    st.success("🧹 삭제 완료")
+                    st.rerun()
         else:
             cols = st.columns(2)
             for idx, log in enumerate(my_logs):
                 with cols[idx % 2]:
-                    st.markdown(f"🔖 {log.get('title', '')}")
+                    st.markdown(f"📌 {log.get('title', '')}")
                     st.markdown(f"{log['memo'][:30]}...")
                     if log.get("image_urls"):
                         st.image(log["image_urls"][0], width=150)
@@ -2114,8 +2092,9 @@ elif menu == "마니또 기록":
                     if selected_title != "선택하지 않음":
                         if st.button("🗑 삭제하기", key=f"delete_{log['id']}"):
                             supabase.table("ManiddoLogs").delete().eq("id", log["id"]).execute()
-                            st.success("🗑 삭제 완료")
+                            st.success("🧹 삭제 완료")
                             st.rerun()
+
 
 
 
