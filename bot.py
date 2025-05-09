@@ -11,6 +11,14 @@ from discord.ext import commands
 import asyncio
 from datetime import datetime
 
+# ✅ 디스코드 클라이언트 설정
+intents = discord.Intents.default()
+intents.members = True  # 중요: 멤버 정보 접근을 위해 활성화
+client = discord.Client(intents=intents)
+
+# ✅ 봇 실행 시각 저장 (기존 알림 방지용)
+start_time = datetime.now(timezone.utc)
+
 
 
 # ✅ 환경 변수 불러오기
@@ -166,7 +174,11 @@ async def polling_loop():
                 last_dropitem_data = current_drop_data
 
             # ✅ 마니또 신청 감시
-            manitto_res = supabase.table("ManiddoRequests").select("*").eq("notified", False).execute()
+            manitto_res = supabase.table("ManiddoRequests")\
+                .select("*")\
+                .eq("notified", False)\
+                .gte("created_at", start_time.isoformat())\
+                .execute()
             new_rows = manitto_res.data
 
             for row in new_rows:
@@ -189,6 +201,8 @@ async def polling_loop():
                 if manitto_channel:
                     await manitto_channel.send(message)
                     print(f"[Manitto 신청] {message}")
+
+                supabase.table("ManiddoRequests").update({"notified": True}).eq("id", row["id"]).execute()
 
                 # #✅ DM 전송 (가능할 경우)
                 # for member in guild.members:
