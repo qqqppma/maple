@@ -692,21 +692,6 @@ if "user" not in st.session_state:
 
 # ✅ 로그인 이후 사이드바
 if "user" in st.session_state:
-    nickname = st.session_state.get("nickname", "")
-    is_admin = st.session_state.get("is_admin", False)
-
-    st.sidebar.markdown(f"👤 로그인: {nickname}")
-
-    if st.sidebar.button("로그아웃"):
-        user_id = st.session_state.get("user")
-        if user_id:
-            supabase.table("Users").update({"login_token": None}) \
-                .eq("user_id", user_id).execute()
-
-        st.session_state.clear()
-        st.query_params.clear()
-        st.rerun()
-
     # ✅ 이벤트 이미지 경로 (고정된 이미지 파일명)
     EVENT_IMAGE_PATH = "이벤트이미지폴더/로또.png"  # 확장자 포함 정확히 지정
 
