@@ -769,39 +769,51 @@ if "user" in st.session_state:
                 bottom: 20px;
                 right: 20px;
                 width: 400px;
-                height: 800px;
-                padding: 20px;
+                height: 600px;
                 background: white;
                 border-radius: 16px;
                 box-shadow: 0 10px 30px rgba(0,0,0,0.15);
                 font-family: sans-serif;
                 z-index: 9999;
-                text-align: center;
-            }}
-            .event-popup img {{
-                width: 100%;
-                border-radius: 10px;
-                margin-bottom: 12px;
-            }}
-            .event-popup h4 {{
-                margin: 6px 0;
-                font-size: 18px;
-                color: #d62c2c;
-            }}
-            .event-popup p {{
-                font-size: 14px;
-                color: #333;
-            }}
-            .button-row {{
                 display: flex;
-                justify-content: space-between;
-                margin-top: 12px;
+                flex-direction: column;
+                overflow: hidden;
             }}
+
             .arrow-row {{
                 display: flex;
                 justify-content: space-between;
                 margin-bottom: 12px;
             }}
+
+            .scroll-area {{
+                overflow-y: auto;
+                flex-grow: 1;
+            }}
+
+            .scroll-area img {{
+                width: 100%;
+                border-radius: 10px;
+                margin-bottom: 12px;
+            }}
+
+            .scroll-area h4 {{
+                margin: 6px 0;
+                font-size: 18px;
+                color: #d62c2c;
+            }}
+
+            .scroll-area p {{
+                font-size: 14px;
+                color: #333;
+            }}
+
+            .button-row {{
+                display: flex;
+                justify-content: space-between;
+                margin-top: 12px;
+            }}
+
             .button-row button, .arrow-row button {{
                 font-size: 13px;
                 padding: 6px 10px;
@@ -809,24 +821,31 @@ if "user" in st.session_state:
                 border: none;
                 cursor: pointer;
             }}
+
             .gray {{ background-color: #ccc; color: white; }}
             .blue {{ background-color: #2b78e4; color: white; }}
             .red {{ background-color: #d62c2c; color: white; }}
             </style>
 
             <div class="event-popup">
+
                 <div class="arrow-row">
                     <form method="post"><button name="arrow_action" value="prev">⬅️</button></form>
                     <form method="post"><button name="arrow_action" value="next">➡️</button></form>
                 </div>
-                <img src="data:image/png;base64,{event['base64']}">
-                <h4>🎉 {event['title']} 이벤트</h4>
-                <p>길드에서 진행 중인 특별한 이벤트!<br>지금 참여하고 보상을 받아보세요 ✨</p>
+
+                <div class="scroll-area">
+                    <img src="data:image/png;base64,{event['base64']}">
+                    <h4>🎉 {event['title']} 이벤트</h4>
+                    <p>길드에서 진행 중인 특별한 이벤트!<br>지금 참여하고 보상을 받아보세요 ✨</p>
+                </div>
+
                 <div class="button-row">
                     <form method="post"><button name="popup_action" value="hide" class="gray">오늘 하루 보지 않기</button></form>
                     <form method="post"><button name="popup_action" value="list" class="blue">이벤트 목록</button></form>
                     <form method="post"><button name="popup_action" value="detail" class="red">참여하기</button></form>
                 </div>
+
             </div>
             """, unsafe_allow_html=True)
         
