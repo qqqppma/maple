@@ -1369,7 +1369,7 @@ elif menu == "이벤트 이미지 등록":
     new_desc = st.text_area("이벤트 설명을 입력하세요", key="reg_desc")
     new_image = st.selectbox("이벤트 이미지 선택", available_images, key="reg_image")
 
-    if st.button("📤 등록하기"):
+    if st.button("📤 등록하기", key="reg_submit"):
         if not new_title:
             st.warning("제목을 입력해주세요.")
         else:
@@ -1380,7 +1380,7 @@ elif menu == "이벤트 이미지 등록":
             }
             res = supabase.table("EventBanners").insert(data).execute()
             if res.data:
-                st.success("✅ 이벤트 등록 완료!")
+                st.session_state["event_created"] = True  # ✅ 등록 완료 플래그
                 st.rerun()
             else:
                 st.error("❌ 등록 실패. 다시 시도해주세요.")
