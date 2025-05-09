@@ -12,6 +12,7 @@ import urllib.parse
 import io
 import os
 import uuid
+import pytz
 from PIL import Image
 from datetime import date, timezone, timedelta
 from supabase import create_client, Client
@@ -2030,7 +2031,6 @@ elif menu == "마니또 기록":
     res_req = supabase.table("ManiddoRequests").select("*").execute()
     all_requests = res_req.data or []
 
-    # ✅ 튜터와 튜티 모두 채워진 row 중 로그인한 사용자가 포함된 경우 찾기
     matched = next(
         (
             r for r in all_requests
@@ -2047,11 +2047,10 @@ elif menu == "마니또 기록":
         tutee = matched["tutee_name"]
         st.subheader(f"🧑‍🏫 튜터: {tutor} - 🎓 튜티: {tutee} 마니또 진행중")
 
-        # ✅ 기록 등록 폼
         with st.form("write_form"):
             title = st.text_input("제목")
             memo = st.text_area("기록", height=150)
-            images = st.file_uploader("이미지 채널", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
+            images = st.file_uploader("새 이미지 업로드", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
 
             if st.form_submit_button("💾 등록"):
                 if not title.strip() and not memo.strip() and not images:
@@ -2082,7 +2081,6 @@ elif menu == "마니또 기록":
                     st.success("✅ 기록이 저장되었습니다.")
                     st.rerun()
 
-        # ✅ 내 기록 조회
         res_logs = supabase.table("ManiddoLogs").select("*").execute()
         all_logs = res_logs.data or []
         my_logs = [
@@ -2110,10 +2108,27 @@ elif menu == "마니또 기록":
 
                 new_title = st.text_input("제목", value=log.get("title", ""), key=f"title_edit_{log_id}")
                 new_memo = st.text_area("기록", value=log.get("memo", ""), height=150, key=f"memo_edit_{log_id}")
-                new_images = st.file_uploader("새 이미지 업로드 (기존 이미지는 유지)", type=["jpg", "jpeg", "png"], accept_multiple_files=True, key=f"img_edit_{log_id}")
+                new_images = st.file_uploader("새 이미지 업로드", type=["jpg", "jpeg", "png"], accept_multiple_files=True, key=f"img_edit_{log_id}")
+
+                # ✅ 기존 이미지 표시 + 삭제 버튼
+                original_urls = log.get("image_urls", []) or []
+                keep_urls = []
+                if original_urls:
+                    st.markdown("#### 기존 이미지 (❌ 버튼으로 삭제)")
+                    for i, url in enumerate(original_urls):
+                        col1, col2 = st.columns([10, 1])
+                        with col1:
+                            st.image(url, width=200)
+                        with col2:
+                            if st.button("❌", key=f"remove_img_{log_id}_{i}"):
+                                st.session_state[f"delete_img_{log_id}_{i}"] = True
+
+                    # 삭제 안한 이미지만 유지
+                    for i, url in enumerate(original_urls):
+                        if not st.session_state.get(f"delete_img_{log_id}_{i}", False):
+                            keep_urls.append(url)
 
                 if st.button("💾 수정 완료", key=f"save_edit_{log_id}"):
-                    urls = log.get("image_urls", [])
                     for img in new_images:
                         try:
                             ext = img.name.split(".")[-1]
@@ -2122,14 +2137,14 @@ elif menu == "마니또 기록":
                             content = img.read()
                             supabase.storage.from_("maniddo-images").upload(path, content)
                             public_url = f"{SUPABASE_URL}/storage/v1/object/public/maniddo-images/{path}"
-                            urls.append(public_url)
+                            keep_urls.append(public_url)
                         except Exception as e:
                             st.error(f"❌ 이미지 업로드 실패: {e}")
 
                     supabase.table("ManiddoLogs").update({
                         "title": new_title,
                         "memo": new_memo,
-                        "image_urls": urls,
+                        "image_urls": keep_urls,
                         "updated_at": datetime.now(KST).isoformat()
                     }).eq("id", log_id).execute()
 
@@ -2154,7 +2169,6 @@ elif menu == "마니또 기록":
                         supabase.table("ManiddoLogs").delete().eq("id", log_id).execute()
                         st.success("🧹 삭제 완료")
                         st.rerun()
-
         else:
             cols = st.columns(2)
             for idx, log in enumerate(my_logs):
