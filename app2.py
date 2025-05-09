@@ -1994,7 +1994,9 @@ elif menu == "마니또 기록":
 
     res = supabase.table("ManiddoLogs").select("*").execute()
     all_logs = res.data or []
-    my_logs = [log for log in all_logs if log.get("tutor_name") == nickname or log.get("tutee_name") == nickname]
+    my_logs = [log for log in all_logs
+        if (log.get("tutor_name") == nickname or log.get("tutee_name") == nickname)
+        and (log.get("memo") or log.get("image_urls") or log.get("title"))]
     my_logs = sorted(my_logs, key=lambda x: x["created_at"], reverse=True)
 
     if not my_logs:
