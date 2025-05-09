@@ -707,61 +707,40 @@ if "user" in st.session_state:
         st.query_params.clear()
         st.rerun()
 
-    # ✅ 이벤트 이미지 폴더 경로
-    EVENT_IMAGE_FOLDER = "이벤트이미지폴더"
+    # ✅ 이벤트 이미지 경로 (고정된 이미지 파일명)
+    EVENT_IMAGE_PATH = "이벤트이미지폴더/로또이벤트.png"  # 확장자 포함 정확히 지정
 
-    def get_event_images():
-        image_files = sorted([
-            f for f in os.listdir(EVENT_IMAGE_FOLDER)
-            if f.endswith((".png", ".jpg", ".jpeg"))
-        ])
-        events = []
-        for file in image_files:
-            img_path = os.path.join(EVENT_IMAGE_FOLDER, file)
-            with open(img_path, "rb") as img_file:
-                encoded = base64.b64encode(img_file.read()).decode()
-            title = os.path.splitext(file)[0]
-            events.append({"title": title, "base64": encoded})
-        return events
+    # ✅ 이미지가 없으면 표시 안함
+    if not os.path.exists(EVENT_IMAGE_PATH):
+        st.stop()
 
     # ✅ 세션 상태 초기화
-    if "event_index" not in st.session_state:
-        st.session_state["event_index"] = 0
-    if "event_last_updated" not in st.session_state:
-        st.session_state["event_last_updated"] = time.time()
     if "hide_today_popup" not in st.session_state:
         st.session_state["hide_today_popup"] = False
 
-    events = get_event_images()
-    if not events:
-        st.stop()
+    # ✅ 로그인 정보 출력
+    nickname = st.session_state.get("nickname", "")
+    st.sidebar.markdown(f"👤 로그인: {nickname}")
 
-    # ✅ 자동 전환 시 메뉴 유지
-    current_time = time.time()
-    if current_time - st.session_state["event_last_updated"] > 5:
-        if "menu" in st.session_state:
-            st.session_state["__prev_menu"] = st.session_state["menu"]  # 메뉴 백업
-        st.session_state["event_index"] = (st.session_state["event_index"] + 1) % len(events)
-        st.session_state["event_last_updated"] = current_time
+    # ✅ 로그아웃 버튼
+    if st.sidebar.button("로그아웃"):
+        user_id = st.session_state.get("user")
+        if user_id:
+            supabase.table("Users").update({"login_token": None}).eq("user_id", user_id).execute()
+        st.session_state.clear()
+        st.query_params.clear()
         st.rerun()
 
-    # ✅ rerun 후 메뉴 복원
-    if "__prev_menu" in st.session_state:
-        st.session_state["menu"] = st.session_state["__prev_menu"]
-        del st.session_state["__prev_menu"]
-
-    # ✅ 현재 이벤트 정보
-    event = events[st.session_state["event_index"]]
-    title = event["title"]
-    base64_img = str(event["base64"])
-
-    # ✅ 배너 닫기 처리
-    if st.sidebar.button("❌ 배너 닫기"):
-        st.session_state["hide_today_popup"] = True
-        st.rerun()
+    # ✅ 배너 닫기 버튼 (사이드바 하단)
+    if not st.session_state["hide_today_popup"]:
+        if st.sidebar.button("❌ 배너 닫기"):
+            st.session_state["hide_today_popup"] = True
 
     # ✅ 배너 표시
     if not st.session_state["hide_today_popup"]:
+        with open(EVENT_IMAGE_PATH, "rb") as img_file:
+            base64_img = base64.b64encode(img_file.read()).decode()
+
         st.markdown(f"""
         <style>
         .event-popup {{
@@ -796,8 +775,8 @@ if "user" in st.session_state:
         </style>
 
         <div class="event-popup">
-            <img src="data:image/png;base64,{base64_img}" alt="{title}">
-            <h4>🎉 {title} 이벤트</h4>
+            <img src="data:image/png;base64,{base64_img}" alt="로또 이벤트">
+            <h4>🎉 로또 이벤트</h4>
             <p>길드에서 진행 중인 특별한 이벤트!<br>지금 참여하고 보상을 받아보세요 ✨</p>
         </div>
         """, unsafe_allow_html=True)
