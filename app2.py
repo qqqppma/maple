@@ -708,114 +708,101 @@ if "user" in st.session_state:
         st.rerun()
 
     # ✅ 우측 하단 고정 팝업형 이벤트 배너 (1장 카드 안에 모두 표시)
-    now = datetime.now()
-    if "hide_event_popup_until" not in st.session_state:
-        st.session_state["hide_event_popup_until"] = None
+    EVENT_IMAGE_FOLDER = "이벤트이미지폴더"
 
-    if st.session_state["hide_event_popup_until"] is None or st.session_state["hide_event_popup_until"] < now:
-        try:
-            res = supabase.table("EventBanners").select("title, image_url").order("created_at", desc=True).execute()
-            banners = res.data if res.data else []
-        except Exception as e:
-            st.error("❌ 이벤트 정보를 불러오는 데 실패했습니다.")
-            banners = []
+    def get_event_images():
+        image_files = [f for f in os.listdir(EVENT_IMAGE_FOLDER) if f.endswith((".png", ".jpg", ".jpeg", ".gif"))]
+        events = []
+        for img_file in image_files:
+            title = os.path.splitext(img_file)[0]
+            img_path = os.path.join(EVENT_IMAGE_FOLDER, img_file).replace("\\", "/")
+            events.append({"title": title, "image_path": img_path})
+        return events
 
-        if banners:
-            html_code = f"""
+    # ✅ 세션 상태 초기화 (처음 한 번만)
+    if "hide_today_popup" not in st.session_state:
+        st.session_state["hide_today_popup"] = False
+
+    # ✅ 폼 처리
+    if st.session_state.get("popup_hide_button"):
+        st.session_state["hide_today_popup"] = True
+        st.session_state["popup_hide_button"] = False  # 버튼 다시 초기화
+
+    # ✅ 팝업 표시 여부
+    if not st.session_state["hide_today_popup"]:
+        events = get_event_images()
+
+        st.markdown("""
             <style>
-            .popup-box {{
+            .event-popup {
                 position: fixed;
                 bottom: 20px;
                 right: 20px;
-                width: 360px;
-                background-color: #ffffff;
-                border: 2px solid #ccc;
-                border-radius: 12px;
-                padding: 16px;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-                z-index: 9999;
-            }}
-            .popup-title {{
-                font-size: 18px;
-                font-weight: bold;
-                margin-bottom: 12px;
-            }}
-            .event-item {{
+                background: white;
+                padding: 15px;
+                border: 1px solid #ddd;
+                border-radius: 10px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+                width: 280px;
+                z-index: 999;
+            }
+            .event-popup h4 {
+                margin-top: 0;
+                font-size: 16px;
+                margin-bottom: 10px;
+            }
+            .event-item {
                 display: flex;
                 align-items: center;
-                margin-bottom: 10px;
-            }}
-            .event-item img {{
-                width: 64px;
-                height: 64px;
-                border-radius: 8px;
-                margin-right: 12px;
-            }}
-            .event-item span {{
-                font-size: 15px;
-                font-weight: 600;
-            }}
-            .popup-buttons {{
+                gap: 10px;
+                margin-bottom: 8px;
+            }
+            .event-thumb {
+                width: 40px;
+                height: 40px;
+                object-fit: cover;
+                border-radius: 5px;
+            }
+            .popup-buttons {
                 display: flex;
                 justify-content: space-between;
-                margin-top: 15px;
-            }}
-            .popup-buttons form {{
-                flex: 1;
-                margin: 0 5px;
-            }}
-            .popup-buttons button {{
-                width: 100%;
-                padding: 6px;
-                font-size: 14px;
-                border-radius: 6px;
-                border: 1px solid #aaa;
+                margin-top: 10px;
+            }
+            .popup-buttons button {
+                font-size: 12px;
+                padding: 4px 8px;
+                border-radius: 5px;
                 cursor: pointer;
-            }}
+            }
             </style>
-            <div class="popup-box">
-                <div class="popup-title">🎉 현재 진행 중인 길드 이벤트</div>
-            """
+        """, unsafe_allow_html=True)
 
-            for ev in banners:
-                html_code += f"""
-                <div class="event-item">
-                    <img src="{ev['image_url']}" />
-                    <span>{ev['title']}</span>
-                </div>
-                """
-
-            # 폼을 통해 버튼도 내부에 포함
-            html_code += """
-                <div class="popup-buttons">
-                    <form method="post">
-                        <button name="popup_hide_button" type="submit">❌ 오늘 하루 보지 않기</button>
-                    </form>
-                    <form method="post">
-                        <button name="popup_move_button" type="submit">👉 이벤트 목록</button>
-                    </form>
-                </div>
+        # HTML 구성
+        html = """
+        <div class="event-popup">
+            <h4>🎉 현재 진행 중인 길드 이벤트</h4>
+        """
+        for event in events:
+            html += f"""
+            <div class="event-item">
+                <img src="{event['image_path']}" class="event-thumb">
+                <span>{event['title']}</span>
             </div>
             """
 
-            st.markdown(html_code, unsafe_allow_html=True)
+        html += """
+            <div class="popup-buttons">
+                <form method="post">
+                    <button name="popup_hide_button" type="submit">❌ 오늘 하루 보지 않기</button>
+                </form>
+                <form method="post">
+                    <button name="popup_move_button" type="submit">👉 이벤트 목록 가기</button>
+                </form>
+            </div>
+        </div>
+        """
 
-            # Streamlit 내부 로직용 버튼 처리 (폼 버튼은 시각용이라 클릭은 별도 처리 필요)
-            if "popup_hide_button" in st.query_params:
-                st.session_state["hide_event_popup_until"] = now + timedelta(days=1)
-                st.rerun()
-
-            if "popup_move_button" in st.query_params:
-                st.session_state["menu"] = "이벤트 목록"
-                st.experimental_rerun()
-
-            # 백업용 Streamlit 버튼 (혹시 HTML 버튼 인식 안될 경우 대비)
-            if st.button("❌ 오늘 하루 보지 않기", key="popup_hide_backup", help="(예비용)") and not st.session_state.get("hide_event_popup_until"):
-                st.session_state["hide_event_popup_until"] = now + timedelta(days=1)
-                st.rerun()
-            if st.button("👉 이벤트 목록 가기", key="popup_move_backup", help="(예비용)") and st.session_state.get("menu") != "이벤트 목록":
-                st.session_state["menu"] = "이벤트 목록"
-                st.experimental_rerun()
+        st.markdown(html, unsafe_allow_html=True)
 
         
 menu_options = []
