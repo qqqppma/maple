@@ -1936,29 +1936,37 @@ elif menu == "마니또 관리":
         display_df = view_df[["튜터", "튜티", "기록"]]
         st.dataframe(display_df, use_container_width=True)
 
-        # 관리자만 수정 가능
+        # 관리자 또는 튜터만 수정 가능
         if is_admin:
             st.markdown("### 📂 확인할 마니또 기록 열람")
 
-            # ✅ 1. 튜터-튜티 쌍 선택
+            # ✅ 1. 튜터-튜티 쌍 목록 불러오기
             pair_options = [
                 f"{r['tutor_name']} - {r['tutee_name']}"
-                for r in all_requests if r.get("tutor_name") and r.get("tutee_name")
+                for r in all_requests
+                if r.get("tutor_name") and r.get("tutee_name")
             ]
-            selected_pair = st.selectbox("📌 확인할 기록 선택", ["선택하지 않음"] + pair_options)
+            selected_pair = st.selectbox("📌 확인할 마니또 선택", ["선택하지 않음"] + pair_options)
 
             if selected_pair != "선택하지 않음":
                 tutor_name, tutee_name = selected_pair.split(" - ")
 
-                # ✅ 2. 로그 조회
+                # ✅ 2. 로그 필터링
                 logs = [
                     log for log in all_logs
                     if log.get("tutor_name") == tutor_name and log.get("tutee_name") == tutee_name
                 ]
                 logs = sorted(logs, key=lambda x: x.get("created_at", ""), reverse=True)
 
-                if logs:
-                    log_titles = [f"{log.get('title') or '(무제목)'} ({log['created_at'][:19].replace('T',' ')})" for log in logs]
+                if not logs:
+                    st.info("📭 해당 마니또 기록이 없습니다.")
+                else:
+                    st.markdown("### 📚 마니또 기록 목록 (관리자 전용)")
+
+                    log_titles = [
+                        f"{log.get('title', '(무제목)')} ({log['created_at'][:19].replace('T',' ')})"
+                        for log in logs
+                    ]
                     selected_title = st.selectbox("🔍 열람할 기록 선택", ["선택하지 않음"] + log_titles)
 
                     if selected_title != "선택하지 않음":
@@ -1967,6 +1975,7 @@ elif menu == "마니또 관리":
                         st.markdown(f"#### 📌 {selected_log.get('title', '')}")
                         st.markdown(f"🕒 {selected_log['created_at'][:19].replace('T',' ')}")
                         st.markdown(selected_log.get("memo", ""))
+
                         for url in selected_log.get("image_urls", []):
                             st.image(url, width=200)
                             st.markdown(f"[🔍 원본 보기]({url})", unsafe_allow_html=True)
