@@ -719,19 +719,23 @@ if "user" in st.session_state:
             events.append({"title": title, "image_path": img_path})
         return events
 
-    # ✅ 세션 상태 초기화 (처음 한 번만)
+    # ✅ 세션 상태 초기화
     if "hide_today_popup" not in st.session_state:
         st.session_state["hide_today_popup"] = False
 
-    # ✅ 폼 처리
-    if st.session_state.get("popup_hide_button"):
-        st.session_state["hide_today_popup"] = True
-        st.session_state["popup_hide_button"] = False  # 버튼 다시 초기화
+    # ✅ 버튼 처리 (Streamlit 방식)
+    if "popup_action" in st.session_state:
+        if st.session_state.popup_action == "hide":
+            st.session_state["hide_today_popup"] = True
+        elif st.session_state.popup_action == "go_event":
+            st.session_state["menu"] = "이벤트 목록"
+        st.session_state.popup_action = None  # 초기화
 
-    # ✅ 팝업 표시 여부
+    # ✅ 팝업 표시
     if not st.session_state["hide_today_popup"]:
         events = get_event_images()
 
+        # CSS 삽입
         st.markdown("""
             <style>
             .event-popup {
@@ -739,45 +743,50 @@ if "user" in st.session_state:
                 bottom: 20px;
                 right: 20px;
                 background: white;
-                padding: 15px;
-                border: 1px solid #ddd;
-                border-radius: 10px;
-                box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-                width: 400px;
-                z-index: 999;
+                padding: 20px;
+                border: 1px solid #ccc;
+                border-radius: 12px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                width: 450px;
+                z-index: 9999;
             }
             .event-popup h4 {
                 margin-top: 0;
-                font-size: 16px;
-                margin-bottom: 10px;
+                font-size: 18px;
+                margin-bottom: 12px;
             }
             .event-item {
                 display: flex;
                 align-items: center;
                 gap: 10px;
-                margin-bottom: 8px;
+                margin-bottom: 10px;
             }
             .event-thumb {
-                width: 40px;
-                height: 40px;
+                width: 48px;
+                height: 48px;
                 object-fit: cover;
                 border-radius: 5px;
             }
             .popup-buttons {
                 display: flex;
                 justify-content: space-between;
-                margin-top: 10px;
+                margin-top: 12px;
+            }
+            .popup-buttons form {
+                display: inline;
             }
             .popup-buttons button {
                 font-size: 12px;
-                padding: 4px 8px;
-                border-radius: 5px;
+                padding: 6px 10px;
+                border-radius: 6px;
+                border: none;
+                background-color: #f0f0f0;
                 cursor: pointer;
             }
             </style>
         """, unsafe_allow_html=True)
 
-        # HTML 구성
+        # HTML 삽입
         html = """
         <div class="event-popup">
             <h4>🎉 현재 진행 중인 길드 이벤트</h4>
@@ -789,14 +798,15 @@ if "user" in st.session_state:
                 <span>{event['title']}</span>
             </div>
             """
-
+        
+        # 버튼 부분 포함
         html += """
             <div class="popup-buttons">
-                <form method="post">
-                    <button name="popup_hide_button" type="submit">❌ 오늘 하루 보지 않기</button>
+                <form action="" method="post">
+                    <button name="popup_action" value="hide">❌ 오늘 하루 보지 않기</button>
                 </form>
-                <form method="post">
-                    <button name="popup_move_button" type="submit">👉 이벤트 목록 가기</button>
+                <form action="" method="post">
+                    <button name="popup_action" value="go_event">👉 이벤트 목록 가기</button>
                 </form>
             </div>
         </div>
