@@ -1351,42 +1351,77 @@ elif menu == "부캐릭터 관리":
 
 
 elif menu == "이벤트 이미지 등록":
-    st.subheader("이벤트 배너 등록")
+    st.subheader("🎯 이벤트 배너 등록 및 수정")
 
-    title = st.text_input("이벤트 제목을 입력하세요")
-    uploaded_file = st.file_uploader("이벤트 이미지를 업로드하세요", type=["png", "jpg", "jpeg"])
-    register = st.button("📤 등록하기")
+    # ✅ 공통 이미지 폴더 설정
+    image_folder = "이벤트이미지폴더"
+    available_images = ["이미지 없음"] + [
+        f for f in os.listdir(image_folder)
+        if f.lower().endswith((".png", ".jpg", ".jpeg"))
+    ]
 
-    if register:
-        if not uploaded_file or not title:
-            st.warning("제목과 이미지를 모두 입력해주세요.")
+    # --------------------------
+    # 📌 신규 이벤트 등록 섹션
+    # --------------------------
+    st.markdown("## 🆕 새 이벤트 등록")
+
+    new_title = st.text_input("이벤트 제목을 입력하세요", key="reg_title")
+    new_desc = st.text_area("이벤트 설명을 입력하세요", key="reg_desc")
+    new_image = st.selectbox("이벤트 이미지 선택", available_images, key="reg_image")
+
+    if st.button("📤 등록하기"):
+        if not new_title:
+            st.warning("제목을 입력해주세요.")
         else:
-            ext = uploaded_file.name.split(".")[-1]
-            file_id = f"{uuid.uuid4()}.{ext}"
-            file_bytes = uploaded_file.read()
+            data = {
+                "title": new_title,
+                "description": new_desc,
+                "image_file_name": None if new_image == "이미지 없음" else new_image
+            }
+            res = supabase.table("EventBanners").insert(data).execute()
+            if res.data:
+                st.success("✅ 이벤트 등록 완료!")
+                st.rerun()
+            else:
+                st.error("❌ 등록 실패. 다시 시도해주세요.")
 
-            try:
-                upload_res = supabase.storage.from_("event-banners").upload(file_id, file_bytes)
-                uploaded_path = upload_res.get("data", {}).get("path", None)
+    # --------------------------
+    # ✏️ 기존 이벤트 수정 섹션
+    # --------------------------
+    st.markdown("---")
+    st.subheader("✏️ 기존 이벤트 수정")
 
-                if uploaded_path:
-                    public_url = f"{SUPABASE_URL}/storage/v1/object/public/event-banners/{uploaded_path}"
+    res = supabase.table("EventBanners").select("*").order("created_at", desc=True).execute()
+    event_list = res.data or []
 
-                    insert_res = supabase.table("EventBanners").insert({
-                        "title": title,
-                        "image_url": public_url
-                    }).execute()
+    if not event_list:
+        st.info("등록된 이벤트가 없습니다.")
+    else:
+        display_names = [f"{ev['title']} ({ev['id']})" for ev in event_list]
+        selected_name = st.selectbox("수정할 이벤트 선택", display_names, key="edit_selector")
+        selected_event = next((ev for ev in event_list if f"{ev['title']} ({ev['id']})" == selected_name), None)
 
-                    if insert_res.data:
-                        st.success("✅ 이벤트 등록 완료!")
-                        st.image(public_url, width=300)
-                    else:
-                        st.error("❌ Supabase 테이블 저장 실패")
+        if selected_event:
+            edited_title = st.text_input("제목 수정", value=selected_event["title"], key="edit_title")
+            edited_desc = st.text_area("내용 수정", value=selected_event.get("description", ""), key="edit_desc")
+            edited_image = st.selectbox("이미지 수정", available_images,
+                                        index=available_images.index(selected_event.get("image_file_name", "이미지 없음"))
+                                        if selected_event.get("image_file_name") in available_images else 0,
+                                        key="edit_image")
+
+            if st.button("✏️ 수정 완료"):
+                update_data = {
+                    "title": edited_title,
+                    "description": edited_desc,
+                    "image_file_name": None if edited_image == "이미지 없음" else edited_image
+                }
+                update_res = supabase.table("EventBanners").update(update_data).eq("id", selected_event["id"]).execute()
+                if update_res:
+                    st.success("✅ 이벤트 수정 완료!")
+                    st.rerun()
                 else:
-                    st.error("❌ 업로드 실패: 이미지 경로 없음")
+                    st.error("❌ 수정 실패. 다시 시도해주세요.")
 
-            except Exception as e:
-                st.error(f"❌ 예외 발생: {e}")
 
 
 elif menu == "부캐릭터 등록":
