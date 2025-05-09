@@ -708,7 +708,6 @@ if "user" in st.session_state:
         st.rerun()
 
     # ✅ 이벤트 이미지 폴더 경로
-    # ✅ 이벤트 이미지 폴더 경로
     EVENT_IMAGE_FOLDER = "이벤트이미지폴더"
 
     def get_event_images():
@@ -743,28 +742,23 @@ if "user" in st.session_state:
     if current_time - st.session_state["event_last_updated"] > 5:
         st.session_state["event_index"] = (st.session_state["event_index"] + 1) % len(events)
         st.session_state["event_last_updated"] = current_time
-        st.rerun()
+        st.experimental_rerun()
 
     # ✅ 현재 이벤트 정보
     event = events[st.session_state["event_index"]]
     title = event["title"]
-    base64_img = str(event["base64"])
+    base64_img = event["base64"]
 
-    # ✅ 버튼 처리 (query param 방식)
-    popup_action = st.query_params.get("popup_action")
-
-    if popup_action == "hide":
-        st.session_state["hide_today_popup"] = True
-        st.query_params.pop("popup_action", None)
-        st.rerun()
-    elif popup_action == "list":
-        st.session_state["menu"] = "이벤트 목록"
-        st.query_params.pop("popup_action", None)
-        st.rerun()
-    elif popup_action == "detail":
-        st.session_state["menu"] = f"이벤트 - {title}"
-        st.query_params.pop("popup_action", None)
-        st.rerun()
+    # ✅ 버튼 처리
+    if "popup_action" in st.session_state:
+        action = st.session_state.popup_action
+        if action == "hide":
+            st.session_state["hide_today_popup"] = True
+        elif action == "list":
+            st.session_state["menu"] = "이벤트 목록"
+        elif action == "detail":
+            st.session_state["menu"] = f"이벤트 - {title}"
+        st.session_state.pop("popup_action")
 
     # ✅ 배너 표시
     if not st.session_state["hide_today_popup"]:
@@ -804,7 +798,7 @@ if "user" in st.session_state:
             justify-content: space-between;
             margin-top: 16px;
         }}
-        .button-row a button {{
+        .button-row button {{
             font-size: 13px;
             padding: 6px 10px;
             border-radius: 6px;
@@ -816,18 +810,32 @@ if "user" in st.session_state:
         .blue {{ background-color: #2b78e4; color: white; }}
         .red {{ background-color: #d62c2c; color: white; }}
         </style>
+        """, unsafe_allow_html=True)
 
-        <div class="event-popup">
+        with st.container():
+            st.markdown('<div class="event-popup">', unsafe_allow_html=True)
+            st.markdown(f"""
             <img src="data:image/png;base64,{base64_img}" alt="{title}">
             <h4>🎉 {title} 이벤트</h4>
             <p>길드에서 진행 중인 특별한 이벤트!<br>지금 참여하고 보상을 받아보세요 ✨</p>
-            <div class="button-row">
-                <a href="?popup_action=hide"><button class="gray">❌ 그만 보기</button></a>
-                <a href="?popup_action=list"><button class="blue">📋 이벤트 목록</button></a>
-                <a href="?popup_action=detail"><button class="red">🔥 참여하기</button></a>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
+
+            with st.form("popup_form", clear_on_submit=True):
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    if st.form_submit_button("❌ 그만 보기"):
+                        st.session_state.popup_action = "hide"
+                        st.experimental_rerun()
+                with col2:
+                    if st.form_submit_button("📋 이벤트 목록"):
+                        st.session_state.popup_action = "list"
+                        st.experimental_rerun()
+                with col3:
+                    if st.form_submit_button("🔥 참여하기"):
+                        st.session_state.popup_action = "detail"
+                        st.experimental_rerun()
+            st.markdown("</div>", unsafe_allow_html=True)
+
         
 menu_options = []
 
