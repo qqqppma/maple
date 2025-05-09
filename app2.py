@@ -2381,7 +2381,7 @@ elif menu == "이벤트 목록":
 
             if st.button("← 목록으로 돌아가기"):
                 del st.session_state["selected_event"]
-                st.experimental_rerun()
+                st.rerun()
         else:
             st.warning("선택한 이벤트를 찾을 수 없습니다.")
     else:
@@ -2401,7 +2401,7 @@ elif menu == "이벤트 목록":
                         st.markdown(f"**{ev['title']}**")
                         if st.button("자세히 보기", key=f"event_detail_{ev['id']}"):
                             st.session_state["selected_event"] = ev["id"]
-                            st.experimental_rerun()
+                            st.rerun()
 
 
 
