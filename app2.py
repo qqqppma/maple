@@ -712,71 +712,108 @@ if "user" in st.session_state:
     if "hide_event_popup_until" not in st.session_state:
         st.session_state["hide_event_popup_until"] = None
 
-    event_banners = [
-        {"title": "악마 길드 복지", "image": "악마 복지.png"},
-        {"title": "AKMA AWARD", "image": "악마 어워드.png"},
-        {"title": "Lotto", "image": "로또.png"},
-    ]
-
     if st.session_state["hide_event_popup_until"] is None or st.session_state["hide_event_popup_until"] < now:
-        html_code = f"""
-    <style>
-    .popup-box {{
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        width: 360px;
-        background-color: #ffffff;
-        border: 2px solid #ccc;
-        border-radius: 12px;
-        padding: 16px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        z-index: 9999;
-    }}
-    .popup-title {{
-        font-size: 18px;
-        font-weight: bold;
-        margin-bottom: 12px;
-    }}
-    .event-item {{
-        display: flex;
-        align-items: center;
-        margin-bottom: 10px;
-    }}
-    .event-item img {{
-        width: 64px;
-        height: 64px;
-        border-radius: 8px;
-        margin-right: 12px;
-    }}
-    .event-item span {{
-        font-size: 15px;
-        font-weight: 600;
-    }}
-    .popup-buttons {{
-        display: flex;
-        justify-content: space-between;
-        margin-top: 15px;
-    }}
-    .popup-buttons button {{
-        padding: 6px 10px;
-        font-size: 14px;
-    }}
-    </style>
-    <div class="popup-box">
-        <div class="popup-title">🎉 현재 진행 중인 길드 이벤트</div>
-    """
+        try:
+            res = supabase.table("EventBanners").select("title, image_url").order("created_at", desc=True).execute()
+            banners = res.data if res.data else []
+        except Exception as e:
+            st.error("❌ 이벤트 정보를 불러오는 데 실패했습니다.")
+            banners = []
 
-        st.markdown(html_code, unsafe_allow_html=True)
+        if banners:
+            html_code = f"""
+            <style>
+            .popup-box {{
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                width: 360px;
+                background-color: #ffffff;
+                border: 2px solid #ccc;
+                border-radius: 12px;
+                padding: 16px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                z-index: 9999;
+            }}
+            .popup-title {{
+                font-size: 18px;
+                font-weight: bold;
+                margin-bottom: 12px;
+            }}
+            .event-item {{
+                display: flex;
+                align-items: center;
+                margin-bottom: 10px;
+            }}
+            .event-item img {{
+                width: 64px;
+                height: 64px;
+                border-radius: 8px;
+                margin-right: 12px;
+            }}
+            .event-item span {{
+                font-size: 15px;
+                font-weight: 600;
+            }}
+            .popup-buttons {{
+                display: flex;
+                justify-content: space-between;
+                margin-top: 15px;
+            }}
+            .popup-buttons form {{
+                flex: 1;
+                margin: 0 5px;
+            }}
+            .popup-buttons button {{
+                width: 100%;
+                padding: 6px;
+                font-size: 14px;
+                border-radius: 6px;
+                border: 1px solid #aaa;
+                cursor: pointer;
+            }}
+            </style>
+            <div class="popup-box">
+                <div class="popup-title">🎉 현재 진행 중인 길드 이벤트</div>
+            """
 
-        # 버튼 기능 실제 구현
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("❌ 오늘 하루 보지 않기", key="popup_hide"):
+            for ev in banners:
+                html_code += f"""
+                <div class="event-item">
+                    <img src="{ev['image_url']}" />
+                    <span>{ev['title']}</span>
+                </div>
+                """
+
+            # 폼을 통해 버튼도 내부에 포함
+            html_code += """
+                <div class="popup-buttons">
+                    <form method="post">
+                        <button name="popup_hide_button" type="submit">❌ 오늘 하루 보지 않기</button>
+                    </form>
+                    <form method="post">
+                        <button name="popup_move_button" type="submit">👉 이벤트 목록</button>
+                    </form>
+                </div>
+            </div>
+            """
+
+            st.markdown(html_code, unsafe_allow_html=True)
+
+            # Streamlit 내부 로직용 버튼 처리 (폼 버튼은 시각용이라 클릭은 별도 처리 필요)
+            if "popup_hide_button" in st.query_params:
                 st.session_state["hide_event_popup_until"] = now + timedelta(days=1)
                 st.rerun()
-        with col2:
-            if st.button("👉 이벤트 목록 가기", key="popup_move"):
+
+            if "popup_move_button" in st.query_params:
+                st.session_state["menu"] = "이벤트 목록"
+                st.experimental_rerun()
+
+            # 백업용 Streamlit 버튼 (혹시 HTML 버튼 인식 안될 경우 대비)
+            if st.button("❌ 오늘 하루 보지 않기", key="popup_hide_backup", help="(예비용)") and not st.session_state.get("hide_event_popup_until"):
+                st.session_state["hide_event_popup_until"] = now + timedelta(days=1)
+                st.rerun()
+            if st.button("👉 이벤트 목록 가기", key="popup_move_backup", help="(예비용)") and st.session_state.get("menu") != "이벤트 목록":
                 st.session_state["menu"] = "이벤트 목록"
                 st.experimental_rerun()
 
@@ -785,7 +822,7 @@ menu_options = []
 
 #관리자만 보이는 메뉴
 if st.session_state.get("is_admin"):
-    menu_options.extend(["악마 길드원 정보 등록", "악마길드 길컨관리", "부캐릭터 관리","마니또 관리"])
+    menu_options.extend(["악마 길드원 정보 등록", "악마길드 길컨관리", "부캐릭터 관리","마니또 관리","이벤트 이미지 등록"])
 
 # 모든 사용자에게 보이는 메뉴
 menu_options.extend(["부캐릭터 등록", "보조대여 신청", "드메템 대여 신청","마니또 기록","이벤트 목록"])
@@ -1361,6 +1398,40 @@ elif menu == "부캐릭터 관리":
                             st.error("삭제 실패")
     else:
         st.info("등록된 부캐릭터가 없습니다.")
+
+
+elif menu == "이벤트 이미지 등록록":
+    st.subheader("이벤트 배너 자동 등록")
+
+    title = st.text_input("이벤트 제목을 입력하세요")
+    uploaded_file = st.file_uploader("이벤트 이미지를 업로드하세요", type=["png", "jpg", "jpeg"])
+
+    if uploaded_file and title:
+        ext = uploaded_file.name.split(".")[-1]
+        file_id = f"{uuid.uuid4()}.{ext}"
+        file_bytes = uploaded_file.read()
+
+        # 1️⃣ Supabase Storage에 이미지 업로드
+        res = supabase.storage.from_("event-banners").upload(file_id, file_bytes)
+
+        if res.status_code == 200:
+            public_url = f"{SUPABASE_URL}/storage/v1/object/public/event-banners/{file_id}"
+
+            # 2️⃣ Supabase Table(EventBanners)에 정보 저장
+            insert_res = supabase.table("EventBanners").insert({
+                "title": title,
+                "image_url": public_url
+            }).execute()
+
+            if insert_res.status_code == 201:
+                st.success("✅ 이벤트 등록 완료!")
+                st.image(public_url, width=300)
+            else:
+                st.error("❌ 테이블 저장 실패")
+        else:
+            st.error("❌ 이미지 업로드 실패")
+    else:
+        st.info("이벤트 제목과 이미지를 모두 입력하세요.")
 
 
 elif menu == "부캐릭터 등록":
@@ -2296,55 +2367,38 @@ elif menu == "마니또 기록":
 elif menu == "이벤트 목록":
     st.subheader("📅 진행 중인 길드 이벤트")
 
-    # 🔑 이벤트 정의 (배너 키와 맞춰야 함)
-    event_details = {
-        "event_1": {
-            "title": "악마 길드 복지",
-            "image": "악마 복지.png",
-            "date": "상시 진행",
-            "content": "악마 길드만의 복지! 비싼 아이템이 단돈 천원?!"
-        },
-        "event_2": {
-            "title": "AKMA AWARD",
-            "image": "악마 어워드.png",
-            "date": "2025.04.01 ~ 2025.12.31",
-            "content": "게임도 하고 여행도 하고!"
-        },
-        "event_3": {
-            "title": "Lotto",
-            "image": "로또.png",
-            "date": "매주 일요일 추첨",
-            "content": "길드 로또 이벤트! 응모하고 보상을 노려보세요."
-        }
-    }
+    # 1️⃣ Supabase에서 이벤트 불러오기
+    try:
+        res = supabase.table("EventBanners").select("*").order("created_at", desc=True).execute()
+        event_list = res.data if res.data else []
+    except Exception as e:
+        st.error("❌ 이벤트 목록 불러오기 실패")
+        event_list = []
 
-    # 🔎 개별 이벤트 클릭 시 상세 내용 보여줌
+    # 2️⃣ 특정 이벤트 선택 시 상세페이지 표시
     selected_event = st.session_state.get("selected_event")
-    if selected_event and selected_event in event_details:
-        ev = event_details[selected_event]
-        st.markdown(f"## 🎉 {ev['title']}")
-        st.caption(f"📅 기간: {ev['date']}")
-        st.image(f"./이벤트이미지폴더/{ev['image']}", use_column_width=True)
-        st.markdown(f"📌 {ev['content']}")
-        if st.button("← 목록으로 돌아가기"):
-            del st.session_state["selected_event"]
-            st.experimental_rerun()
-        st.markdown("---")
+    if selected_event:
+        selected = next((ev for ev in event_list if ev["id"] == selected_event), None)
+        if selected:
+            st.markdown(f"## {selected['title']}")
+            st.image(selected["image_url"], use_column_width=True)
+            if st.button("← 목록으로 돌아가기"):
+                del st.session_state["selected_event"]
+                st.experimental_rerun()
+        else:
+            st.warning("선택한 이벤트를 찾을 수 없습니다.")
     else:
-        # 🔲 전체 목록 보기 (3열 카드형)
-        event_keys = list(event_details.keys())
-        for i in range(0, len(event_keys), 3):
+        # 3️⃣ 전체 목록: 3열 카드형으로 출력
+        for i in range(0, len(event_list), 3):
             cols = st.columns(3)
             for j, col in enumerate(cols):
-                if i + j < len(event_keys):
-                    key = event_keys[i + j]
-                    ev = event_details[key]
+                if i + j < len(event_list):
+                    ev = event_list[i + j]
                     with col:
-                        st.image(f"./이벤트이미지폴더/{ev['image']}", use_column_width=True)
+                        st.image(ev["image_url"], use_column_width=True)
                         st.markdown(f"**{ev['title']}**")
-                        st.caption(ev["date"])
-                        if st.button("자세히 보기", key=f"detail_{key}"):
-                            st.session_state["selected_event"] = key
+                        if st.button("자세히 보기", key=f"event_detail_{ev['id']}"):
+                            st.session_state["selected_event"] = ev["id"]
                             st.experimental_rerun()
 
 
