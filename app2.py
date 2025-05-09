@@ -692,6 +692,8 @@ if "user" not in st.session_state:
 
 # ✅ 로그인 이후 사이드바
 if "user" in st.session_state:
+    is_admin = st.session_state.get("is_admin", False)
+
     # ✅ 이벤트 이미지 경로 (고정된 이미지 파일명)
     EVENT_IMAGE_PATH = "이벤트이미지폴더/로또.png"  # 확장자 포함 정확히 지정
 
