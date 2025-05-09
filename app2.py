@@ -2119,12 +2119,16 @@ elif menu == "마니또 기록":
                 if original_urls:
                     st.markdown("#### 기존 이미지 (❌ 버튼으로 삭제)")
                     for i, url in enumerate(original_urls):
+                        if st.session_state.get(f"delete_img_{log_id}_{i}", False):
+                            continue  # ❌ 이미 삭제 요청된 이미지는 즉시 숨김
+
                         col1, col2 = st.columns([10, 1])
                         with col1:
                             st.image(url, width=200)
                         with col2:
                             if st.button("❌", key=f"remove_img_{log_id}_{i}"):
                                 st.session_state[f"delete_img_{log_id}_{i}"] = True
+                                st.rerun()  # ← 즉시 이미지 갱신
 
                     # 삭제 안한 이미지만 유지
                     for i, url in enumerate(original_urls):
