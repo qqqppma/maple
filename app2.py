@@ -707,45 +707,94 @@ if "user" in st.session_state:
         st.query_params.clear()
         st.rerun()
 
-    # 이벤트 배너 리스트
+    # ✅ 우측 하단 고정 팝업형 이벤트 배너 (1장 카드 안에 모두 표시)
+    now = datetime.now()
+    if "hide_event_popup_until" not in st.session_state:
+        st.session_state["hide_event_popup_until"] = None
+
     event_banners = [
-        {
-            "title": "악마 길드 복지",
-            "image": "악마 복지.png",
-            "key": "event_1"
-        },
-        {
-            "title": "AKMA AWARD",
-            "image": "악마 어워드.png",
-            "key": "event_2"
-        },
-        {
-            "title": "Lotto",
-            "image": "로또.png",
-            "key": "event_3"
-        },
+        {"title": "악마 길드 복지", "image": "악마 복지.png"},
+        {"title": "AKMA AWARD", "image": "악마 어워드.png"},
+        {"title": "Lotto", "image": "로또.png"},
     ]
 
-    # 오늘 하루 보지 않기: 세션 상태 관리
-    now = datetime.now()
-    if "hide_event_banner_until" not in st.session_state:
-        st.session_state["hide_event_banner_until"] = None
+    if st.session_state["hide_event_popup_until"] is None or st.session_state["hide_event_popup_until"] < now:
+        html_code = """
+        <style>
+        .popup-box {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 360px;
+            background-color: #ffffff;
+            border: 2px solid #ccc;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            z-index: 9999;
+        }
+        .popup-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 12px;
+        }
+        .event-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .event-item img {
+            width: 64px;
+            height: 64px;
+            border-radius: 8px;
+            margin-right: 12px;
+        }
+        .event-item span {
+            font-size: 15px;
+            font-weight: 600;
+        }
+        .popup-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+        }
+        .popup-buttons button {
+            padding: 6px 10px;
+            font-size: 14px;
+        }
+        </style>
+        <div class="popup-box">
+            <div class="popup-title">🎉 현재 진행 중인 길드 이벤트</div>
+        """
 
-    # 조건: 오늘 하루 보지 않기 누르지 않은 경우만 표시
-    if st.session_state["hide_event_banner_until"] is None or st.session_state["hide_event_banner_until"] < now:
-        st.markdown("## 🎉 현재 진행 중인 길드 이벤트")
-        cols = st.columns(len(event_banners))
-        for i, col in enumerate(cols):
-            with col:
-                st.image(f"./이벤트이미지폴더/{event_banners[i]['image']}", use_column_width=True)
-                if st.button(event_banners[i]['title'], key=f"banner_{i}"):
-                    st.session_state["menu"] = "이벤트 목록"
-                    st.session_state["selected_event"] = event_banners[i]["key"]
-                    st.experimental_rerun()
+        for ev in event_banners:
+            html_code += f"""
+            <div class="event-item">
+                <img src="./이벤트이미지폴더/{ev['image']}" />
+                <span>{ev['title']}</span>
+            </div>
+            """
 
-        if st.button("❌ 오늘 하루 보지 않기"):
-            st.session_state["hide_event_banner_until"] = now + timedelta(days=1)
-        st.markdown("---")
+        html_code += """
+            <div class="popup-buttons">
+                <form action="" method="post"><button name="hide" type="submit">❌ 오늘 하루 보지 않기</button></form>
+                <form action="" method="post"><button name="move" type="submit">👉 이벤트 목록</button></form>
+            </div>
+        </div>
+        """
+
+        st.markdown(html_code, unsafe_allow_html=True)
+
+        # 버튼 기능 실제 구현
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("❌ 오늘 하루 보지 않기", key="popup_hide"):
+                st.session_state["hide_event_popup_until"] = now + timedelta(days=1)
+                st.rerun()
+        with col2:
+            if st.button("👉 이벤트 목록 가기", key="popup_move"):
+                st.session_state["menu"] = "이벤트 목록"
+                st.experimental_rerun()
 
         
 menu_options = []
