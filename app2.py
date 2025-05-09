@@ -2114,26 +2114,27 @@ elif menu == "마니또 기록":
                 new_images = st.file_uploader("새 이미지 업로드", type=["jpg", "jpeg", "png"], accept_multiple_files=True, key=f"img_edit_{log_id}")
 
                 # ✅ 기존 이미지 표시 + 삭제 버튼
+                # 기존 이미지 삭제 UI (즉시 사라지게)
                 original_urls = log.get("image_urls", []) or []
-                keep_urls = []
+
                 if original_urls:
                     st.markdown("#### 기존 이미지 (❌ 버튼으로 삭제)")
                     for i, url in enumerate(original_urls):
                         if st.session_state.get(f"delete_img_{log_id}_{i}", False):
-                            continue  # ❌ 이미 삭제 요청된 이미지는 즉시 숨김
-
+                            continue  # 삭제된 건 표시 안함
                         col1, col2 = st.columns([10, 1])
                         with col1:
                             st.image(url, width=200)
                         with col2:
                             if st.button("❌", key=f"remove_img_{log_id}_{i}"):
                                 st.session_state[f"delete_img_{log_id}_{i}"] = True
-                                st.rerun()  # ← 즉시 이미지 갱신
+                                st.rerun()
 
-                    # 삭제 안한 이미지만 유지
-                    for i, url in enumerate(original_urls):
-                        if not st.session_state.get(f"delete_img_{log_id}_{i}", False):
-                            keep_urls.append(url)
+                # 🔒 수정 완료 시점에 실제로 남긴 이미지만 저장
+                keep_urls = [
+                    url for i, url in enumerate(original_urls)
+                    if not st.session_state.get(f"delete_img_{log_id}_{i}", False)
+                ]
 
                 if st.button("💾 수정 완료", key=f"save_edit_{log_id}"):
                     for img in new_images:
