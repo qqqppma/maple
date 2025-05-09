@@ -709,7 +709,7 @@ if "user" in st.session_state:
 
     # ✅ 이벤트 이미지 폴더 경로
     # ✅ 이벤트 이미지 폴더 경로
-    EVENT_IMAGE_FOLDER = "이벤트이미지폴더"  # 폴더명 정확히 확인
+    EVENT_IMAGE_FOLDER = "이벤트이미지폴더"
 
     def get_event_images():
         image_files = sorted([
@@ -724,6 +724,7 @@ if "user" in st.session_state:
             title = os.path.splitext(file)[0]
             events.append({"title": title, "base64": encoded})
         return events
+
     # ✅ 세션 상태 초기화
     if "event_index" not in st.session_state:
         st.session_state["event_index"] = 0
@@ -733,7 +734,7 @@ if "user" in st.session_state:
         st.session_state["hide_today_popup"] = False
 
     # ✅ 이벤트 이미지 목록
-    events = get_event_images()  # [{"title": ..., "base64": ...}, ...]
+    events = get_event_images()
     if not events:
         st.stop()
 
@@ -749,16 +750,21 @@ if "user" in st.session_state:
     title = event["title"]
     base64_img = str(event["base64"])
 
-    # ✅ 버튼 처리
-    if "popup_action" in st.session_state:
-        action = st.session_state.popup_action
-        if action == "hide":
-            st.session_state["hide_today_popup"] = True
-        elif action == "list":
-            st.session_state["menu"] = "이벤트 목록"
-        elif action == "detail":
-            st.session_state["menu"] = f"이벤트 - {title}"
-        st.session_state.popup_action = None
+    # ✅ 버튼 처리 (query param 방식)
+    popup_action = st.query_params.get("popup_action")
+
+    if popup_action == "hide":
+        st.session_state["hide_today_popup"] = True
+        st.query_params.pop("popup_action", None)
+        st.rerun()
+    elif popup_action == "list":
+        st.session_state["menu"] = "이벤트 목록"
+        st.query_params.pop("popup_action", None)
+        st.rerun()
+    elif popup_action == "detail":
+        st.session_state["menu"] = f"이벤트 - {title}"
+        st.query_params.pop("popup_action", None)
+        st.rerun()
 
     # ✅ 배너 표시
     if not st.session_state["hide_today_popup"]:
@@ -798,12 +804,13 @@ if "user" in st.session_state:
             justify-content: space-between;
             margin-top: 16px;
         }}
-        .button-row button {{
+        .button-row a button {{
             font-size: 13px;
             padding: 6px 10px;
             border-radius: 6px;
             border: none;
             cursor: pointer;
+            width: 115px;
         }}
         .gray {{ background-color: #ccc; color: white; }}
         .blue {{ background-color: #2b78e4; color: white; }}
@@ -815,9 +822,9 @@ if "user" in st.session_state:
             <h4>🎉 {title} 이벤트</h4>
             <p>길드에서 진행 중인 특별한 이벤트!<br>지금 참여하고 보상을 받아보세요 ✨</p>
             <div class="button-row">
-                <form method="post"><button name="popup_action" value="hide" class="gray">❌ 오늘 하루 보지 않기</button></form>
-                <form method="post"><button name="popup_action" value="list" class="blue">📋 이벤트 목록</button></form>
-                <form method="post"><button name="popup_action" value="detail" class="red">🔥 참여하기</button></form>
+                <a href="?popup_action=hide"><button class="gray">❌ 오늘 하루 보지 않기</button></a>
+                <a href="?popup_action=list"><button class="blue">📋 이벤트 목록</button></a>
+                <a href="?popup_action=detail"><button class="red">🔥 참여하기</button></a>
             </div>
         </div>
         """, unsafe_allow_html=True)
