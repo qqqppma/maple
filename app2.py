@@ -777,6 +777,7 @@ if "user" in st.session_state:
                 font-family: sans-serif;
                 z-index: 9999;
                 text-align: center;
+                overflow-y: auto;  /* 내용이 길면 스크롤 */
             }}
             .event-popup img {{
                 width: 100%;
@@ -795,14 +796,9 @@ if "user" in st.session_state:
             .button-row {{
                 display: flex;
                 justify-content: space-between;
-                margin-top: 12px;
+                margin-top: 16px;
             }}
-            .arrow-row {{
-                display: flex;
-                justify-content: space-between;
-                margin-bottom: 12px;
-            }}
-            .button-row button, .arrow-row button {{
+            .button-row button {{
                 font-size: 13px;
                 padding: 6px 10px;
                 border-radius: 6px;
@@ -815,15 +811,11 @@ if "user" in st.session_state:
             </style>
 
             <div class="event-popup">
-                <div class="arrow-row">
-                    <form method="post"><button name="arrow_action" value="prev">⬅️</button></form>
-                    <form method="post"><button name="arrow_action" value="next">➡️</button></form>
-                </div>
                 <img src="data:image/png;base64,{event['base64']}">
                 <div class="button-row">
-                    <form method="post"><button name="popup_action" value="hide" class="gray">오늘 하루 보지 않기</button></form>
-                    <form method="post"><button name="popup_action" value="list" class="blue">이벤트 목록</button></form>
-                    <form method="post"><button name="popup_action" value="detail" class="red">참여하기</button></form>
+                    <form method="post"><button name="popup_action" value="hide" class="gray">❌ 오늘 하루 보지 않기</button></form>
+                    <form method="post"><button name="popup_action" value="list" class="blue">📋 이벤트 목록</button></form>
+                    <form method="post"><button name="popup_action" value="detail" class="red">🔥 참여하기</button></form>
                 </div>
             </div>
             """, unsafe_allow_html=True)
