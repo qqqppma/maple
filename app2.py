@@ -707,14 +707,15 @@ if "user" in st.session_state:
         st.query_params.clear()
         st.rerun()
 
-    # ✅ 우측 하단 고정 팝업형 이벤트 배너 (1장 카드 안에 모두 표시)
     # ✅ 이벤트 이미지 폴더 경로
     EVENT_IMAGE_FOLDER = "이벤트이미지폴더"
 
+    # ✅ 이미지 base64로 변환
     def image_to_base64(path):
         with open(path, "rb") as img_file:
             return base64.b64encode(img_file.read()).decode()
 
+    # ✅ 이미지 목록 수집
     def get_event_images():
         files = sorted([f for f in os.listdir(EVENT_IMAGE_FOLDER) if f.endswith((".png", ".jpg", ".jpeg"))])
         events = []
@@ -725,34 +726,38 @@ if "user" in st.session_state:
             events.append({"title": title, "base64": encoded})
         return events
 
-    # 세션 상태 초기화
+    # ✅ 세션 상태 초기화
     if "hide_today_popup" not in st.session_state:
         st.session_state["hide_today_popup"] = False
     if "event_index" not in st.session_state:
         st.session_state["event_index"] = 0
 
-    # 버튼 처리
+    # ✅ 버튼 처리
     if "popup_action" in st.session_state:
-        if st.session_state.popup_action == "hide":
+        action = st.session_state.popup_action
+        if action == "hide":
             st.session_state["hide_today_popup"] = True
-        elif st.session_state.popup_action == "go_event":
+        elif action == "list":
             st.session_state["menu"] = "이벤트 목록"
+        elif action == "detail":
+            current_title = get_event_images()[st.session_state["event_index"]]["title"]
+            st.session_state["menu"] = f"이벤트 - {current_title}"
         st.session_state.popup_action = None
 
-    # 이벤트 배너
-    if not st.session_state["hide_today_popup"]:
+    if "arrow_action" in st.session_state:
         events = get_event_images()
         total = len(events)
-        if total == 0:
-            st.stop()
+        if st.session_state.arrow_action == "prev":
+            st.session_state["event_index"] = (st.session_state["event_index"] - 1) % total
+        elif st.session_state.arrow_action == "next":
+            st.session_state["event_index"] = (st.session_state["event_index"] + 1) % total
+        st.session_state.arrow_action = None
 
-        # 화살표 처리
-        if "arrow_action" in st.session_state:
-            if st.session_state.arrow_action == "prev":
-                st.session_state["event_index"] = (st.session_state["event_index"] - 1) % total
-            elif st.session_state.arrow_action == "next":
-                st.session_state["event_index"] = (st.session_state["event_index"] + 1) % total
-            st.session_state.arrow_action = None
+    # ✅ 배너 표시
+    if not st.session_state["hide_today_popup"]:
+        events = get_event_images()
+        if not events:
+            st.stop()
 
         event = events[st.session_state["event_index"]]
 
@@ -764,6 +769,7 @@ if "user" in st.session_state:
                 bottom: 20px;
                 right: 20px;
                 width: 400px;
+                height: 600px;
                 padding: 20px;
                 background: white;
                 border-radius: 16px;
@@ -818,8 +824,8 @@ if "user" in st.session_state:
                 <p>길드에서 진행 중인 특별한 이벤트!<br>지금 참여하고 보상을 받아보세요 ✨</p>
                 <div class="button-row">
                     <form method="post"><button name="popup_action" value="hide" class="gray">오늘 하루 보지 않기</button></form>
-                    <form method="post"><button name="popup_action" value="go_event" class="blue">이벤트 목록</button></form>
-                    <form method="post"><button name="popup_action" value="go_event" class="red">참여하기</button></form>
+                    <form method="post"><button name="popup_action" value="list" class="blue">이벤트 목록</button></form>
+                    <form method="post"><button name="popup_action" value="detail" class="red">참여하기</button></form>
                 </div>
             </div>
             """, unsafe_allow_html=True)
