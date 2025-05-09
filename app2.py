@@ -708,7 +708,6 @@ if "user" in st.session_state:
         st.rerun()
 
     # ✅ 이벤트 이미지 폴더 경로
-    # ✅ 이벤트 이미지 폴더 경로
     EVENT_IMAGE_FOLDER = "이벤트이미지폴더"
 
     def get_event_images():
@@ -750,19 +749,10 @@ if "user" in st.session_state:
     title = event["title"]
     base64_img = str(event["base64"])
 
-    # ✅ 버튼 처리 (query param 방식)
+    # ✅ 버튼 처리
     popup_action = st.query_params.get("popup_action")
-
     if popup_action == "hide":
         st.session_state["hide_today_popup"] = True
-        st.query_params.pop("popup_action", None)
-        st.rerun()
-    elif popup_action == "list":
-        st.session_state["menu"] = "이벤트 목록"
-        st.query_params.pop("popup_action", None)
-        st.rerun()
-    elif popup_action == "detail":
-        st.session_state["menu"] = f"이벤트 - {title}"
         st.query_params.pop("popup_action", None)
         st.rerun()
 
@@ -799,35 +789,31 @@ if "user" in st.session_state:
             font-size: 14px;
             color: #333;
         }}
-        .button-row {{
-            display: flex;
-            justify-content: space-between;
+        .close-button {{
             margin-top: 16px;
         }}
-        .button-row a button {{
+        .close-button a button {{
             font-size: 13px;
             padding: 6px 10px;
             border-radius: 6px;
             border: none;
             cursor: pointer;
-            width: 115px;
+            width: 100%;
+            background-color: #ccc;
+            color: white;
         }}
-        .gray {{ background-color: #ccc; color: white; }}
-        .blue {{ background-color: #2b78e4; color: white; }}
-        .red {{ background-color: #d62c2c; color: white; }}
         </style>
 
         <div class="event-popup">
             <img src="data:image/png;base64,{base64_img}" alt="{title}">
             <h4>🎉 {title} 이벤트</h4>
             <p>길드에서 진행 중인 특별한 이벤트!<br>지금 참여하고 보상을 받아보세요 ✨</p>
-            <div class="button-row">
-                <a href="?popup_action=hide"><button class="gray">❌ 그만보기</button></a>
-                <a href="?popup_action=list"><button class="blue">📋 이벤트 목록</button></a>
-                <a href="?popup_action=detail"><button class="red">🔥 참여하기</button></a>
+            <div class="close-button">
+                <a href="?popup_action=hide"><button>❌ 닫기</button></a>
             </div>
         </div>
         """, unsafe_allow_html=True)
+
         
 menu_options = []
 
