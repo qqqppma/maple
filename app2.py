@@ -769,7 +769,7 @@ if "user" in st.session_state:
                 bottom: 20px;
                 right: 20px;
                 width: 400px;
-                height: 700px;
+                height: 650px;
                 padding: 20px;
                 background: white;
                 border-radius: 16px;
