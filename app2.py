@@ -707,7 +707,7 @@ if "user" in st.session_state:
         st.query_params.clear()
         st.rerun()
 
-    # ✅ 이벤트 이미지 목록
+    # ✅ 이벤트 이미지 폴더 경로
     EVENT_IMAGE_FOLDER = "이벤트이미지폴더"
 
     def get_event_images():
@@ -725,20 +725,35 @@ if "user" in st.session_state:
         return events
 
     # ✅ 세션 상태 초기화
-    if "event_index" not in st.session_state:
-        st.session_state["event_index"] = 0
+    if "random_event" not in st.session_state:
+        events = get_event_images()
+        if events:
+            st.session_state["random_event"] = random.choice(events)
     if "hide_today_popup" not in st.session_state:
         st.session_state["hide_today_popup"] = False
 
-    events = get_event_images()
-    if not events:
-        st.stop()
+    # ✅ 로그인된 사용자 정보 출력
+    nickname = st.session_state.get("nickname", "")
+    st.sidebar.markdown(f"👤 로그인: {nickname}")
 
-    event = events[st.session_state["event_index"]]
+    # ✅ 로그아웃 버튼
+    if st.sidebar.button("로그아웃"):
+        user_id = st.session_state.get("user")
+        if user_id:
+            supabase.table("Users").update({"login_token": None}).eq("user_id", user_id).execute()
+        st.session_state.clear()
+        st.query_params.clear()
+        st.rerun()
 
-    # ✅ 클릭 감지 영역
-    st.markdown(
-        f"""
+    # ✅ 로그아웃 아래에 배너 닫기 버튼
+    if not st.session_state["hide_today_popup"]:
+        if st.sidebar.button("❌ 배너 닫기"):
+            st.session_state["hide_today_popup"] = True
+
+    # ✅ 배너 표시
+    if not st.session_state["hide_today_popup"] and "random_event" in st.session_state:
+        event = st.session_state["random_event"]
+        st.markdown(f"""
         <style>
         .event-popup {{
             position: fixed;
@@ -746,6 +761,7 @@ if "user" in st.session_state:
             right: 20px;
             width: 400px;
             height: 650px;
+            padding: 20px;
             background: white;
             border-radius: 16px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.15);
@@ -753,7 +769,6 @@ if "user" in st.session_state:
             z-index: 9999;
             text-align: center;
             overflow-y: auto;
-            cursor: pointer;
         }}
         .event-popup img {{
             width: 100%;
@@ -770,21 +785,13 @@ if "user" in st.session_state:
             color: #333;
         }}
         </style>
-        <a href='?next_event=1'>
-            <div class="event-popup">
-                <img src="data:image/png;base64,{event['base64']}" alt="{event['title']}">
-                <h4>🎉 {event['title']} 이벤트</h4>
-                <p>길드에서 진행 중인 특별한 이벤트!<br>지금 참여하고 보상을 받아보세요 ✨</p>
-            </div>
-        </a>
-        """,
-        unsafe_allow_html=True
-    )
 
-    # ✅ 클릭 시 인덱스 갱신
-    if st.query_params.get("next_event"):
-        st.session_state["event_index"] = (st.session_state["event_index"] + 1) % len(events)
-        st.query_params.pop("next_event")
+        <div class="event-popup">
+            <img src="data:image/png;base64,{event['base64']}" alt="{event['title']}">
+            <h4>🎉 {event['title']} 이벤트</h4>
+            <p>길드에서 진행 중인 특별한 이벤트!<br>지금 참여하고 보상을 받아보세요 ✨</p>
+        </div>
+        """, unsafe_allow_html=True)
         
 menu_options = []
 
