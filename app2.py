@@ -1416,20 +1416,12 @@ elif menu == "이벤트 이미지 등록":
             file_bytes = uploaded_file.read()
 
             try:
-                # ✅ Storage 업로드
                 upload_res = supabase.storage.from_("event-banners").upload(file_id, file_bytes)
 
-                # 객체 내부 확인을 위해 st.write()로 상태 출력
-                st.write("업로드 응답:", upload_res)
+                # 성공하면 UploadResponse 객체 반환됨. .path 또는 .full_path 속성 있음
+                if hasattr(upload_res, "path") or hasattr(upload_res, "full_path"):
+                    public_url = f"{SUPABASE_URL}/storage/v1/object/public/event-banners/{upload_res.full_path}"
 
-                # 실패했을 때 예외 발생시키는 방식으로 처리
-                if hasattr(upload_res, "error") and upload_res.error is not None:
-                    st.error(f"❌ 이미지 업로드 실패: {upload_res.error}")
-                else:
-                    # 파일 URL 생성
-                    public_url = f"{SUPABASE_URL}/storage/v1/object/public/event-banners/{file_id}"
-
-                    # Supabase DB에 기록
                     insert_res = supabase.table("EventBanners").insert({
                         "title": title,
                         "image_url": public_url
@@ -1440,6 +1432,9 @@ elif menu == "이벤트 이미지 등록":
                         st.image(public_url, width=300)
                     else:
                         st.error("❌ Supabase 테이블 저장 실패")
+
+                else:
+                    st.error("❌ 업로드 실패: 응답에 full_path 없음")
 
             except Exception as e:
                 st.error(f"❌ 예외 발생: {e}")
