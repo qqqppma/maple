@@ -742,7 +742,7 @@ if "user" in st.session_state:
     if current_time - st.session_state["event_last_updated"] > 5:
         st.session_state["event_index"] = (st.session_state["event_index"] + 1) % len(events)
         st.session_state["event_last_updated"] = current_time
-        st.experimental_rerun()
+        st.rerun()
 
     # ✅ 현재 이벤트 정보
     event = events[st.session_state["event_index"]]
