@@ -202,7 +202,7 @@ async def polling_loop():
                     await manitto_channel.send(message)
                     print(f"[Manitto 신청] {message}")
 
-                supabase.table("ManiddoRequests").update({"notified": True}).eq("id", row["id"]).execute()
+            
 
                 # #✅ DM 전송 (가능할 경우)
                 # for member in guild.members:
