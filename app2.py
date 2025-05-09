@@ -822,11 +822,9 @@ if "user" in st.session_state:
             <h4>🎉 {title} 이벤트</h4>
             <p>길드에서 진행 중인 특별한 이벤트!<br>지금 참여하고 보상을 받아보세요 ✨</p>
             <div class="button-row">
-                <form action="" method="post">
-                    <button type="submit" name="popup_action" value="hide" class="gray">❌ 그만 보기</button>
-                    <button type="submit" name="popup_action" value="list" class="blue">📋 이벤트 목록</button>
-                    <button type="submit" name="popup_action" value="detail" class="red">🔥 참여하기</button>
-                </form>
+                <a href="?popup_action=hide"><button class="gray">❌ 그만 보기</button></a>
+                <a href="?popup_action=list"><button class="blue">📋 이벤트 목록</button></a>
+                <a href="?popup_action=detail"><button class="red">🔥 참여하기</button></a>
             </div>
         </div>
         """, unsafe_allow_html=True)
