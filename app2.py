@@ -1997,18 +1997,10 @@ elif menu == "마니또 기록":
     my_logs = [log for log in all_logs if log.get("tutor_name") == nickname or log.get("tutee_name") == nickname]
 
     if not my_logs:
-        if is_admin:
-            st.warning("🙅‍♂️ 마니또 기록이 없습니다. 마니또 관리 페이지에서 매칭을 먼저 등록해주세요.")
-        else:
-            st.warning("🙅‍♀️ 현재 마니또를 진행 중이 아닙니다.")
+        st.warning("🙅‍♀️ 현재 마니또를 진행 중이 아닙니다." if not is_admin else "🙅‍♂️ 마니또 기록이 없습니다. 마니또 관리 페이지에서 매칭을 먼저 등록해주세요.")
     else:
         latest_log = my_logs[0]
-        if nickname == latest_log.get("tutor_name"):
-            tutor = nickname
-            tutee = latest_log.get("tutee_name", "")
-        else:
-            tutor = latest_log.get("tutor_name", "")
-            tutee = nickname
+        tutor, tutee = (nickname, latest_log.get("tutee_name")) if nickname == latest_log.get("tutor_name") else (latest_log.get("tutor_name"), nickname)
 
         st.subheader(f"🧑‍🏫 튜터: {tutor} - 🎓 튜티: {tutee} 마니또 진행중")
 
@@ -2018,13 +2010,16 @@ elif menu == "마니또 기록":
             if st.form_submit_button("💾 등록"):
                 urls = []
                 for img in images:
-                    ext = img.name.split(".")[-1]
-                    file_id = f"{uuid.uuid4()}.{ext}"
-                    path = f"maniddo-images/{file_id}"
-                    content = img.read()
-                    supabase.storage.from_("maniddo-images").upload(path, content)
-                    public_url = supabase.storage.from_("maniddo-images").get_public_url(path)
-                    urls.append(public_url)
+                    try:
+                        ext = img.name.split(".")[-1]
+                        file_id = f"{uuid.uuid4()}.{ext}"
+                        path = f"{nickname}/{file_id}"
+                        content = img.read()
+                        supabase.storage.from_("maniddo-images").upload(path, content)
+                        public_url = f"{SUPABASE_URL}/storage/v1/object/public/maniddo-images/{path}"
+                        urls.append(public_url)
+                    except Exception as e:
+                        st.error(f"❌ 이미지 업로드 실패: {e}")
 
                 supabase.table("ManiddoLogs").insert({
                     "tutor_name": tutor,
@@ -2053,24 +2048,29 @@ elif menu == "마니또 기록":
             if st.session_state.get(edit_key):
                 new_memo = st.text_area("기록 내용", value=log.get("memo", ""), key=f"memo_edit_{log['id']}")
                 st.markdown("📷 기존 이미지:")
-                for img_url in log.get("image_urls", []):
-                    st.image(img_url, width=250)
+                for url in log.get("image_urls", []):
+                    st.image(url, width=250, caption="기존 이미지")
+                    st.markdown(f"[🔍 원본 보기]({url})", unsafe_allow_html=True)
+
                 new_imgs = st.file_uploader("이미지 추가 업로드", type=["png", "jpg", "jpeg"], accept_multiple_files=True, key=f"newimg_{log['id']}")
                 if new_imgs:
-                    st.markdown("🆕 추가 업로드 이미지 미리보기:")
+                    st.markdown("🆕 추가 이미지 미리보기:")
                     for img in new_imgs:
                         st.image(img, width=250)
 
                 if st.button("✅ 수정 완료", key=f"submit_edit_{log['id']}"):
                     updated_urls = log.get("image_urls", [])
                     for img in new_imgs:
-                        ext = img.name.split(".")[-1]
-                        file_id = f"{uuid.uuid4()}.{ext}"
-                        path = f"maniddo-images/{file_id}"
-                        content = img.read()
-                        supabase.storage.from_("maniddo-images").upload(path, content)
-                        public_url = supabase.storage.from_("maniddo-images").get_public_url(path)
-                        updated_urls.append(public_url)
+                        try:
+                            ext = img.name.split(".")[-1]
+                            file_id = f"{uuid.uuid4()}.{ext}"
+                            path = f"{nickname}/{file_id}"
+                            content = img.read()
+                            supabase.storage.from_("maniddo-images").upload(path, content)
+                            public_url = f"{SUPABASE_URL}/storage/v1/object/public/maniddo-images/{path}"
+                            updated_urls.append(public_url)
+                        except Exception as e:
+                            st.error(f"❌ 이미지 업로드 실패: {e}")
 
                     supabase.table("ManiddoLogs").update({
                         "memo": new_memo,
@@ -2083,7 +2083,8 @@ elif menu == "마니또 기록":
             else:
                 st.markdown(log.get("memo", ""))
                 for url in log.get("image_urls", []):
-                    st.image(url, width=300)
+                    st.image(url, width=250)
+                    st.markdown(f"[🔍 원본 보기]({url})", unsafe_allow_html=True)
                 col1, col2 = st.columns(2)
                 with col1:
                     if st.button("✏ 수정하기", key=f"edit_button_{log['id']}"):
@@ -2091,9 +2092,8 @@ elif menu == "마니또 기록":
                 with col2:
                     if st.button("🗑 삭제하기", key=f"delete_button_{log['id']}"):
                         supabase.table("ManiddoLogs").delete().eq("id", log["id"]).execute()
-                        st.success("🗑 삭제 완료되었습니다.")
+                        st.success("🧹 삭제 완료")
                         st.rerun()
-
         else:
             cols = st.columns(2)
             for idx, log in enumerate(my_logs[::-1]):
@@ -2102,10 +2102,10 @@ elif menu == "마니또 기록":
                     st.markdown(f"{log['memo'][:30]}...")
                     if log.get("image_urls"):
                         st.image(log["image_urls"][0], width=150)
-                    delete_key = f"delete_{log['id']}"
-                    if st.button("🗑 삭제하기", key=delete_key):
+                        st.markdown(f"[🔍 원본 보기]({log['image_urls'][0]})", unsafe_allow_html=True)
+                    if st.button("🗑 삭제하기", key=f"delete_{log['id']}"):
                         supabase.table("ManiddoLogs").delete().eq("id", log["id"]).execute()
-                        st.success("🧹 기록 삭제 완료")
+                        st.success("🧹 삭제 완료")
                         st.rerun()
 
 
