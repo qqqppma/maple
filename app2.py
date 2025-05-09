@@ -1992,11 +1992,14 @@ elif menu == "마니또 기록":
     nickname = st.session_state.get("nickname", "")
     is_admin = nickname in ADMIN_USERS
 
-    # ✅ 매칭 여부를 ManiddoRequests 기준으로 판단
+    # ✅ 매칭 여부를 ManiddoRequests 기준으로 확인 (튜터/튜티 모두 존재하는 레코드만)
     res_req = supabase.table("ManiddoRequests").select("*").execute()
     all_requests = res_req.data or []
+
     matched = next(
-        (r for r in all_requests if r.get("tutor_name") == nickname or r.get("tutee_name") == nickname),
+        (r for r in all_requests
+         if nickname in [r.get("tutor_name"), r.get("tutee_name")]
+         and r.get("tutor_name") and r.get("tutee_name")),
         None
     )
 
@@ -2004,17 +2007,8 @@ elif menu == "마니또 기록":
         st.warning("🙅‍♀️ 현재 마니또를 진행 중이 아닙니다.")
         st.stop()
 
-    tutor = matched.get("tutor_name")
-    tutee = matched.get("tutee_name")
-
-    if not tutor or not tutee:
-        st.warning("🙅‍♀️ 아직 매칭이 완료되지 않았습니다. 관리자에게 문의하세요.")
-        st.stop()
-
-    if nickname != tutor and nickname != tutee:
-        st.warning("🙅‍♀️ 현재 마니또를 진행 중이 아닙니다.")
-        st.stop()
-
+    tutor = matched["tutor_name"]
+    tutee = matched["tutee_name"]
     st.subheader(f"🧑‍🏫 튜터: {tutor} - 🎓 튜티: {tutee} 마니또 진행중")
 
     with st.form("write_form"):
