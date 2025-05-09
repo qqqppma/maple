@@ -1368,6 +1368,8 @@ elif menu == "이벤트 이미지 등록":
     new_title = st.text_input("이벤트 제목을 입력하세요", key="reg_title")
     new_desc = st.text_area("이벤트 설명을 입력하세요", key="reg_desc")
     new_image = st.selectbox("이벤트 이미지 선택", available_images, key="reg_image")
+    st.info('''
+            🔹 등록하기 누르면 안된거 같아도 올라간거에요''')
 
     if st.button("📤 등록하기", key="reg_submit"):
         if not new_title:
