@@ -2003,12 +2003,13 @@ elif menu == "마니또 기록":
     if not matched:
         st.warning("🙅‍♀️ 현재 마니또를 진행 중이 아닙니다.")
     else:
-        tutor = matched.get("tutor_name") or nickname
-        tutee = matched.get("tutee_name") or nickname
-        if nickname == tutee:
-            tutor, tutee = tutor, tutee
+        # ✅ 정확한 튜터-튜티 분리
+        if matched.get("tutor_name") == nickname:
+            tutor = nickname
+            tutee = matched.get("tutee_name", "")
         else:
-            tutor, tutee = nickname, tutee
+            tutor = matched.get("tutor_name", "")
+            tutee = nickname
 
         st.subheader(f"🧑‍🏫 튜터: {tutor} - 🎓 튜티: {tutee} 마니또 진행중")
 
