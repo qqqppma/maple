@@ -2102,6 +2102,11 @@ elif menu == "마니또 기록":
                     st.markdown(f"{log['memo'][:30]}...")
                     if log.get("image_urls"):
                         st.image(log["image_urls"][0], width=150)
+                    delete_key = f"delete_{log['id']}"
+                    if st.button("🗑 삭제하기", key=delete_key):
+                        supabase.table("ManiddoLogs").delete().eq("id", log["id"]).execute()
+                        st.success("🧹 기록 삭제 완료")
+                        st.rerun()
 
 
 
