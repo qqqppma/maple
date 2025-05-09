@@ -708,6 +708,21 @@ if "user" in st.session_state:
         st.rerun()
 
     # ✅ 이벤트 이미지 폴더 경로
+    EVENT_IMAGE_FOLDER = "이벤트이미지폴더"  # 폴더명 정확히 확인
+
+    def get_event_images():
+        image_files = sorted([
+            f for f in os.listdir(EVENT_IMAGE_FOLDER)
+            if f.endswith((".png", ".jpg", ".jpeg"))
+        ])
+        events = []
+        for file in image_files:
+            img_path = os.path.join(EVENT_IMAGE_FOLDER, file)
+            with open(img_path, "rb") as img_file:
+                encoded = base64.b64encode(img_file.read()).decode()
+            title = os.path.splitext(file)[0]
+            events.append({"title": title, "base64": encoded})
+        return events
     # ✅ 세션 상태 초기화
     if "event_index" not in st.session_state:
         st.session_state["event_index"] = 0
