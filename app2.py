@@ -2354,7 +2354,7 @@ elif menu == "이벤트 목록":
                         st.markdown(f"**{ev['title']}**")
                         if st.button("자세히 보기", key=f"event_detail_{ev['id']}"):
                             st.session_state["selected_event"] = ev["id"]
-                            st.experimental_rerun()
+                            st.rerun()
 
 
 
