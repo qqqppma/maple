@@ -1805,13 +1805,15 @@ elif menu == "마니또 관리":
     guild_nicks = sorted([m["nickname"] for m in mainmembers if m.get("nickname")])
 
     # 중복/매칭된 인원 제외
-    registered_tutors = df[df["tutor_name"].notna()]["tutor_name"].unique().tolist()
-    registered_tutees = df[df["tutee_name"].notna()]["tutee_name"].unique().tolist()
-    matched_tutors = df[df["tutor_name"].notna() & df["tutee_name"].notna()]["tutor_name"].unique().tolist()
-    matched_tutees = df[df["tutor_name"].notna() & df["tutee_name"].notna()]["tutee_name"].unique().tolist()
+    used_names = set()
+    for r in all_requests:
+        if r.get("tutor_name"):
+            used_names.add(r["tutor_name"])
+        if r.get("tutee_name"):
+            used_names.add(r["tutee_name"])
 
-    available_tutors = [n for n in guild_nicks if n not in registered_tutors and n not in matched_tutors]
-    available_tutees = [n for n in guild_nicks if n not in registered_tutees and n not in matched_tutees]
+    available_tutors = [n for n in guild_nicks if n not in used_names]
+    available_tutees = [n for n in guild_nicks if n not in used_names]
 
     # ✅ 기존 튜터/튜티 등록 폼에 적용
     with st.form("tutor_form"):
