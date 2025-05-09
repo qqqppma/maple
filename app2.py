@@ -2092,7 +2092,7 @@ elif menu == "마니또 기록":
 
         st.markdown("---")
         st.markdown("### 📚 마니또 기록 목록")
-        st.info("🔹 확인할 기록에서 수정하고 싶은 기록을 선택하세요요")
+        st.info("🔹 확인할 기록에서 수정하고 싶은 기록을 선택하세요")
 
         log_options = {f"{log.get('title') or '(무제목)'}": log for log in my_logs}
         selected_title = st.selectbox("🔍 확인할 기록 선택", ["선택하지 않음"] + list(log_options.keys()))
