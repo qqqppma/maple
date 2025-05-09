@@ -2037,7 +2037,7 @@ elif menu == "마니또 기록":
                         "title": title,
                         "tutor_name": tutor,
                         "tutee_name": tutee,
-                        "memo": memo,
+                        "memo": memo or "",
                         "image_urls": urls,
                         "created_at": datetime.now().isoformat(),
                         "updated_at": datetime.now().isoformat()
