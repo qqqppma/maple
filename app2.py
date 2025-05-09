@@ -708,7 +708,7 @@ if "user" in st.session_state:
         st.rerun()
 
     # ✅ 이벤트 이미지 경로 (고정된 이미지 파일명)
-    EVENT_IMAGE_PATH = "이벤트이미지폴더/로또이벤트.png"  # 확장자 포함 정확히 지정
+    EVENT_IMAGE_PATH = "이벤트이미지폴더/로또.png"  # 확장자 포함 정확히 지정
 
     # ✅ 이미지가 없으면 표시 안함
     if not os.path.exists(EVENT_IMAGE_PATH):
