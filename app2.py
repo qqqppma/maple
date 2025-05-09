@@ -1969,6 +1969,22 @@ elif menu == "마니또 관리":
                 logs = sorted(logs, key=lambda x: x["created_at"], reverse=True)
 
                 st.markdown("---")
+                if st.button("🛑 선택한 마니또 종료 (기록 전체 삭제)", use_container_width=True):
+                    if selected_pair == "선택하지 않음":
+                        st.warning("⚠️ 마니또를 선택해주세요.")
+                    else:
+                        tutor_name, tutee_name = selected_pair.split("튜터: ")[1].split(" - 튜티: ")
+                        tutor_name = tutor_name.strip()
+                        tutee_name = tutee_name.strip()
+
+                        supabase.table("ManiddoLogs").delete()\
+                            .eq("tutor_name", tutor_name)\
+                            .eq("tutee_name", tutee_name)\
+                            .execute()
+
+                        st.success(f"🧹 {tutor_name} - {tutee_name} 마니또 기록이 모두 삭제되었습니다.")
+                        st.rerun()
+                st.markdown("----")
                 st.markdown("### 📚 마니또 기록 목록 (관리자 전용)")
 
                 # ✅ 기록 선택 셀렉트박스
