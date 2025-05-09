@@ -695,6 +695,10 @@ if "user" in st.session_state:
     nickname = st.session_state.get("nickname", "")
     is_admin = st.session_state.get("is_admin", False)
 
+    st.sidebar.markdown(f"👤 로그인: {nickname}")
+
+    logout_clicked = st.sidebar.button("로그아웃")
+
     # ✅ 이벤트 이미지 폴더 경로
     # ✅ 이벤트 이미지 폴더 경로
     EVENT_IMAGE_FOLDER = "이벤트이미지폴더"
@@ -753,6 +757,17 @@ if "user" in st.session_state:
         st.session_state["menu"] = f"이벤트 - {title}"
         st.query_params.pop("popup_action", None)
         st.rerun()
+
+    # ✅ 로그아웃은 popup_action 처리 이후에 실행
+    if logout_clicked:
+        user_id = st.session_state.get("user")
+        if user_id:
+            supabase.table("Users").update({"login_token": None}) \
+                .eq("user_id", user_id).execute()
+        st.session_state.clear()
+        st.query_params.clear()
+        st.rerun()
+
 
     # ✅ 배너 표시
     if not st.session_state["hide_today_popup"]:
@@ -816,17 +831,6 @@ if "user" in st.session_state:
             </div>
         </div>
         """, unsafe_allow_html=True)
-    st.sidebar.markdown(f"👤 로그인: {nickname}")
-
-    if st.sidebar.button("로그아웃"):
-        user_id = st.session_state.get("user")
-        if user_id:
-            supabase.table("Users").update({"login_token": None}) \
-                .eq("user_id", user_id).execute()
-
-        st.session_state.clear()
-        st.query_params.clear()
-        st.rerun()
         
 menu_options = []
 
