@@ -2094,9 +2094,9 @@ elif menu == "마니또 기록":
         st.markdown("---")
         st.markdown("### 📚 마니또 기록 목록")
         st.info('''
-                🔹 확인할 기록에서 수정하고 싶은 기록을 선택하세요\n
+                🔹 확인할 기록에서 수정하고 싶은 기록을 선택하세요 \n
                 🔹 수정하기 버튼을 눌러도 동작하지 않으면 한 번 더 눌러주세요
-                ''' )
+                ''')
 
         log_options = {f"{log.get('title') or '(무제목)'}": log for log in my_logs}
         selected_title = st.selectbox("🔍 확인할 기록 선택", ["선택하지 않음"] + list(log_options.keys()))
@@ -2113,15 +2113,13 @@ elif menu == "마니또 기록":
                 new_memo = st.text_area("기록", value=log.get("memo", ""), height=150, key=f"memo_edit_{log_id}")
                 new_images = st.file_uploader("새 이미지 업로드", type=["jpg", "jpeg", "png"], accept_multiple_files=True, key=f"img_edit_{log_id}")
 
-                # ✅ 기존 이미지 표시 + 삭제 버튼
-                # 기존 이미지 삭제 UI (즉시 사라지게)
                 original_urls = log.get("image_urls", []) or []
 
                 if original_urls:
                     st.markdown("#### 기존 이미지 (❌ 버튼으로 삭제)")
                     for i, url in enumerate(original_urls):
                         if st.session_state.get(f"delete_img_{log_id}_{i}", False):
-                            continue  # 삭제된 건 표시 안함
+                            continue  # 삭제 표시된 건 숨김
                         col1, col2 = st.columns([10, 1])
                         with col1:
                             st.image(url, width=200)
@@ -2130,13 +2128,12 @@ elif menu == "마니또 기록":
                                 st.session_state[f"delete_img_{log_id}_{i}"] = True
                                 st.rerun()
 
-                # 🔒 수정 완료 시점에 실제로 남긴 이미지만 저장
-                keep_urls = [
-                    url for i, url in enumerate(original_urls)
-                    if not st.session_state.get(f"delete_img_{log_id}_{i}", False)
-                ]
-
+                # 수정 완료 버튼
                 if st.button("💾 수정 완료", key=f"save_edit_{log_id}"):
+                    keep_urls = [
+                        url for i, url in enumerate(original_urls)
+                        if not st.session_state.get(f"delete_img_{log_id}_{i}", False)
+                    ]
                     for img in new_images:
                         try:
                             ext = img.name.split(".")[-1]
@@ -2171,6 +2168,9 @@ elif menu == "마니또 기록":
                 col1, col2 = st.columns(2)
                 with col1:
                     if st.button("✏ 수정하기", key=f"edit_button_{log_id}"):
+                        # ✅ 수정 진입 시 삭제 상태 초기화
+                        for i in range(len(log.get("image_urls", []))):
+                            st.session_state[f"delete_img_{log_id}_{i}"] = False
                         st.session_state[f"edit_{log_id}"] = True
                 with col2:
                     if st.button("🗑 삭제하기", key=f"delete_button_{log_id}"):
