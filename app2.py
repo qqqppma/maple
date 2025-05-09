@@ -1401,6 +1401,7 @@ elif menu == "이벤트 이미지 등록":
         selected_name = st.selectbox("수정할 이벤트 선택", display_names, key="edit_selector")
         selected_event = next((ev for ev in event_list if f"{ev['title']} ({ev['id']})" == selected_name), None)
 
+        # ✅ 이 부분은 그대로 유지
         if selected_event:
             edited_title = st.text_input("제목 수정", value=selected_event["title"], key="edit_title")
             edited_desc = st.text_area("내용 수정", value=selected_event.get("description", ""), key="edit_desc")
@@ -1409,33 +1410,31 @@ elif menu == "이벤트 이미지 등록":
                                         if selected_event.get("image_file_name") in available_images else 0,
                                         key="edit_image")
 
-            if st.button("✏️ 수정 완료"):
-                col1, col2 = st.columns([1, 1])
+            # ✅ 여기서부터 통째로 바꿔줘
+            col1, col2 = st.columns(2)
 
-                with col1:
-                    if st.button("✏️ 수정 완료"):
-                        update_data = {
-                            "title": edited_title,
-                            "description": edited_desc,
-                            "image_file_name": None if edited_image == "이미지 없음" else edited_image
-                        }
-                        update_res = supabase.table("EventBanners").update(update_data).eq("id", selected_event["id"]).execute()
-                        if update_res:
-                            st.success("✅ 이벤트 수정 완료!")
-                            st.rerun()
-                        else:
-                            st.error("❌ 수정 실패. 다시 시도해주세요.")
+            with col1:
+                if st.button("✏️ 수정 완료", key="edit_confirm"):
+                    update_data = {
+                        "title": edited_title,
+                        "description": edited_desc,
+                        "image_file_name": None if edited_image == "이미지 없음" else edited_image
+                    }
+                    update_res = supabase.table("EventBanners").update(update_data).eq("id", selected_event["id"]).execute()
+                    if update_res:
+                        st.success("✅ 이벤트 수정 완료!")
+                        st.rerun()
+                    else:
+                        st.error("❌ 수정 실패. 다시 시도해주세요.")
 
-                with col2:
-                    if st.button("🗑️ 삭제하기"):
-                        confirm = st.warning("정말 삭제하시겠습니까? 다시 되돌릴 수 없습니다.", icon="⚠️")
-                        if st.button("✅ 삭제 확정"):
-                            delete_res = supabase.table("EventBanners").delete().eq("id", selected_event["id"]).execute()
-                            if delete_res:
-                                st.success("🗑️ 삭제 완료!")
-                                st.rerun()
-                            else:
-                                st.error("❌ 삭제 실패. 다시 시도해주세요.")
+            with col2:
+                if st.button("🗑️ 삭제하기", key="delete_event"):
+                    delete_res = supabase.table("EventBanners").delete().eq("id", selected_event["id"]).execute()
+                    if delete_res:
+                        st.success("🗑️ 삭제 완료!")
+                        st.rerun()
+                    else:
+                        st.error("❌ 삭제 실패. 다시 시도해주세요.")
 
 
 
