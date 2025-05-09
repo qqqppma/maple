@@ -10,7 +10,7 @@ import uuid
 import re
 import urllib.parse
 import io
-import os
+import os, base64
 import uuid
 import pytz
 from PIL import Image
@@ -710,102 +710,105 @@ if "user" in st.session_state:
     # ✅ 우측 하단 고정 팝업형 이벤트 배너 (1장 카드 안에 모두 표시)
     EVENT_IMAGE_FOLDER = "이벤트이미지폴더"
 
+    # 🖼 base64 변환 함수
+    def image_to_base64(path):
+        with open(path, "rb") as img_file:
+            return base64.b64encode(img_file.read()).decode()
+
+    # 📋 이미지 리스트 가져오기
     def get_event_images():
-        image_files = [f for f in os.listdir(EVENT_IMAGE_FOLDER) if f.endswith((".png", ".jpg", ".jpeg", ".gif"))]
+        image_files = [f for f in os.listdir(EVENT_IMAGE_FOLDER) if f.endswith((".png", ".jpg", ".jpeg"))]
         events = []
-        for img_file in image_files:
-            title = os.path.splitext(img_file)[0]
-            img_path = os.path.join(EVENT_IMAGE_FOLDER, img_file).replace("\\", "/")
-            events.append({"title": title, "image_path": img_path})
+        for file in image_files:
+            img_path = os.path.join(EVENT_IMAGE_FOLDER, file)
+            encoded = image_to_base64(img_path)
+            title = os.path.splitext(file)[0]
+            events.append({"title": title, "base64": encoded})
         return events
 
     # ✅ 세션 상태 초기화
     if "hide_today_popup" not in st.session_state:
         st.session_state["hide_today_popup"] = False
 
-    # ✅ 버튼 처리 (Streamlit 방식)
+    # ✅ 버튼 처리
     if "popup_action" in st.session_state:
         if st.session_state.popup_action == "hide":
             st.session_state["hide_today_popup"] = True
         elif st.session_state.popup_action == "go_event":
             st.session_state["menu"] = "이벤트 목록"
-        st.session_state.popup_action = None  # 초기화
+        st.session_state.popup_action = None
 
-    # ✅ 팝업 표시
+    # ✅ 배너 표시
     if not st.session_state["hide_today_popup"]:
         events = get_event_images()
 
-        # CSS 삽입
         st.markdown("""
-            <style>
-            .event-popup {
-                position: fixed;
-                bottom: 20px;
-                right: 20px;
-                background: white;
-                padding: 20px;
-                border: 1px solid #ccc;
-                border-radius: 12px;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-                width: 450px;
-                z-index: 9999;
-            }
-            .event-popup h4 {
-                margin-top: 0;
-                font-size: 18px;
-                margin-bottom: 12px;
-            }
-            .event-item {
-                display: flex;
-                align-items: center;
-                gap: 10px;
-                margin-bottom: 10px;
-            }
-            .event-thumb {
-                width: 48px;
-                height: 48px;
-                object-fit: cover;
-                border-radius: 5px;
-            }
-            .popup-buttons {
-                display: flex;
-                justify-content: space-between;
-                margin-top: 12px;
-            }
-            .popup-buttons form {
-                display: inline;
-            }
-            .popup-buttons button {
-                font-size: 12px;
-                padding: 6px 10px;
-                border-radius: 6px;
-                border: none;
-                background-color: #f0f0f0;
-                cursor: pointer;
-            }
-            </style>
+        <style>
+        .event-popup {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: white;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            width: 420px;
+            z-index: 9999;
+        }
+        .event-popup h4 {
+            margin-top: 0;
+            font-size: 18px;
+            margin-bottom: 14px;
+        }
+        .event-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .event-thumb {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 6px;
+        }
+        .popup-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+        }
+        .popup-buttons button {
+            font-size: 12px;
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: none;
+            background-color: #f0f0f0;
+            cursor: pointer;
+        }
+        </style>
         """, unsafe_allow_html=True)
 
-        # HTML 삽입
+        # HTML 본문 구성
         html = """
         <div class="event-popup">
             <h4>🎉 현재 진행 중인 길드 이벤트</h4>
         """
+
         for event in events:
             html += f"""
             <div class="event-item">
-                <img src="{event['image_path']}" class="event-thumb">
+                <img src="data:image/png;base64,{event['base64']}" class="event-thumb">
                 <span>{event['title']}</span>
             </div>
             """
-        
-        # 버튼 부분 포함
+
         html += """
             <div class="popup-buttons">
-                <form action="" method="post">
+                <form method="post">
                     <button name="popup_action" value="hide">❌ 오늘 하루 보지 않기</button>
                 </form>
-                <form action="" method="post">
+                <form method="post">
                     <button name="popup_action" value="go_event">👉 이벤트 목록 가기</button>
                 </form>
             </div>
@@ -813,7 +816,6 @@ if "user" in st.session_state:
         """
 
         st.markdown(html, unsafe_allow_html=True)
-
         
 menu_options = []
 
