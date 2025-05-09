@@ -732,29 +732,33 @@ if "user" in st.session_state:
     if "hide_today_popup" not in st.session_state:
         st.session_state["hide_today_popup"] = False
 
-    # ✅ 이벤트 목록 불러오기
     events = get_event_images()
     if not events:
         st.stop()
 
-    # ✅ 5초마다 자동 전환
+    # ✅ 자동 전환 시 메뉴 유지
     current_time = time.time()
     if current_time - st.session_state["event_last_updated"] > 5:
+        if "menu" in st.session_state:
+            st.session_state["__prev_menu"] = st.session_state["menu"]  # 메뉴 백업
         st.session_state["event_index"] = (st.session_state["event_index"] + 1) % len(events)
         st.session_state["event_last_updated"] = current_time
         st.rerun()
 
-    # ✅ 현재 보여줄 이벤트 정보
+    # ✅ rerun 후 메뉴 복원
+    if "__prev_menu" in st.session_state:
+        st.session_state["menu"] = st.session_state["__prev_menu"]
+        del st.session_state["__prev_menu"]
+
+    # ✅ 현재 이벤트 정보
     event = events[st.session_state["event_index"]]
     title = event["title"]
     base64_img = str(event["base64"])
 
-    # ✅ 사이드바에 배너 닫기 버튼
-    if not st.session_state["hide_today_popup"]:
-        st.sidebar.markdown("---")
-        if st.sidebar.button("❌ 배너 닫기"):
-            st.session_state["hide_today_popup"] = True
-            st.rerun()
+    # ✅ 배너 닫기 처리
+    if st.sidebar.button("❌ 배너 닫기"):
+        st.session_state["hide_today_popup"] = True
+        st.rerun()
 
     # ✅ 배너 표시
     if not st.session_state["hide_today_popup"]:
