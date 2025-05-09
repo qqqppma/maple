@@ -760,6 +760,7 @@ if "user" in st.session_state:
             st.stop()
 
         event = events[st.session_state["event_index"]]
+        base64_img = event["base64"]
 
         with st.empty():
             st.markdown(f"""
@@ -826,24 +827,24 @@ if "user" in st.session_state:
 
             <div class="event-popup">
 
-                <img src="data:image/png;base64,{event['base64']}">
-                <h4>🎉 {event['title']} 이벤트</h4>
-                <p>길드에서 진행 중인 특별한 이벤트!<br>지금 참여하고 보상을 받아보세요 ✨</p>
+            <img src="data:image/png;base64,{base64_img}">
+            <h4>🎉 {event['title']} 이벤트</h4>
+            <p>길드에서 진행 중인 특별한 이벤트!<br>지금 참여하고 보상을 받아보세요 ✨</p>
 
-                <div class="arrow-row">
-                    <form method="post"><button name="arrow_action" value="prev">⬅️ 이전</button></form>
-                    <form method="post"><button name="arrow_action" value="next">다음 ➡️</button></form>
-                </div>
-
-                <div class="button-row">
-                    <form method="post"><button name="popup_action" value="hide" class="gray">❌ 오늘 하루 보지 않기</button></form>
-                    <form method="post"><button name="popup_action" value="list" class="blue">📋 이벤트 목록</button></form>
-                    <form method="post"><button name="popup_action" value="detail" class="red">🔥 참여하기</button></form>
-                </div>
-
+            <div class="arrow-row">
+                <form method="post"><button name="arrow_action" value="prev">⬅️ 이전</button></form>
+                <form method="post"><button name="arrow_action" value="next">다음 ➡️</button></form>
             </div>
-            """, unsafe_allow_html=True)
-        
+
+            <div class="button-row">
+                <form method="post"><button name="popup_action" value="hide" class="gray">❌ 오늘 하루 보지 않기</button></form>
+                <form method="post"><button name="popup_action" value="list" class="blue">📋 이벤트 목록</button></form>
+                <form method="post"><button name="popup_action" value="detail" class="red">🔥 참여하기</button></form>
+            </div>
+
+        </div>
+        """, unsafe_allow_html=True)
+                
 menu_options = []
 
 #관리자만 보이는 메뉴
