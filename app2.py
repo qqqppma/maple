@@ -2013,8 +2013,7 @@ elif menu == "마니또 기록":
                     try:
                         ext = img.name.split(".")[-1]
                         file_id = f"{uuid.uuid4()}.{ext}"
-                        safe_nickname = urllib.parse.quote(nickname)  # URL-safe 변환 (예: o차월o → o%EC%B0%A8%EC%9B%94o)
-                        path = f"{safe_nickname}/{file_id}"
+                        path = f"{file_id}"
                         content = img.read()
                         supabase.storage.from_("maniddo-images").upload(path, content)
                         public_url = f"{SUPABASE_URL}/storage/v1/object/public/maniddo-images/{path}"
@@ -2065,8 +2064,7 @@ elif menu == "마니또 기록":
                         try:
                             ext = img.name.split(".")[-1]
                             file_id = f"{uuid.uuid4()}.{ext}"
-                            safe_nickname = urllib.parse.quote(nickname)  # URL-safe 변환 (예: o차월o → o%EC%B0%A8%EC%9B%94o)
-                            path = f"{safe_nickname}/{file_id}"
+                            path = f"{file_id}"
                             content = img.read()
                             supabase.storage.from_("maniddo-images").upload(path, content)
                             public_url = f"{SUPABASE_URL}/storage/v1/object/public/maniddo-images/{path}"
