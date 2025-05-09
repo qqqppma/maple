@@ -1400,7 +1400,7 @@ elif menu == "부캐릭터 관리":
         st.info("등록된 부캐릭터가 없습니다.")
 
 
-elif menu == "이벤트 이미지 등록록":
+elif menu == "이벤트 이미지 등록":
     st.subheader("이벤트 배너 자동 등록")
 
     title = st.text_input("이벤트 제목을 입력하세요")
