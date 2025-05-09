@@ -2018,6 +2018,7 @@ elif menu == "마니또 관리":
     else:
         st.info("🙅 현재 매칭된 마니또가 없습니다.")
 
+
 elif menu == "마니또 기록":
     st.title("📘 마니또 기록 페이지")
     nickname = st.session_state.get("nickname", "")
@@ -2073,8 +2074,8 @@ elif menu == "마니또 기록":
                         "title": title,
                         "memo": memo or "",
                         "image_urls": urls,
-                        "created_at": datetime.now().isoformat(),
-                        "updated_at": datetime.now().isoformat()
+                        "created_at": datetime.now(KST).isoformat(),
+                        "updated_at": datetime.now(KST).isoformat()
                     }).execute()
                     st.success("✅ 기록이 저장되었습니다.")
                     st.rerun()
@@ -2099,22 +2100,58 @@ elif menu == "마니또 기록":
 
         if selected_title != "선택하지 않음":
             log = log_options[selected_title]
-            st.markdown(f"#### 🕒 작성일시: {log['created_at'][:19].replace('T',' ')}")
-            st.markdown(f"#### 📌 {log.get('title', '')}")
-            st.markdown(log.get("memo", ""))
-            for url in log.get("image_urls", []):
-                st.image(url, width=250)
-                st.markdown(f"[🔍 원본 보기]({url})", unsafe_allow_html=True)
+            log_id = log["id"]
+            is_editing = st.session_state.get(f"edit_{log_id}", False)
 
-            col1, col2 = st.columns(2)
-            with col1:
-                if st.button("✏ 수정하기", key=f"edit_button_{log['id']}"):
-                    st.session_state[f"edit_{log['id']}"] = True
-            with col2:
-                if st.button("🗑 삭제하기", key=f"delete_button_{log['id']}"):
-                    supabase.table("ManiddoLogs").delete().eq("id", log["id"]).execute()
-                    st.success("🧹 삭제 완료")
+            if is_editing:
+                st.markdown("### ✏ 기록 수정")
+
+                new_title = st.text_input("제목", value=log.get("title", ""), key=f"title_edit_{log_id}")
+                new_memo = st.text_area("기록", value=log.get("memo", ""), height=150, key=f"memo_edit_{log_id}")
+                new_images = st.file_uploader("새 이미지 업로드 (기존 이미지는 유지)", type=["jpg", "jpeg", "png"], accept_multiple_files=True, key=f"img_edit_{log_id}")
+
+                if st.button("💾 수정 완료", key=f"save_edit_{log_id}"):
+                    urls = log.get("image_urls", [])
+                    for img in new_images:
+                        try:
+                            ext = img.name.split(".")[-1]
+                            file_id = f"{uuid.uuid4()}.{ext}"
+                            path = f"{file_id}"
+                            content = img.read()
+                            supabase.storage.from_("maniddo-images").upload(path, content)
+                            public_url = f"{SUPABASE_URL}/storage/v1/object/public/maniddo-images/{path}"
+                            urls.append(public_url)
+                        except Exception as e:
+                            st.error(f"❌ 이미지 업로드 실패: {e}")
+
+                    supabase.table("ManiddoLogs").update({
+                        "title": new_title,
+                        "memo": new_memo,
+                        "image_urls": urls,
+                        "updated_at": datetime.now(KST).isoformat()
+                    }).eq("id", log_id).execute()
+
+                    st.success("✅ 수정이 완료되었습니다.")
+                    st.session_state[f"edit_{log_id}"] = False
                     st.rerun()
+
+            else:
+                st.markdown(f"#### 🕒 작성일시: {log['created_at'][:19].replace('T',' ')} (KST)")
+                st.markdown(f"#### 📌 {log.get('title', '')}")
+                st.markdown(log.get("memo", ""))
+                for url in log.get("image_urls", []):
+                    st.image(url, width=250)
+                    st.markdown(f"[🔍 원본 보기]({url})", unsafe_allow_html=True)
+
+                col1, col2 = st.columns(2)
+                with col1:
+                    if st.button("✏ 수정하기", key=f"edit_button_{log_id}"):
+                        st.session_state[f"edit_{log_id}"] = True
+                with col2:
+                    if st.button("🗑 삭제하기", key=f"delete_button_{log_id}"):
+                        supabase.table("ManiddoLogs").delete().eq("id", log_id).execute()
+                        st.success("🧹 삭제 완료")
+                        st.rerun()
 
         else:
             cols = st.columns(2)
