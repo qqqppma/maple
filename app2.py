@@ -706,6 +706,47 @@ if "user" in st.session_state:
         st.session_state.clear()
         st.query_params.clear()
         st.rerun()
+
+    # 이벤트 배너 리스트
+    event_banners = [
+        {
+            "title": "악마 길드 복지",
+            "image": "악마 복지.png",
+            "key": "event_1"
+        },
+        {
+            "title": "AKMA AWARD",
+            "image": "악마 어워드.png",
+            "key": "event_2"
+        },
+        {
+            "title": "Lotto",
+            "image": "로또.png",
+            "key": "event_3"
+        },
+    ]
+
+    # 오늘 하루 보지 않기: 세션 상태 관리
+    now = datetime.now()
+    if "hide_event_banner_until" not in st.session_state:
+        st.session_state["hide_event_banner_until"] = None
+
+    # 조건: 오늘 하루 보지 않기 누르지 않은 경우만 표시
+    if st.session_state["hide_event_banner_until"] is None or st.session_state["hide_event_banner_until"] < now:
+        st.markdown("## 🎉 현재 진행 중인 길드 이벤트")
+        cols = st.columns(len(event_banners))
+        for i, col in enumerate(cols):
+            with col:
+                st.image(f"./이벤트이미지폴더/{event_banners[i]['image']}", use_column_width=True)
+                if st.button(event_banners[i]['title'], key=f"banner_{i}"):
+                    st.session_state["menu"] = "이벤트 목록"
+                    st.session_state["selected_event"] = event_banners[i]["key"]
+                    st.experimental_rerun()
+
+        if st.button("❌ 오늘 하루 보지 않기"):
+            st.session_state["hide_event_banner_until"] = now + timedelta(days=1)
+        st.markdown("---")
+
         
 menu_options = []
 
@@ -714,7 +755,7 @@ if st.session_state.get("is_admin"):
     menu_options.extend(["악마 길드원 정보 등록", "악마길드 길컨관리", "부캐릭터 관리","마니또 관리"])
 
 # 모든 사용자에게 보이는 메뉴
-menu_options.extend(["부캐릭터 등록", "보조대여 신청", "드메템 대여 신청","마니또 기록"])
+menu_options.extend(["부캐릭터 등록", "보조대여 신청", "드메템 대여 신청","마니또 기록","이벤트 목록"])
 
 menu = st.sidebar.radio("메뉴", menu_options)
 
@@ -2218,6 +2259,61 @@ elif menu == "마니또 기록":
                         supabase.table("ManiddoLogs").delete().eq("id", log["id"]).execute()
                         st.success("🧹 삭제 완료")
                         st.rerun()
+
+elif menu == "이벤트 목록":
+    st.subheader("📅 진행 중인 길드 이벤트")
+
+    # 🔑 이벤트 정의 (배너 키와 맞춰야 함)
+    event_details = {
+        "event_1": {
+            "title": "악마 길드 복지",
+            "image": "악마 복지.png",
+            "date": "상시 진행",
+            "content": "악마 길드만의 복지! 비싼 아이템이 단돈 천원?!"
+        },
+        "event_2": {
+            "title": "AKMA AWARD",
+            "image": "악마 어워드.png",
+            "date": "2025.04.01 ~ 2025.12.31",
+            "content": "게임도 하고 여행도 하고!"
+        },
+        "event_3": {
+            "title": "Lotto",
+            "image": "로또.png",
+            "date": "매주 일요일 추첨",
+            "content": "길드 로또 이벤트! 응모하고 보상을 노려보세요."
+        }
+    }
+
+    # 🔎 개별 이벤트 클릭 시 상세 내용 보여줌
+    selected_event = st.session_state.get("selected_event")
+    if selected_event and selected_event in event_details:
+        ev = event_details[selected_event]
+        st.markdown(f"## 🎉 {ev['title']}")
+        st.caption(f"📅 기간: {ev['date']}")
+        st.image(f"./이벤트이미지폴더/{ev['image']}", use_column_width=True)
+        st.markdown(f"📌 {ev['content']}")
+        if st.button("← 목록으로 돌아가기"):
+            del st.session_state["selected_event"]
+            st.experimental_rerun()
+        st.markdown("---")
+    else:
+        # 🔲 전체 목록 보기 (3열 카드형)
+        event_keys = list(event_details.keys())
+        for i in range(0, len(event_keys), 3):
+            cols = st.columns(3)
+            for j, col in enumerate(cols):
+                if i + j < len(event_keys):
+                    key = event_keys[i + j]
+                    ev = event_details[key]
+                    with col:
+                        st.image(f"./이벤트이미지폴더/{ev['image']}", use_column_width=True)
+                        st.markdown(f"**{ev['title']}**")
+                        st.caption(ev["date"])
+                        if st.button("자세히 보기", key=f"detail_{key}"):
+                            st.session_state["selected_event"] = key
+                            st.experimental_rerun()
+
 
 
 
