@@ -1419,8 +1419,8 @@ elif menu == "이벤트 이미지 등록":
                 # ✅ Storage 업로드
                 upload_res = supabase.storage.from_("event-banners").upload(file_id, file_bytes)
 
-                # ✅ 올바른 방식: 객체 속성 확인
-                if upload_res.error is None:
+                # ✅ 실제 업로드가 성공했는지 확인
+                if upload_res.status_code == 200:
                     public_url = f"{SUPABASE_URL}/storage/v1/object/public/event-banners/{file_id}"
 
                     insert_res = supabase.table("EventBanners").insert({
@@ -1434,7 +1434,7 @@ elif menu == "이벤트 이미지 등록":
                     else:
                         st.error("❌ Supabase 테이블 저장 실패")
                 else:
-                    st.error(f"❌ 이미지 업로드 실패: {upload_res.error.message}")
+                    st.error(f"❌ 이미지 업로드 실패: {upload_res.text}")
 
             except Exception as e:
                 st.error(f"❌ 예외 발생: {e}")
