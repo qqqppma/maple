@@ -45,7 +45,7 @@ HEADERS = {
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 KST = timezone(timedelta(hours=9))
 now_kst = datetime.now(KST)
-
+##
 
 ADMIN_USERS = ["자리스틸의왕", "나영진", "죤냇", "o차월o","랩핑","관리자"]
 guild_options = ["악마","악질", "악먀"]  # 혹은 DB나 리스트에서 불러오기
