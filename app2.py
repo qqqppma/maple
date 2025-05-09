@@ -732,7 +732,7 @@ if "user" in st.session_state:
     if "hide_today_popup" not in st.session_state:
         st.session_state["hide_today_popup"] = False
 
-    # ✅ 이벤트 이미지 목록
+    # ✅ 이벤트 목록 불러오기
     events = get_event_images()
     if not events:
         st.stop()
@@ -744,17 +744,17 @@ if "user" in st.session_state:
         st.session_state["event_last_updated"] = current_time
         st.rerun()
 
-    # ✅ 현재 이벤트 정보
+    # ✅ 현재 보여줄 이벤트 정보
     event = events[st.session_state["event_index"]]
     title = event["title"]
     base64_img = str(event["base64"])
 
-    # ✅ 버튼 처리
-    popup_action = st.query_params.get("popup_action")
-    if popup_action == "hide":
-        st.session_state["hide_today_popup"] = True
-        st.query_params.pop("popup_action", None)
-        st.rerun()
+    # ✅ 사이드바에 배너 닫기 버튼
+    if not st.session_state["hide_today_popup"]:
+        st.sidebar.markdown("---")
+        if st.sidebar.button("❌ 배너 닫기"):
+            st.session_state["hide_today_popup"] = True
+            st.rerun()
 
     # ✅ 배너 표시
     if not st.session_state["hide_today_popup"]:
@@ -789,31 +789,14 @@ if "user" in st.session_state:
             font-size: 14px;
             color: #333;
         }}
-        .close-button {{
-            margin-top: 16px;
-        }}
-        .close-button a button {{
-            font-size: 13px;
-            padding: 6px 10px;
-            border-radius: 6px;
-            border: none;
-            cursor: pointer;
-            width: 100%;
-            background-color: #ccc;
-            color: white;
-        }}
         </style>
 
         <div class="event-popup">
             <img src="data:image/png;base64,{base64_img}" alt="{title}">
             <h4>🎉 {title} 이벤트</h4>
             <p>길드에서 진행 중인 특별한 이벤트!<br>지금 참여하고 보상을 받아보세요 ✨</p>
-            <div class="close-button">
-                <a href="?popup_action=hide"><button>❌ 닫기</button></a>
-            </div>
         </div>
         """, unsafe_allow_html=True)
-
         
 menu_options = []
 
