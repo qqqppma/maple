@@ -2357,39 +2357,52 @@ elif menu == "마니또 기록":
 elif menu == "이벤트 목록":
     st.subheader("📅 진행 중인 길드 이벤트")
 
-    # 1️⃣ Supabase에서 이벤트 불러오기
     try:
-        res = supabase.table("EventBanners").select("*").order("created_at", desc=True).execute()
+        res = supabase.table("EventBanners").select("*").order("id", desc=True).execute()
         event_list = res.data if res.data else []
     except Exception as e:
         st.error("❌ 이벤트 목록 불러오기 실패")
         event_list = []
 
-    # 2️⃣ 특정 이벤트 선택 시 상세페이지 표시
     selected_event = st.session_state.get("selected_event")
     if selected_event:
         selected = next((ev for ev in event_list if ev["id"] == selected_event), None)
         if selected:
             st.markdown(f"## {selected['title']}")
-            st.image(selected["image_url"], width=500)  # use_column_width 제거
+            st.markdown(selected.get("description", ""))
+
+            image_name = selected.get("image_file_name")
+            if image_name and image_name.lower() != "이미지 없음":
+                image_path = os.path.join("이벤트이미지폴더", image_name)
+                if os.path.exists(image_path):
+                    st.image(image_path, width=500)
+                else:
+                    st.warning("❗ 이미지 파일이 존재하지 않습니다.")
+
             if st.button("← 목록으로 돌아가기"):
                 del st.session_state["selected_event"]
                 st.experimental_rerun()
         else:
             st.warning("선택한 이벤트를 찾을 수 없습니다.")
     else:
-        # 3️⃣ 전체 목록: 3열 카드형으로 출력
         for i in range(0, len(event_list), 3):
             cols = st.columns(3)
             for j, col in enumerate(cols):
                 if i + j < len(event_list):
                     ev = event_list[i + j]
                     with col:
-                        st.image(ev["image_url"], width=300)  # 수정된 부분
+                        image_name = ev.get("image_file_name")
+                        if image_name and image_name.lower() != "이미지 없음":
+                            image_path = os.path.join("이벤트이미지폴더", image_name)
+                            if os.path.exists(image_path):
+                                st.image(image_path, width=300)
+                            else:
+                                st.warning("❗ 이미지 없음")
                         st.markdown(f"**{ev['title']}**")
                         if st.button("자세히 보기", key=f"event_detail_{ev['id']}"):
                             st.session_state["selected_event"] = ev["id"]
-                            st.rerun()
+                            st.experimental_rerun()
+
 
 
 
