@@ -1970,14 +1970,18 @@ elif menu == "마니또 관리":
 
                 col_del, _ = st.columns([2, 8])
                 with col_del:
-                    if st.button("❌ 마니또 종료"):
+                    if st.button("❌ 마니또 종료", use_container_width=True):
                         if selected_pair == "선택하지 않음":
                             st.warning("⚠️ 마니또를 선택해주세요.")
-                        else:
-                            tutor_name, tutee_name = selected_pair.split("튜터: ")[1].split(" - 튜티: ")
+                        elif selected_pair.startswith("튜터: ") and " - 튜티: " in selected_pair:
+                            tutor_name, tutee_name = selected_pair.replace("튜터: ", "").split(" - 튜티: ")
                             tutor_name = tutor_name.strip()
                             tutee_name = tutee_name.strip()
 
+                            # 확인용 출력
+                            st.write("삭제 시도 중:", tutor_name, tutee_name)
+
+                            # 삭제 시도
                             supabase.table("ManiddoLogs").delete()\
                                 .eq("tutor_name", tutor_name)\
                                 .eq("tutee_name", tutee_name)\
