@@ -760,74 +760,73 @@ if "user" in st.session_state:
             st.stop()
 
         event = events[st.session_state["event_index"]]
-        base64_img = event["base64"]
 
         with st.empty():
             st.markdown(f"""
-            <style>
-            .event-popup {{
-                position: fixed;
-                bottom: 20px;
-                right: 20px;
-                width: 400px;
-                height: 650px;  /* 고정 높이 */
-                padding: 20px;
-                background: white;
-                border-radius: 16px;
-                box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-                font-family: sans-serif;
-                z-index: 9999;
-                overflow-y: auto;  /* 전체 스크롤 가능 */
-            }}
+        <style>
+        .event-popup {{
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 400px;
+            height: 800px; 
+            padding: 20px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            font-family: sans-serif;
+            z-index: 9999;
+            overflow-y: auto;  /* 전체 스크롤 가능 */
+        }}
 
-            .event-popup img {{
-                width: 100%;
-                border-radius: 10px;
-                margin-bottom: 12px;
-            }}
+        .event-popup img {{
+            width: 100%;
+            border-radius: 10px;
+            margin-bottom: 12px;
+        }}
 
-            .event-popup h4 {{
-                margin: 6px 0;
-                font-size: 18px;
-                color: #d62c2c;
-            }}
+        .event-popup h4 {{
+            margin: 6px 0;
+            font-size: 18px;
+            color: #d62c2c;
+        }}
 
-            .event-popup p {{
-                font-size: 14px;
-                color: #333;
-                line-height: 1.4;
-                margin-bottom: 16px;
-            }}
+        .event-popup p {{
+            font-size: 14px;
+            color: #333;
+            line-height: 1.4;
+            margin-bottom: 16px;
+        }}
 
-            .arrow-row {{
-                display: flex;
-                justify-content: space-between;
-                margin: 10px 0 16px 0;
-            }}
+        .arrow-row {{
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0 16px 0;
+        }}
 
-            .button-row {{
-                display: flex;
-                justify-content: space-between;
-                margin-top: 16px;
-            }}
+        .button-row {{
+            display: flex;
+            justify-content: space-between;
+            margin-top: 16px;
+        }}
 
-            .button-row button,
-            .arrow-row button {{
-                font-size: 13px;
-                padding: 6px 10px;
-                border-radius: 6px;
-                border: none;
-                cursor: pointer;
-            }}
+        .button-row button,
+        .arrow-row button {{
+            font-size: 13px;
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+        }}
 
-            .gray {{ background-color: #ccc; color: white; }}
-            .blue {{ background-color: #2b78e4; color: white; }}
-            .red {{ background-color: #d62c2c; color: white; }}
-            </style>
+        .gray {{ background-color: #ccc; color: white; }}
+        .blue {{ background-color: #2b78e4; color: white; }}
+        .red {{ background-color: #d62c2c; color: white; }}
+        </style>
 
-            <div class="event-popup">
+        <div class="event-popup">
 
-            <img src="data:image/png;base64,{base64_img}">
+            <img src="data:image/png;base64,{event['base64']}">
             <h4>🎉 {event['title']} 이벤트</h4>
             <p>길드에서 진행 중인 특별한 이벤트!<br>지금 참여하고 보상을 받아보세요 ✨</p>
 
@@ -844,7 +843,7 @@ if "user" in st.session_state:
 
         </div>
         """, unsafe_allow_html=True)
-                
+        
 menu_options = []
 
 #관리자만 보이는 메뉴
