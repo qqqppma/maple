@@ -1938,7 +1938,7 @@ elif menu == "마니또 관리":
         view_df["튜터"] = view_df["tutor_name"]
         view_df["튜티"] = view_df["tutee_name"]
         view_df["기록"] = view_df.get("memo", "")
-        display_df = view_df[["튜터", "튜티", "기록"]]
+        display_df = view_df[["튜터", "튜티"]]
         st.dataframe(display_df, use_container_width=True)
 
         # 관리자 또는 튜터만 수정 가능
@@ -1951,7 +1951,7 @@ elif menu == "마니또 관리":
                 for r in all_requests
                 if r.get("tutor_name") and r.get("tutee_name")
             ]
-            selected_pair = st.selectbox("👀 열람할 마니또 선택", ["선택하지 않음"] + pair_options)
+            selected_pair = st.selectbox("열람할 마니또 선택", ["선택하지 않음"] + pair_options)
 
             if selected_pair != "선택하지 않음":
                 selected_tutor, selected_tutee = selected_pair.replace("튜터: ", "").replace("튜티: ", "").split(" - ")
