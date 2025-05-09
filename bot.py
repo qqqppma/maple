@@ -177,7 +177,7 @@ async def polling_loop():
             manitto_res = supabase.table("ManiddoRequests")\
                 .select("*")\
                 .eq("notified", False)\
-                .gte("created_at", start_time.isoformat())\
+                .gte("timestamp", start_time.isoformat())\
                 .execute()
             new_rows = manitto_res.data
 
