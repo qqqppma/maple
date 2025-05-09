@@ -1367,9 +1367,10 @@ elif menu == "이벤트 이미지 등록":
 
             try:
                 upload_res = supabase.storage.from_("event-banners").upload(file_id, file_bytes)
+                uploaded_path = upload_res.get("data", {}).get("path", None)
 
-                if hasattr(upload_res, "full_path"):
-                    public_url = f"{SUPABASE_URL}/storage/v1/object/public/event-banners/{upload_res.full_path}"
+                if uploaded_path:
+                    public_url = f"{SUPABASE_URL}/storage/v1/object/public/event-banners/{uploaded_path}"
 
                     insert_res = supabase.table("EventBanners").insert({
                         "title": title,
@@ -1380,10 +1381,9 @@ elif menu == "이벤트 이미지 등록":
                         st.success("✅ 이벤트 등록 완료!")
                         st.image(public_url, width=300)
                     else:
-                        st.error(f"❌ Supabase 테이블 저장 실패: {insert_res.error}")
-
+                        st.error("❌ Supabase 테이블 저장 실패")
                 else:
-                    st.error("❌ 업로드 실패: full_path 없음")
+                    st.error("❌ 업로드 실패: 이미지 경로 없음")
 
             except Exception as e:
                 st.error(f"❌ 예외 발생: {e}")
