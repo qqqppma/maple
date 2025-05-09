@@ -1410,17 +1410,32 @@ elif menu == "이벤트 이미지 등록":
                                         key="edit_image")
 
             if st.button("✏️ 수정 완료"):
-                update_data = {
-                    "title": edited_title,
-                    "description": edited_desc,
-                    "image_file_name": None if edited_image == "이미지 없음" else edited_image
-                }
-                update_res = supabase.table("EventBanners").update(update_data).eq("id", selected_event["id"]).execute()
-                if update_res:
-                    st.success("✅ 이벤트 수정 완료!")
-                    st.rerun()
-                else:
-                    st.error("❌ 수정 실패. 다시 시도해주세요.")
+                col1, col2 = st.columns([1, 1])
+
+                with col1:
+                    if st.button("✏️ 수정 완료"):
+                        update_data = {
+                            "title": edited_title,
+                            "description": edited_desc,
+                            "image_file_name": None if edited_image == "이미지 없음" else edited_image
+                        }
+                        update_res = supabase.table("EventBanners").update(update_data).eq("id", selected_event["id"]).execute()
+                        if update_res:
+                            st.success("✅ 이벤트 수정 완료!")
+                            st.rerun()
+                        else:
+                            st.error("❌ 수정 실패. 다시 시도해주세요.")
+
+                with col2:
+                    if st.button("🗑️ 삭제하기"):
+                        confirm = st.warning("정말 삭제하시겠습니까? 다시 되돌릴 수 없습니다.", icon="⚠️")
+                        if st.button("✅ 삭제 확정"):
+                            delete_res = supabase.table("EventBanners").delete().eq("id", selected_event["id"]).execute()
+                            if delete_res:
+                                st.success("🗑️ 삭제 완료!")
+                                st.rerun()
+                            else:
+                                st.error("❌ 삭제 실패. 다시 시도해주세요.")
 
 
 
