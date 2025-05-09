@@ -820,8 +820,6 @@ if "user" in st.session_state:
                     <form method="post"><button name="arrow_action" value="next">➡️</button></form>
                 </div>
                 <img src="data:image/png;base64,{event['base64']}">
-                <h4>🎉 {event['title']} 이벤트</h4>
-                <p>길드에서 진행 중인 특별한 이벤트!<br>지금 참여하고 보상을 받아보세요 ✨</p>
                 <div class="button-row">
                     <form method="post"><button name="popup_action" value="hide" class="gray">오늘 하루 보지 않기</button></form>
                     <form method="post"><button name="popup_action" value="list" class="blue">이벤트 목록</button></form>
