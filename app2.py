@@ -724,36 +724,44 @@ if "user" in st.session_state:
             events.append({"title": title, "base64": encoded})
         return events
 
-    # ✅ 먼저 이벤트 목록을 불러옴
-    events = get_event_images()
-
     # ✅ 세션 상태 초기화
+    if "event_index" not in st.session_state:
+        st.session_state["event_index"] = 0
+    if "event_last_updated" not in st.session_state:
+        st.session_state["event_last_updated"] = time.time()
     if "hide_today_popup" not in st.session_state:
         st.session_state["hide_today_popup"] = False
-    if "random_event" not in st.session_state and events:
-        st.session_state["random_event"] = random.choice(events)
 
-    # ✅ 로그인된 사용자 정보 출력
-    nickname = st.session_state.get("nickname", "")
-    st.sidebar.markdown(f"👤 로그인: {nickname}")
+    events = get_event_images()
+    if not events:
+        st.stop()
 
-    # ✅ 로그아웃 버튼
-    if st.sidebar.button("로그아웃"):
-        user_id = st.session_state.get("user")
-        if user_id:
-            supabase.table("Users").update({"login_token": None}).eq("user_id", user_id).execute()
-        st.session_state.clear()
-        st.query_params.clear()
+    # ✅ 자동 전환 시 메뉴 유지
+    current_time = time.time()
+    if current_time - st.session_state["event_last_updated"] > 5:
+        if "menu" in st.session_state:
+            st.session_state["__prev_menu"] = st.session_state["menu"]  # 메뉴 백업
+        st.session_state["event_index"] = (st.session_state["event_index"] + 1) % len(events)
+        st.session_state["event_last_updated"] = current_time
         st.rerun()
 
-    # ✅ 로그아웃 아래에 배너 닫기 버튼
-    if not st.session_state["hide_today_popup"]:
-        if st.sidebar.button("❌ 배너 닫기"):
-            st.session_state["hide_today_popup"] = True
+    # ✅ rerun 후 메뉴 복원
+    if "__prev_menu" in st.session_state:
+        st.session_state["menu"] = st.session_state["__prev_menu"]
+        del st.session_state["__prev_menu"]
+
+    # ✅ 현재 이벤트 정보
+    event = events[st.session_state["event_index"]]
+    title = event["title"]
+    base64_img = str(event["base64"])
+
+    # ✅ 배너 닫기 처리
+    if st.sidebar.button("❌ 배너 닫기"):
+        st.session_state["hide_today_popup"] = True
+        st.rerun()
 
     # ✅ 배너 표시
-    if not st.session_state["hide_today_popup"] and "random_event" in st.session_state:
-        event = st.session_state["random_event"]
+    if not st.session_state["hide_today_popup"]:
         st.markdown(f"""
         <style>
         .event-popup {{
@@ -788,8 +796,8 @@ if "user" in st.session_state:
         </style>
 
         <div class="event-popup">
-            <img src="data:image/png;base64,{event['base64']}" alt="{event['title']}">
-            <h4>🎉 {event['title']} 이벤트</h4>
+            <img src="data:image/png;base64,{base64_img}" alt="{title}">
+            <h4>🎉 {title} 이벤트</h4>
             <p>길드에서 진행 중인 특별한 이벤트!<br>지금 참여하고 보상을 받아보세요 ✨</p>
         </div>
         """, unsafe_allow_html=True)
