@@ -1968,7 +1968,7 @@ elif menu == "마니또 관리":
                 logs = [log for log in logs if "created_at" in log and log["created_at"]]
                 logs = sorted(logs, key=lambda x: x["created_at"], reverse=True)
 
-                col_del, _ = st.columns([1, 9])
+                col_del, _ = st.columns([2, 8])
                 with col_del:
                     if st.button("❌ 마니또 종료"):
                         if selected_pair == "선택하지 않음":
