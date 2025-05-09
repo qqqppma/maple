@@ -1937,53 +1937,49 @@ elif menu == "마니또 관리":
         st.dataframe(display_df, use_container_width=True)
 
         # 관리자 또는 튜터만 수정 가능
-        if is_admin or is_tutor:
-            st.markdown("---")
-            st.subheader("🔧 마니또 관리 (관리자 전용)")
+        if is_admin:
+            st.markdown("### 📂 확인할 마니또 기록 열람")
 
-            if is_admin:
-                # 🔹 튜터/튜티 관리 selectbox 구성
-                pair_titles = [f"튜터: {r['tutor_name']} - 튜티: {r['tutee_name']}" for _, r in matched_df.iterrows()]
-                selected_pair = st.selectbox("🔷 수정할 마니또 선택", pair_titles)
+            # ✅ 관리자: 튜터-튜티 쌍 선택
+            pair_options = [
+                f"튜터: {r['tutor_name']} - 튜티: {r['tutee_name']}" 
+                for r in all_requests 
+                if r.get("tutor_name") and r.get("tutee_name")
+            ]
+            selected_pair = st.selectbox("👀 열람할 마니또 선택", ["선택하지 않음"] + pair_options)
 
-                if selected_pair:
-                    sel_row = matched_df.iloc[pair_titles.index(selected_pair)]
-                    display_row = pd.DataFrame([sel_row])[['tutor_name', 'tutee_name', 'memo']].rename(columns={
-                        'tutor_name': '튜터',
-                        'tutee_name': '튜티',
-                        'memo': '기록'
-                    })
-                    st.dataframe(display_row, use_container_width=True)
+            if selected_pair != "선택하지 않음":
+                selected_tutor, selected_tutee = selected_pair.replace("튜터: ", "").replace("튜티: ", "").split(" - ")
+                
+                # ✅ 해당 쌍의 로그 불러오기
+                res_logs = supabase.table("ManiddoLogs").select("*").execute()
+                all_logs = res_logs.data or []
+                logs = [
+                    log for log in all_logs
+                    if log.get("tutor_name") == selected_tutor and log.get("tutee_name") == selected_tutee
+                    and (log.get("title") or log.get("memo") or log.get("image_urls"))
+                ]
+                logs = [log for log in logs if "created_at" in log and log["created_at"]]
+                logs = sorted(logs, key=lambda x: x["created_at"], reverse=True)
 
-                    new_memo = st.text_area("기록", value=sel_row.get("memo", ""))
-                    if st.button("💾 수정완료"):
-                        supabase.table("ManiddoRequests").update({"memo": new_memo}).eq("id", sel_row["id"]).execute()
-                        st.success("✅ 메모가 수정되었습니다.")
-                        st.rerun()
-                    if st.button("❌ 마니또 종료"):
-                        supabase.table("ManiddoRequests").delete().eq("id", sel_row["id"]).execute()
-                        st.success("🗑 삭제 완료")
-                        st.rerun()
+                st.markdown("---")
+                st.markdown("### 📚 마니또 기록 목록 (관리자 전용)")
 
-            elif is_tutor:
-                # 튜터 입장에서 본인 관련 매칭만 표시
-                my_matches = matched_df[matched_df["tutor_name"] == nickname]
-                st.dataframe(my_matches[["tutee_name", "memo"]].rename(columns={
-                    "tutee_name": "튜티",
-                    "memo": "기록"
-                }), use_container_width=True)
+                if not logs:
+                    st.info("🗂 해당 마니또의 기록이 없습니다.")
+                else:
+                    for idx, log in enumerate(logs):
+                        st.markdown(f"##### 📌 {log.get('title', '(무제목)')}")
+                        st.markdown(f"🕒 {log['created_at'][:19].replace('T',' ')}")
+                        st.markdown(log.get("memo", ""))
+                        for url in log.get("image_urls", []):
+                            st.image(url, width=200)
+                            st.markdown(f"[🔍 원본 보기]({url})", unsafe_allow_html=True)
 
-                for row in my_matches.itertuples():
-                    st.markdown(f"### 📝 {row.tutee_name}님과의 기록")
-                    updated_memo = st.text_area("기록", value=row.memo or "", key=f"memo_{row.id}")
-                    if st.button("✏️ 수정 완료", key=f"save_{row.id}"):
-                        supabase.table("ManiddoRequests").update({"memo": updated_memo}).eq("id", row.id).execute()
-                        st.success("✅ 메모가 저장되었습니다.")
-                        st.rerun()
-                    if st.button("❌ 마니또 종료", key=f"delete_{row.id}"):
-                        supabase.table("ManiddoRequests").delete().eq("id", row.id).execute()
-                        st.success("🗑 매칭이 종료되었습니다.")
-                        st.rerun()
+                        if st.button("🗑 삭제하기", key=f"delete_admin_{log['id']}"):
+                            supabase.table("ManiddoLogs").delete().eq("id", log["id"]).execute()
+                            st.success("🧹 삭제 완료")
+                            st.rerun()
     else:
         st.info("🙅 현재 매칭된 마니또가 없습니다.")
 
