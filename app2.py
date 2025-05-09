@@ -2336,7 +2336,7 @@ elif menu == "이벤트 목록":
         selected = next((ev for ev in event_list if ev["id"] == selected_event), None)
         if selected:
             st.markdown(f"## {selected['title']}")
-            st.image(selected["image_url"], use_column_width=True)
+            st.image(selected["image_url"], width=500)  # use_column_width 제거
             if st.button("← 목록으로 돌아가기"):
                 del st.session_state["selected_event"]
                 st.experimental_rerun()
@@ -2350,7 +2350,7 @@ elif menu == "이벤트 목록":
                 if i + j < len(event_list):
                     ev = event_list[i + j]
                     with col:
-                        st.image(ev["image_url"], use_column_width=True)
+                        st.image(ev["image_url"], width=300)  # 수정된 부분
                         st.markdown(f"**{ev['title']}**")
                         if st.button("자세히 보기", key=f"event_detail_{ev['id']}"):
                             st.session_state["selected_event"] = ev["id"]
