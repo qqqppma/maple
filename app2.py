@@ -2003,8 +2003,8 @@ elif menu == "마니또 기록":
     if not matched:
         st.warning("🙅‍♀️ 현재 마니또를 진행 중이 아닙니다.")
     else:
-        tutor = matched.get("tutor_name", "")
-        tutee = matched.get("tutee_name", "")
+        tutor = matched.get("tutor_name") or nickname
+        tutee = matched.get("tutee_name") or nickname
         if nickname == tutee:
             tutor, tutee = tutor, tutee
         else:
