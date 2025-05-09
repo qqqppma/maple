@@ -2005,6 +2005,7 @@ elif menu == "마니또 기록":
         st.subheader(f"🧑‍🏫 튜터: {tutor} - 🎓 튜티: {tutee} 마니또 진행중")
 
         with st.form("write_form"):
+            title = st.text_input("제목")  # ✅ 제목 필드 추가
             memo = st.text_area("기록", height=150)
             images = st.file_uploader("이미지 첨부", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
             if st.form_submit_button("💾 등록"):
@@ -2022,6 +2023,7 @@ elif menu == "마니또 기록":
                         st.error(f"❌ 이미지 업로드 실패: {e}")
 
                 supabase.table("ManiddoLogs").insert({
+                    "title": title,
                     "tutor_name": tutor,
                     "tutee_name": tutee,
                     "memo": memo,
