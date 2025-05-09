@@ -1978,16 +1978,21 @@ elif menu == "마니또 관리":
                             tutor_name = tutor_name.strip()
                             tutee_name = tutee_name.strip()
 
-                            # 확인용 출력
-                            st.write("삭제 시도 중:", tutor_name, tutee_name)
+                            st.write(f"삭제 시도 중: '{tutor_name}' '{tutee_name}'")
 
-                            # 삭제 시도
+                            # ✅ ManiddoLogs 삭제
                             supabase.table("ManiddoLogs").delete()\
                                 .eq("tutor_name", tutor_name)\
                                 .eq("tutee_name", tutee_name)\
                                 .execute()
 
-                            st.success(f"🧹 {tutor_name} - {tutee_name} 마니또 기록이 모두 삭제되었습니다.")
+                            # ✅ ManiddoRequests 삭제
+                            supabase.table("ManiddoRequests").delete()\
+                                .eq("tutor_name", tutor_name)\
+                                .eq("tutee_name", tutee_name)\
+                                .execute()
+
+                            st.success(f"🧹 {tutor_name} - {tutee_name} 마니또가 완전히 종료되었습니다.")
                             st.rerun()
                 st.markdown("----")
                 st.markdown("### 📚 마니또 기록 목록 (관리자 전용)")
