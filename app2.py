@@ -633,7 +633,7 @@ if "user" not in st.session_state:
         🔹 부길드에 본캐로 가입한 분들은 따로 연락 바랍니다. \n
         🔹 가입하기 후 로그인 화면으로 되돌아 가지지 않는다면 돌아가기 버튼을 눌러주세요.
         ''')
-
+###
         col1, col2 = st.columns(2)
         with col1:
             if st.button("가입하기"):
