@@ -11,7 +11,7 @@ import re
 import urllib.parse
 import io
 import os, base64
-import uuid
+import uuid, time
 import pytz
 from PIL import Image
 from datetime import date, timezone, timedelta
@@ -708,29 +708,30 @@ if "user" in st.session_state:
         st.rerun()
 
     # ✅ 이벤트 이미지 폴더 경로
-    EVENT_IMAGE_FOLDER = "이벤트이미지폴더"
-
-    # ✅ 이미지 base64로 변환
-    def image_to_base64(path):
-        with open(path, "rb") as img_file:
-            return base64.b64encode(img_file.read()).decode()
-
-    # ✅ 이미지 목록 수집
-    def get_event_images():
-        files = sorted([f for f in os.listdir(EVENT_IMAGE_FOLDER) if f.endswith((".png", ".jpg", ".jpeg"))])
-        events = []
-        for file in files:
-            path = os.path.join(EVENT_IMAGE_FOLDER, file)
-            title = os.path.splitext(file)[0]
-            encoded = image_to_base64(path)
-            events.append({"title": title, "base64": encoded})
-        return events
-
     # ✅ 세션 상태 초기화
-    if "hide_today_popup" not in st.session_state:
-        st.session_state["hide_today_popup"] = False
     if "event_index" not in st.session_state:
         st.session_state["event_index"] = 0
+    if "event_last_updated" not in st.session_state:
+        st.session_state["event_last_updated"] = time.time()
+    if "hide_today_popup" not in st.session_state:
+        st.session_state["hide_today_popup"] = False
+
+    # ✅ 이벤트 이미지 목록
+    events = get_event_images()  # [{"title": ..., "base64": ...}, ...]
+    if not events:
+        st.stop()
+
+    # ✅ 5초마다 자동 전환
+    current_time = time.time()
+    if current_time - st.session_state["event_last_updated"] > 5:
+        st.session_state["event_index"] = (st.session_state["event_index"] + 1) % len(events)
+        st.session_state["event_last_updated"] = current_time
+        st.experimental_rerun()
+
+    # ✅ 현재 이벤트 정보
+    event = events[st.session_state["event_index"]]
+    title = event["title"]
+    base64_img = str(event["base64"])
 
     # ✅ 버튼 처리
     if "popup_action" in st.session_state:
@@ -740,85 +741,70 @@ if "user" in st.session_state:
         elif action == "list":
             st.session_state["menu"] = "이벤트 목록"
         elif action == "detail":
-            current_title = get_event_images()[st.session_state["event_index"]]["title"]
-            st.session_state["menu"] = f"이벤트 - {current_title}"
+            st.session_state["menu"] = f"이벤트 - {title}"
         st.session_state.popup_action = None
-
-    if "arrow_action" in st.session_state:
-        events = get_event_images()
-        total = len(events)
-        if st.session_state.arrow_action == "prev":
-            st.session_state["event_index"] = (st.session_state["event_index"] - 1) % total
-        elif st.session_state.arrow_action == "next":
-            st.session_state["event_index"] = (st.session_state["event_index"] + 1) % total
-        st.session_state.arrow_action = None
 
     # ✅ 배너 표시
     if not st.session_state["hide_today_popup"]:
-        events = get_event_images()
-        if not events:
-            st.stop()
+        st.markdown(f"""
+        <style>
+        .event-popup {{
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 400px;
+            height: 650px;
+            padding: 20px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            font-family: sans-serif;
+            z-index: 9999;
+            text-align: center;
+            overflow-y: auto;
+        }}
+        .event-popup img {{
+            width: 100%;
+            border-radius: 10px;
+            margin-bottom: 12px;
+        }}
+        .event-popup h4 {{
+            margin: 6px 0;
+            font-size: 18px;
+            color: #d62c2c;
+        }}
+        .event-popup p {{
+            font-size: 14px;
+            color: #333;
+        }}
+        .button-row {{
+            display: flex;
+            justify-content: space-between;
+            margin-top: 16px;
+        }}
+        .button-row button {{
+            font-size: 13px;
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+        }}
+        .gray {{ background-color: #ccc; color: white; }}
+        .blue {{ background-color: #2b78e4; color: white; }}
+        .red {{ background-color: #d62c2c; color: white; }}
+        </style>
 
-        event = events[st.session_state["event_index"]]
-
-        with st.empty():
-            st.markdown(f"""
-            <style>
-            .event-popup {{
-                position: fixed;
-                bottom: 20px;
-                right: 20px;
-                width: 400px;
-                height: 650px;
-                padding: 20px;
-                background: white;
-                border-radius: 16px;
-                box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-                font-family: sans-serif;
-                z-index: 9999;
-                text-align: center;
-                overflow-y: auto;  /* 내용이 길면 스크롤 */
-            }}
-            .event-popup img {{
-                width: 100%;
-                border-radius: 10px;
-                margin-bottom: 12px;
-            }}
-            .event-popup h4 {{
-                margin: 6px 0;
-                font-size: 18px;
-                color: #d62c2c;
-            }}
-            .event-popup p {{
-                font-size: 14px;
-                color: #333;
-            }}
-            .button-row {{
-                display: flex;
-                justify-content: space-between;
-                margin-top: 16px;
-            }}
-            .button-row button {{
-                font-size: 13px;
-                padding: 6px 10px;
-                border-radius: 6px;
-                border: none;
-                cursor: pointer;
-            }}
-            .gray {{ background-color: #ccc; color: white; }}
-            .blue {{ background-color: #2b78e4; color: white; }}
-            .red {{ background-color: #d62c2c; color: white; }}
-            </style>
-
-            <div class="event-popup">
-                <img src="data:image/png;base64,{event['base64']}">
-                <div class="button-row">
-                    <form method="post"><button name="popup_action" value="hide" class="gray">❌ 오늘 하루 보지 않기</button></form>
-                    <form method="post"><button name="popup_action" value="list" class="blue">📋 이벤트 목록</button></form>
-                    <form method="post"><button name="popup_action" value="detail" class="red">🔥 참여하기</button></form>
-                </div>
+        <div class="event-popup">
+            <img src="data:image/png;base64,{base64_img}" alt="{title}">
+            <h4>🎉 {title} 이벤트</h4>
+            <p>길드에서 진행 중인 특별한 이벤트!<br>지금 참여하고 보상을 받아보세요 ✨</p>
+            <div class="button-row">
+                <form method="post"><button name="popup_action" value="hide" class="gray">❌ 오늘 하루 보지 않기</button></form>
+                <form method="post"><button name="popup_action" value="list" class="blue">📋 이벤트 목록</button></form>
+                <form method="post"><button name="popup_action" value="detail" class="red">🔥 참여하기</button></form>
             </div>
-            """, unsafe_allow_html=True)
+        </div>
+        """, unsafe_allow_html=True)
         
 menu_options = []
 
