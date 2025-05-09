@@ -719,69 +719,53 @@ if "user" in st.session_state:
     ]
 
     if st.session_state["hide_event_popup_until"] is None or st.session_state["hide_event_popup_until"] < now:
-        html_code = """
-        <style>
-        .popup-box {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            width: 360px;
-            background-color: #ffffff;
-            border: 2px solid #ccc;
-            border-radius: 12px;
-            padding: 16px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            z-index: 9999;
-        }
-        .popup-title {
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 12px;
-        }
-        .event-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-        .event-item img {
-            width: 64px;
-            height: 64px;
-            border-radius: 8px;
-            margin-right: 12px;
-        }
-        .event-item span {
-            font-size: 15px;
-            font-weight: 600;
-        }
-        .popup-buttons {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 15px;
-        }
-        .popup-buttons button {
-            padding: 6px 10px;
-            font-size: 14px;
-        }
-        </style>
-        <div class="popup-box">
-            <div class="popup-title">🎉 현재 진행 중인 길드 이벤트</div>
-        """
-
-        for ev in event_banners:
-            html_code += f"""
-            <div class="event-item">
-                <img src="./이벤트이미지폴더/{ev['image']}" />
-                <span>{ev['title']}</span>
-            </div>
-            """
-
-        html_code += """
-            <div class="popup-buttons">
-                <form action="" method="post"><button name="hide" type="submit">❌ 오늘 하루 보지 않기</button></form>
-                <form action="" method="post"><button name="move" type="submit">👉 이벤트 목록</button></form>
-            </div>
-        </div>
-        """
+        html_code = f"""
+    <style>
+    .popup-box {{
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 360px;
+        background-color: #ffffff;
+        border: 2px solid #ccc;
+        border-radius: 12px;
+        padding: 16px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        z-index: 9999;
+    }}
+    .popup-title {{
+        font-size: 18px;
+        font-weight: bold;
+        margin-bottom: 12px;
+    }}
+    .event-item {{
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+    }}
+    .event-item img {{
+        width: 64px;
+        height: 64px;
+        border-radius: 8px;
+        margin-right: 12px;
+    }}
+    .event-item span {{
+        font-size: 15px;
+        font-weight: 600;
+    }}
+    .popup-buttons {{
+        display: flex;
+        justify-content: space-between;
+        margin-top: 15px;
+    }}
+    .popup-buttons button {{
+        padding: 6px 10px;
+        font-size: 14px;
+    }}
+    </style>
+    <div class="popup-box">
+        <div class="popup-title">🎉 현재 진행 중인 길드 이벤트</div>
+    """
 
         st.markdown(html_code, unsafe_allow_html=True)
 
