@@ -945,14 +945,12 @@ elif menu == "악마길드 길컨관리":
         df_main["ID"] = df_main.index + 1
         id_map = df_main.set_index("ID")["id"].to_dict()
 
-        # ✅ 안전하게 부캐 필터링: 컬럼 존재 + 값 존재 확인
-        if "note" in df_member.columns and "main_nickname" in df_member.columns:
-            df_sub = df_member[
-                (df_member["note"] == "부캐") &
-                (df_member["main_nickname"].notnull())
-            ].copy()
+        # ✅ 안전하게 부캐 필터링: note 없이 필터링
+        if "main_nickname" in df_member.columns:
+            df_sub = df_member[df_member["main_nickname"].notnull()].copy()
         else:
             df_sub = pd.DataFrame()
+
 
         # ✅ 부캐 점수 컬럼 처리
         for col in ["suro_score", "flag_score", "mission_point"]:
