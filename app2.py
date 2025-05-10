@@ -941,9 +941,12 @@ elif menu == "악마길드 길컨관리":
         df_main["ID"] = df_main.index + 1               # 표시용 ID
         id_map = df_main.set_index("ID")["id"].to_dict()
 
-        # 부캐만 필터링
-        df_sub = df_member[df_member["note"] == "부캐"].copy()
-        df_sub = df_sub[df_sub["main_nickname"].notnull()]
+        # 부캐만 필터링 (note == '부캐' + 본캐 연결 + 악마 길드 소속만)
+        df_sub = df_member[
+            (df_member["note"] == "부캐") &
+            (df_member["main_nickname"].notnull()) &
+            (df_member["guild_name1"] == "악마")
+        ].copy()
 
         # 부캐 점수 기본값 처리
         for col in ["suro_score", "flag_score", "mission_point"]:
@@ -958,12 +961,12 @@ elif menu == "악마길드 길컨관리":
         df_main = df_main.merge(sub_sums, how="left", left_on="nickname", right_on="main_nickname")
 
         for col in ["suro_score", "flag_score", "mission_point"]:
-            df_main[col] = df_main[col].fillna(0).astype(int)  # 본캐 점수
-            df_main[f"{col}_sub"] = df_main.get(col + "_y", 0).fillna(0).astype(int)
+            df_main[col] = df_main[col].fillna(0).astype(int)
+            df_main[f"{col}_sub"] = df_main.get(f"{col}_y", 0).fillna(0).astype(int)
             df_main[col] = df_main[col] + df_main[f"{col}_sub"]
 
         # 불필요한 컬럼 제거
-        df_main.drop(columns=[c for c in df_main.columns if "_y" in c or "_sub" in c or c == "main_nickname"], inplace=True, errors="ignore")
+        df_main.drop(columns=[c for c in df_main.columns if "_y" in c or "_sub" in c or c == "main_nickname"], inplace=True)
 
         # ✅ 합계 계산
         df_main["event_sum"] = (
