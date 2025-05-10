@@ -876,21 +876,25 @@ if menu == "악마 길드원 정보 등록":
     # ✅ 길드원 신규 등록
     st.subheader("길드원 정보 등록")
 
+    # ✅ 역할 선택 (즉시 반응을 위해 form 밖에 둠)
+    role = st.selectbox("역할 선택", ["본캐", "부캐"], key="role_selector")
+
+    # ✅ 길드원 등록 폼
     with st.form("add_member_form"):
+        st.subheader("길드원 정보 등록")
+
         nickname_input = st.text_input("닉네임")
         position_input = st.text_input("직위", value="길드원")
-        
-        # ✅ 역할 선택
-        role = st.selectbox("역할 선택", ["본캐", "부캐"])
 
-        # ✅ 본캐 닉네임 입력/선택은 조건부 렌더링
         main_nickname_input = ""
         if role == "부캐":
             main_names = [m["nickname"] for m in get_members()]
-            main_nickname_input = st.text_input("본캐 닉네임 입력 (직접 입력 또는 선택)")
-            selected_main = st.selectbox("본캐 닉네임 선택", [""] + main_names)
-            if not main_nickname_input and selected_main:
-                main_nickname_input = selected_main
+            input_text = st.text_input("본캐 닉네임 직접 입력")
+            select_input = st.selectbox("본캐 닉네임 선택", [""] + main_names)
+            if input_text:
+                main_nickname_input = input_text.strip()
+            elif select_input:
+                main_nickname_input = select_input.strip()
 
         submitted = st.form_submit_button("등록")
 
@@ -902,11 +906,11 @@ if menu == "악마 길드원 정보 등록":
                     "nickname": nickname_input.strip(),
                     "position": position_input.strip(),
                     "note": role,
-                    "main_nickname": main_nickname_input.strip() if role == "부캐" else None
+                    "main_nickname": main_nickname_input if role == "부캐" else None
                 }
 
                 if insert_member(data):
-                    # ✅ 본캐일 경우에만 MainMembers 등록
+                    # ✅ 본캐일 경우만 MainMembers에 자동 등록
                     if role == "본캐":
                         existing_main = supabase.table("MainMembers").select("nickname").eq("nickname", nickname_input.strip()).execute()
                         if not existing_main.data:
