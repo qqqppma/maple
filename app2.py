@@ -875,22 +875,25 @@ if menu == "악마 길드원 정보 등록":
 
     # ✅ 길드원 신규 등록
     st.subheader("길드원 정보 등록")
+
     with st.form("add_member_form"):
         nickname_input = st.text_input("닉네임")
-        position_input = st.text_input("직위")
+        position_input = st.text_input("직위", value="길드원")
+        
+        # ✅ 역할 선택
+        role = st.selectbox("역할 선택", ["본캐", "부캐"])
 
-        role = st.selectbox("역할 선택", ["본캐", "부캐"])  # 기존 note → 역할로 변경
+        # ✅ 본캐 닉네임 입력/선택은 조건부 렌더링
         main_nickname_input = ""
-
         if role == "부캐":
-            main_nickname_input = st.text_input("본캐 닉네임 입력")
-            # 선택도 가능하게
             main_names = [m["nickname"] for m in get_members()]
-            selected_main = st.selectbox("본캐 닉네임 목록에서 선택", [""] + main_names)
+            main_nickname_input = st.text_input("본캐 닉네임 입력 (직접 입력 또는 선택)")
+            selected_main = st.selectbox("본캐 닉네임 선택", [""] + main_names)
             if not main_nickname_input and selected_main:
                 main_nickname_input = selected_main
 
         submitted = st.form_submit_button("등록")
+
         if submitted:
             if nickname_input in df["nickname"].values:
                 st.warning(f"⚠️ '{nickname_input}' 닉네임은 이미 등록되어 있습니다.")
@@ -901,24 +904,26 @@ if menu == "악마 길드원 정보 등록":
                     "note": role,
                     "main_nickname": main_nickname_input.strip() if role == "부캐" else None
                 }
+
                 if insert_member(data):
-                    # ✅ MainMembers 테이블에도 추가
-                    existing_main = supabase.table("MainMembers").select("nickname").eq("nickname", nickname_input.strip()).execute()
-                    if not existing_main.data:
-                        supabase.table("MainMembers").insert({
-                            "nickname": nickname_input.strip(),
-                            "position": position_input.strip() or "길드원",
-                            "suro_score": 0,
-                            "flag_score": 0,
-                            "mission_point": 0,
-                            "event_sum": 0
-                        }).execute()
+                    # ✅ 본캐일 경우에만 MainMembers 등록
+                    if role == "본캐":
+                        existing_main = supabase.table("MainMembers").select("nickname").eq("nickname", nickname_input.strip()).execute()
+                        if not existing_main.data:
+                            supabase.table("MainMembers").insert({
+                                "nickname": nickname_input.strip(),
+                                "position": position_input.strip() or "길드원",
+                                "suro_score": 0,
+                                "flag_score": 0,
+                                "mission_point": 0,
+                                "event_sum": 0
+                            }).execute()
 
                     st.success("✅ 길드원이 등록되었습니다!")
                     st.rerun()
-
                 else:
                     st.error("🚫 등록에 실패했습니다. 데이터를 다시 확인해주세요.")
+
 
                     
 elif menu == "악마길드 길컨관리":
