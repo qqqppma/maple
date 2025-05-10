@@ -897,42 +897,30 @@ if menu == "악마 길드원 정보 등록":
                     "position": position_input.strip()
                 }
 
-                # 부캐일 경우 본캐 닉네임 추가
-                if role == "부캐" and main_nickname_input:
+                # 부캐일 경우 main_nickname 추가
+                if role == "부캐" and main_nickname_input.strip():
                     data["main_nickname"] = main_nickname_input.strip()
 
                 result = insert_member(data)
-                if result:
-                    if role == "본캐":
-                        # 본캐일 경우: 본인 닉네임을 MainMembers에 등록
-                        existing_main = supabase.table("MainMembers").select("nickname").eq("nickname", nickname_input.strip()).execute()
-                        if not existing_main.data:
-                            supabase.table("MainMembers").insert({
-                                "nickname": nickname_input.strip(),
-                                "position": position_input.strip() or "길드원",
-                                "suro_score": 0,
-                                "flag_score": 0,
-                                "mission_point": 0,
-                                "event_sum": 0
-                            }).execute()
 
-                    elif role == "부캐" and main_nickname_input:
-                        # 부캐일 경우: 연결된 본캐가 MainMembers에 없다면 등록
-                        existing_main = supabase.table("MainMembers").select("nickname").eq("nickname", main_nickname_input.strip()).execute()
-                        if not existing_main.data:
-                            supabase.table("MainMembers").insert({
-                                "nickname": main_nickname_input.strip(),
-                                "position": "길드원",
-                                "suro_score": 0,
-                                "flag_score": 0,
-                                "mission_point": 0,
-                                "event_sum": 0
-                            }).execute()
+                if result:
+                    # ✅ 본캐/부캐 관계없이 MainMembers에 무조건 저장
+                    supabase.table("MainMembers").insert({
+                        "nickname": nickname_input.strip(),
+                        "position": position_input.strip() or "길드원",
+                        "suro_score": 0,
+                        "flag_score": 0,
+                        "mission_point": 0,
+                        "event_sum": 0 if role == "부캐" else (
+                            0  # 실제 본캐도 초기값 0, 추후 수동 입력됨
+                        )
+                    }).execute()
 
                     st.success("✅ 길드원이 등록되었습니다!")
                     st.rerun()
                 else:
                     st.error("🚫 등록에 실패했습니다. 입력값을 확인해주세요.")
+
 
 
                     
