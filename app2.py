@@ -887,10 +887,9 @@ if menu == "악마 길드원 정보 등록":
         main_nickname_input = ""
         if role == "부캐":
             main_names = [m["nickname"] for m in get_members()]
-            input_text = st.text_input("본캐 닉네임 직접 입력")
             select_input = st.selectbox("본캐 닉네임 선택", [""] + main_names)
-            if input_text:
-                main_nickname_input = input_text.strip()
+            if select_input:
+                main_nickname_input = select_input.strip()
             elif select_input:
                 main_nickname_input = select_input.strip()
 
