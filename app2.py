@@ -794,7 +794,6 @@ if menu == "악마 길드원 정보 등록":
         df_display = df.rename(columns={
             "nickname": "닉네임",
             "position": "직위",
-            "note": "비고"
         })
 
         # ✅ 전체 보기 토글 상태 관리
@@ -812,10 +811,10 @@ if menu == "악마 길드원 정보 등록":
 
         # ✅ 표 표시 (수정 불가능하게 잠금)
         st.data_editor(
-            df_display[["ID", "닉네임", "직위", "비고"]].reset_index(drop=True),
+            df_display[["ID", "닉네임", "직위"]].reset_index(drop=True),
             use_container_width=True,
             height=height_value,
-            disabled=["ID", "닉네임", "직위", "비고"],
+            disabled=["ID", "닉네임", "직위"],
             key="guild_view_editor"
         )
 
@@ -832,7 +831,6 @@ if menu == "악마 길드원 정보 등록":
             with st.form("edit_form"):
                 nickname_edit = st.text_input("닉네임", selected_row["nickname"])
                 position_edit = st.text_input("직위", selected_row["position"])
-                note_edit = st.text_input("비고", selected_row["note"])
 
                 update_btn = st.form_submit_button("✏️ 수정")
                 delete_btn = st.form_submit_button("🗑 삭제")
