@@ -937,38 +937,45 @@ elif menu == "악마길드 길컨관리":
         # 🔽 부캐 점수를 본캐에 합산
         members = get_members()
         df_member = pd.DataFrame(members)
-        df_main["id"] = [m["id"] for m in mainmembers]  # 실제 id
-        df_main["ID"] = df_main.index + 1               # 표시용 ID
+
+        df_main = pd.DataFrame(mainmembers)
+        df_main["id"] = [m["id"] for m in mainmembers]
+        df_main["ID"] = df_main.index + 1
         id_map = df_main.set_index("ID")["id"].to_dict()
 
-        # ✅ 안전하게 부캐 필터링
+        # ✅ 안전하게 부캐 필터링: 컬럼 존재 + 값 존재 확인
         if "note" in df_member.columns and "main_nickname" in df_member.columns:
             df_sub = df_member[
                 (df_member["note"] == "부캐") &
                 (df_member["main_nickname"].notnull())
             ].copy()
         else:
-            df_sub = pd.DataFrame()  # 컬럼이 없으면 빈 처리
+            df_sub = pd.DataFrame()
 
-        # ✅ 부캐 점수 기본값 처리
+        # ✅ 부캐 점수 컬럼 처리
         for col in ["suro_score", "flag_score", "mission_point"]:
             if col not in df_sub.columns:
                 df_sub[col] = 0
             df_sub[col] = df_sub[col].fillna(0).astype(int)
 
-        # ✅ 본캐 기준으로 부캐 점수 합산
+        # ✅ 본캐 기준 부캐 점수 합산
         sub_sums = df_sub.groupby("main_nickname")[["suro_score", "flag_score", "mission_point"]].sum().reset_index()
 
-        # ✅ 본캐에 부캐 점수 병합
+        # ✅ 부캐 점수 병합
         df_main = df_main.merge(sub_sums, how="left", left_on="nickname", right_on="main_nickname")
 
-        # ✅ 점수 합산 처리
+        # ✅ 본캐 점수 처리 (안전하게)
         for col in ["suro_score", "flag_score", "mission_point"]:
-            df_main[col] = df_main[col].fillna(0).astype(int)  # 본캐 점수
-            df_main[f"{col}_sub"] = df_main.get(col + "_y", 0).fillna(0).astype(int)
-            df_main[col] = df_main[col] + df_main[f"{col}_sub"]
+            if col not in df_main.columns:
+                df_main[col] = 0
+            df_main[col] = df_main[col].fillna(0).astype(int)
 
-        # ✅ 불필요한 컬럼 제거
+            sub_col = col + "_y"
+            if sub_col in df_main.columns:
+                df_main[f"{col}_sub"] = df_main[sub_col].fillna(0).astype(int)
+                df_main[col] = df_main[col] + df_main[f"{col}_sub"]
+
+        # ✅ 정리
         df_main.drop(columns=[c for c in df_main.columns if "_y" in c or "_sub" in c or c == "main_nickname"], inplace=True)
 
         # ✅ 합계 점수 계산
@@ -985,6 +992,7 @@ elif menu == "악마길드 길컨관리":
         ).reset_index(drop=True)
 
         df_main["ID"] = df_main.index + 1
+
 
         id_map = df_main.set_index("ID")["id"].to_dict()
 
