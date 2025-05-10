@@ -902,17 +902,16 @@ if menu == "악마 길드원 정보 등록":
                 result = insert_member(data)
                 if result:
                     # ✅ 본캐일 경우에만 MainMembers 테이블 자동 추가
-                    if role == "본캐":
-                        existing_main = supabase.table("MainMembers").select("nickname").eq("nickname", nickname_input.strip()).execute()
-                        if not existing_main.data:
-                            supabase.table("MainMembers").insert({
-                                "nickname": nickname_input.strip(),
-                                "position": position_input.strip() or "길드원",
-                                "suro_score": 0,
-                                "flag_score": 0,
-                                "mission_point": 0,
-                                "event_sum": 0
-                            }).execute()
+                    existing_main = supabase.table("MainMembers").select("nickname").eq("nickname", nickname_input.strip()).execute()
+                    if not existing_main.data:
+                        supabase.table("MainMembers").insert({
+                            "nickname": nickname_input.strip(),
+                            "position": position_input.strip() or "길드원",
+                            "suro_score": 0,
+                            "flag_score": 0,
+                            "mission_point": 0,
+                            "event_sum": 0
+                        }).execute()
 
                     st.success("✅ 길드원이 등록되었습니다!")
                     st.rerun()
