@@ -763,8 +763,6 @@ if "user" in st.session_state:
 
         <div class="event-popup">
             <img src="data:image/png;base64,{base64_img}" alt="로또 이벤트">
-            <h4>🎉 로또 이벤트</h4>
-            <p>길드에서 진행 중인 특별한 이벤트!<br>지금 참여하고 보상을 받아보세요 ✨</p>
         </div>
         """, unsafe_allow_html=True)
         
