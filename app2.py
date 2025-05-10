@@ -878,7 +878,17 @@ if menu == "악마 길드원 정보 등록":
     with st.form("add_member_form"):
         nickname_input = st.text_input("닉네임")
         position_input = st.text_input("직위")
-        note = st.text_input("비고")
+
+        role = st.selectbox("역할 선택", ["본캐", "부캐"])  # 기존 note → 역할로 변경
+        main_nickname_input = ""
+
+        if role == "부캐":
+            main_nickname_input = st.text_input("본캐 닉네임 입력")
+            # 선택도 가능하게
+            main_names = [m["nickname"] for m in get_members()]
+            selected_main = st.selectbox("본캐 닉네임 목록에서 선택", [""] + main_names)
+            if not main_nickname_input and selected_main:
+                main_nickname_input = selected_main
 
         submitted = st.form_submit_button("등록")
         if submitted:
@@ -886,9 +896,10 @@ if menu == "악마 길드원 정보 등록":
                 st.warning(f"⚠️ '{nickname_input}' 닉네임은 이미 등록되어 있습니다.")
             else:
                 data = {
-                    "nickname": nickname_input,
-                    "position": position_input,
-                    "note": note,
+                    "nickname": nickname_input.strip(),
+                    "position": position_input.strip(),
+                    "note": role,
+                    "main_nickname": main_nickname_input.strip() if role == "부캐" else None
                 }
                 if insert_member(data):
                     # ✅ MainMembers 테이블에도 추가
@@ -896,7 +907,7 @@ if menu == "악마 길드원 정보 등록":
                     if not existing_main.data:
                         supabase.table("MainMembers").insert({
                             "nickname": nickname_input.strip(),
-                            "position": position_input or "길드원",
+                            "position": position_input.strip() or "길드원",
                             "suro_score": 0,
                             "flag_score": 0,
                             "mission_point": 0,
@@ -905,6 +916,7 @@ if menu == "악마 길드원 정보 등록":
 
                     st.success("✅ 길드원이 등록되었습니다!")
                     st.rerun()
+
                 else:
                     st.error("🚫 등록에 실패했습니다. 데이터를 다시 확인해주세요.")
 
@@ -923,33 +935,35 @@ elif menu == "악마길드 길컨관리":
         df_main["id"] = [m["id"] for m in mainmembers]  # ✅ id 컬럼 명시적으로 설정
 
         # 🔽 부캐 점수를 본캐에 합산
-        submembers = get_submembers()
-        df_sub = pd.DataFrame(submembers)
+        members = get_members()
+        df_member = pd.DataFrame(members)
         df_main["id"] = [m["id"] for m in mainmembers]  # 실제 id
         df_main["ID"] = df_main.index + 1               # 표시용 ID
         id_map = df_main.set_index("ID")["id"].to_dict()
 
-        if not df_sub.empty:
-            sub_sums = df_sub.groupby("main_name")[["suro_score", "flag_score", "mission_point"]].sum().reset_index()
-            df_main = df_main.merge(sub_sums, how="left", left_on="nickname", right_on="main_name")
+        # 부캐만 필터링
+        df_sub = df_member[df_member["note"] == "부캐"].copy()
+        df_sub = df_sub[df_sub["main_nickname"].notnull()]
 
-            for col in ["suro_score", "flag_score", "mission_point"]:
-                if col + "_x" in df_main.columns and col + "_y" in df_main.columns:
-                    df_main[col + "_x"] = df_main[col + "_x"].fillna(0)
-                    df_main[col + "_y"] = df_main[col + "_y"].fillna(0)
-                    df_main[col] = df_main[col + "_x"] + df_main[col + "_y"]
-
-            drop_cols = [col for col in [
-                "main_name",
-                "suro_score_x", "suro_score_y",
-                "flag_score_x", "flag_score_y",
-                "mission_point_x", "mission_point_y"
-            ] if col in df_main.columns]
-            df_main.drop(columns=drop_cols, inplace=True)
-
-        # ✅ 점수 형변환
+        # 부캐 점수 기본값 처리
         for col in ["suro_score", "flag_score", "mission_point"]:
-            df_main[col] = df_main[col].fillna(0).astype(int)
+            if col not in df_sub.columns:
+                df_sub[col] = 0
+            df_sub[col] = df_sub[col].fillna(0).astype(int)
+
+        # 본캐 기준으로 부캐 점수 합산
+        sub_sums = df_sub.groupby("main_nickname")[["suro_score", "flag_score", "mission_point"]].sum().reset_index()
+
+        # 본캐에 합산 점수 더하기
+        df_main = df_main.merge(sub_sums, how="left", left_on="nickname", right_on="main_nickname")
+
+        for col in ["suro_score", "flag_score", "mission_point"]:
+            df_main[col] = df_main[col].fillna(0).astype(int)  # 본캐 점수
+            df_main[f"{col}_sub"] = df_main.get(col + "_y", 0).fillna(0).astype(int)
+            df_main[col] = df_main[col] + df_main[f"{col}_sub"]
+
+        # 불필요한 컬럼 제거
+        df_main.drop(columns=[c for c in df_main.columns if "_y" in c or "_sub" in c or c == "main_nickname"], inplace=True, errors="ignore")
 
         # ✅ 합계 계산
         df_main["event_sum"] = (
@@ -965,6 +979,7 @@ elif menu == "악마길드 길컨관리":
         ).reset_index(drop=True)
 
         df_main["ID"] = df_main.index + 1
+
         id_map = df_main.set_index("ID")["id"].to_dict()
 
         df_display = df_main[["ID", "nickname", "position", "suro_score", "flag_score", "mission_point", "event_sum"]].copy()
