@@ -941,34 +941,34 @@ elif menu == "악마길드 길컨관리":
         df_main["ID"] = df_main.index + 1               # 표시용 ID
         id_map = df_main.set_index("ID")["id"].to_dict()
 
-        # 부캐만 필터링 (note == '부캐' + 본캐 연결 + 악마 길드 소속만)
+        # ✅ 부캐만 필터링: note == "부캐" and main_nickname이 존재
         df_sub = df_member[
             (df_member["note"] == "부캐") &
-            (df_member["main_nickname"].notnull()) &
-            (df_member["guild_name1"] == "악마")
+            (df_member["main_nickname"].notnull())
         ].copy()
 
-        # 부캐 점수 기본값 처리
+        # ✅ 부캐 점수 기본값 처리
         for col in ["suro_score", "flag_score", "mission_point"]:
             if col not in df_sub.columns:
                 df_sub[col] = 0
             df_sub[col] = df_sub[col].fillna(0).astype(int)
 
-        # 본캐 기준으로 부캐 점수 합산
+        # ✅ 본캐 기준으로 부캐 점수 합산
         sub_sums = df_sub.groupby("main_nickname")[["suro_score", "flag_score", "mission_point"]].sum().reset_index()
 
-        # 본캐에 합산 점수 더하기
+        # ✅ 본캐에 부캐 점수 병합
         df_main = df_main.merge(sub_sums, how="left", left_on="nickname", right_on="main_nickname")
 
+        # ✅ 점수 합산 처리
         for col in ["suro_score", "flag_score", "mission_point"]:
-            df_main[col] = df_main[col].fillna(0).astype(int)
-            df_main[f"{col}_sub"] = df_main.get(f"{col}_y", 0).fillna(0).astype(int)
+            df_main[col] = df_main[col].fillna(0).astype(int)  # 본캐 점수
+            df_main[f"{col}_sub"] = df_main.get(col + "_y", 0).fillna(0).astype(int)
             df_main[col] = df_main[col] + df_main[f"{col}_sub"]
 
-        # 불필요한 컬럼 제거
+        # ✅ 불필요한 컬럼 제거
         df_main.drop(columns=[c for c in df_main.columns if "_y" in c or "_sub" in c or c == "main_nickname"], inplace=True)
 
-        # ✅ 합계 계산
+        # ✅ 합계 점수 계산
         df_main["event_sum"] = (
             (df_main["suro_score"] // 5000) +
             (df_main["flag_score"] // 1000) +
