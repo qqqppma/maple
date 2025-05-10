@@ -871,10 +871,7 @@ if menu == "악마 길드원 정보 등록":
     else:
         st.info("아직 등록된 길드원이 없습니다.")
 
-    # ✅ 길드원 신규 등록
-    st.subheader("길드원 정보 등록")
-
-    # ✅ 역할 선택 (즉시 반응을 위해 form 밖에 둠)
+   # ✅ 역할 선택 (폼 밖에서 즉시 반응 가능하도록)
     role = st.selectbox("역할 선택", ["본캐", "부캐"], key="role_selector")
 
     # ✅ 길드원 등록 폼
@@ -887,27 +884,24 @@ if menu == "악마 길드원 정보 등록":
         main_nickname_input = ""
         if role == "부캐":
             main_names = [m["nickname"] for m in get_members()]
-            select_input = st.selectbox("본캐 닉네임 선택", [""] + main_names)
-            if select_input:
-                main_nickname_input = select_input.strip()
-            elif select_input:
-                main_nickname_input = select_input.strip()
+            main_nickname_input = st.selectbox("본캐 닉네임 선택", [""] + main_names)
 
         submitted = st.form_submit_button("등록")
 
         if submitted:
-            if nickname_input in df["nickname"].values:
+            if nickname_input.strip() in df["nickname"].values:
                 st.warning(f"⚠️ '{nickname_input}' 닉네임은 이미 등록되어 있습니다.")
             else:
                 data = {
                     "nickname": nickname_input.strip(),
                     "position": position_input.strip(),
                     "note": role,
-                    "main_nickname": main_nickname_input if role == "부캐" else None
+                    "main_nickname": main_nickname_input.strip() if role == "부캐" and main_nickname_input else None
                 }
 
-                if insert_member(data):
-                    # ✅ 본캐일 경우만 MainMembers에 자동 등록
+                result = insert_member(data)
+                if result:
+                    # ✅ 본캐일 경우에만 MainMembers 테이블 자동 추가
                     if role == "본캐":
                         existing_main = supabase.table("MainMembers").select("nickname").eq("nickname", nickname_input.strip()).execute()
                         if not existing_main.data:
@@ -923,7 +917,7 @@ if menu == "악마 길드원 정보 등록":
                     st.success("✅ 길드원이 등록되었습니다!")
                     st.rerun()
                 else:
-                    st.error("🚫 등록에 실패했습니다. 데이터를 다시 확인해주세요.")
+                    st.error("🚫 등록에 실패했습니다. 입력값을 확인해주세요.")
 
 
                     
