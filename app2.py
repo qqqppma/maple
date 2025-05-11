@@ -1324,18 +1324,18 @@ elif menu == "부캐릭터 관리":
                     key=f"editor_{main}"
                 )
 
-                if st.button(f"💾 `{main}` 수정 내용 저장", key=f"btn_save_{main}"):
-                    for idx, row in editable_df.iterrows():
-                        sub_id = df_main.iloc[idx]["sub_id"]
-                        update_data = {
-                            "guild_name1": row["부캐 길드"],
-                            "suro_score": row["수로 점수"],
-                            "flag_score": row["플래그 점수"],
-                            "mission_point": row["주간미션포인트"]
-                        }
-                        update_submember(sub_id, update_data)
-                    st.success(f"✅ {main} 부캐 정보 수정 완료!")
-                    st.rerun()
+                # if st.button(f"💾 `{main}` 수정 내용 저장", key=f"btn_save_{main}"):
+                #     for idx, row in editable_df.iterrows():
+                #         sub_id = df_main.iloc[idx]["sub_id"]
+                #         update_data = {
+                #             "guild_name1": row["부캐 길드"],
+                #             "suro_score": row["수로 점수"],
+                #             "flag_score": row["플래그 점수"],
+                #             "mission_point": row["주간미션포인트"]
+                #         }
+                #         update_submember(sub_id, update_data)
+                #     st.success(f"✅ {main} 부캐 정보 수정 완료!")
+                #     st.rerun()
 
                 # ✅ 관리자 전용 확장 수정
                 with st.expander(f"✏️ {main} 부캐 수정"):
