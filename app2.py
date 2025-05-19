@@ -946,30 +946,45 @@ elif menu == "악마길드 길컨관리":
         df_main["ID"] = df_main.index + 1
         id_map = df_main.set_index("ID")["id"].to_dict()
 
-        # ✅ 안전하게 부캐 필터링: note 없이 필터링
+        # ✅ MainMembers 닉네임 목록 확보
+        main_nicknames = df_main["nickname"].astype(str).str.strip().unique().tolist()
+
+        # ✅ Members 테이블에서: 본인이 MainMembers에 등록된 부캐만 필터링
         if "main_nickname" in df_member.columns:
-            df_sub = df_member[df_member["main_nickname"].notnull()].copy()
+            df_member["nickname"] = df_member["nickname"].astype(str).str.strip()
+            df_member["main_nickname"] = df_member["main_nickname"].astype(str).str.strip()
+
+            # 👉 부캐 조건: nickname이 MainMembers에 등록되어 있고, main_nickname이 존재하는 경우만
+            df_sub = df_member[
+                df_member["nickname"].isin(main_nicknames) & 
+                df_member["main_nickname"].notnull()
+            ].copy()
         else:
             df_sub = pd.DataFrame()
 
-
-        # ✅ 부캐 점수 컬럼 처리
+        # ✅ 점수 컬럼 누락 방지 및 정수화
         for col in ["suro_score", "flag_score", "mission_point"]:
             if col not in df_sub.columns:
                 df_sub[col] = 0
             df_sub[col] = df_sub[col].fillna(0).astype(int)
 
-        # ✅ 본캐 기준 부캐 점수 합산
+        # ✅ 부캐 점수 합산
         sub_sums = df_sub.groupby("main_nickname")[["suro_score", "flag_score", "mission_point"]].sum().reset_index()
 
-        # ✅ 병합 전 공백 제거
+        # ✅ 병합 전 문자열 공백 제거
         df_main["nickname"] = df_main["nickname"].astype(str).str.strip()
         sub_sums["main_nickname"] = sub_sums["main_nickname"].astype(str).str.strip()
 
         # ✅ 부캐 점수 병합
-        df_main = df_main.merge(sub_sums, how="left", left_on="nickname", right_on="main_nickname",suffixes=('', '_sub'))
+        df_main = df_main.merge(
+            sub_sums,
+            how="left",
+            left_on="nickname",
+            right_on="main_nickname",
+            suffixes=('', '_sub')
+        )
 
-        # ✅ 본캐 점수 처리 (안전하게)
+        # ✅ 본캐 점수와 부캐 점수 합산
         for col in ["suro_score", "flag_score", "mission_point"]:
             if col not in df_main.columns:
                 df_main[col] = 0
@@ -977,11 +992,12 @@ elif menu == "악마길드 길컨관리":
 
             sub_col = col + "_sub"
             if sub_col in df_main.columns:
-                df_main[f"{col}_sub"] = df_main[sub_col].fillna(0).astype(int)
-                df_main[col] = df_main[col] + df_main[f"{col}_sub"]
+                df_main[sub_col] = df_main[sub_col].fillna(0).astype(int)
+                df_main[col] = df_main[col] + df_main[sub_col]
 
-        # ✅ 정리
-        df_main.drop(columns=[c for c in df_main.columns if "_y" in c or "_sub" in c or c == "main_nickname"], inplace=True)
+        # ✅ 불필요한 컬럼 정리
+        df_main.drop(columns=[c for c in df_main.columns if "_sub" in c or c == "main_nickname"], inplace=True)
+
 
         # ✅ 합계 점수 계산
         df_main["event_sum"] = (
