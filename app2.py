@@ -2230,7 +2230,7 @@ elif menu == "마니또 관리":
                 ]
                 selected_title = st.selectbox("🔍 열람할 기록 선택", ["열람할 기록이 없습니다."] + log_titles)
 
-                if selected_title != "선택하지 않음":
+                if selected_title in log_titles:
                     selected_log = logs[log_titles.index(selected_title)]
                     created_at_kst = datetime.fromisoformat(selected_log['created_at']).astimezone(kst).strftime('%Y-%m-%d %H:%M:%S')
 
