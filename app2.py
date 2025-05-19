@@ -1412,6 +1412,20 @@ elif menu == "이벤트 이미지 등록":
                 os.makedirs(image_folder, exist_ok=True)
                 save_path = os.path.join(image_folder, saved_filename)
 
+                # ✅ 이미지 열고 리사이즈
+                image = Image.open(uploaded_file)
+                width, height = image.size
+
+                # ✅ 세로 최대 800 제한 (비율 유지)
+                if height > 800:
+                    new_height = 800
+                    new_width = int(width * (800 / height))
+                    image = image.resize((new_width, new_height), Image.ANTIALIAS)
+
+                # ✅ 저장
+                image.save(save_path)
+                st.image(save_path, caption="업로드된 이미지", use_column_width=True)
+
                 with open(save_path, "wb") as f:
                     f.write(uploaded_file.read())
 
