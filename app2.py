@@ -924,8 +924,8 @@ if menu == "악마 길드원 정보 등록":
 
 
                     
-elif menu == "악마길드 길어쿠롤 관리":
-    st.subheader("👥 악마길드 길드쿠롤 관리")
+elif menu == "악마길드 길컨 관리":
+    st.subheader("👥 악마길드 길컨 관리")
 
     mainmembers = get_mainmembers()
     members = get_members()
