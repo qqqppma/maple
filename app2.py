@@ -1161,9 +1161,6 @@ elif menu == "부캐릭터 관리":
         selected_main = st.selectbox("본캐 닉네임 선택", main_names)
         guild_name1 = st.selectbox("길드 이름", guild_options)
         sub_name = st.text_input("부캐 이름")
-        suro_score = st.number_input("수로 점수", min_value=0, step=1)
-        flag_score = st.number_input("플래그 점수", min_value=0, step=1)
-        mission_point = st.number_input("주간미션포인트", min_value=0, step=1)
         submit_sub = st.form_submit_button("부캐 등록")
 
         if submit_sub:
@@ -1177,9 +1174,9 @@ elif menu == "부캐릭터 관리":
                     "guild_name1": guild_name1,
                     "sub_name": sub_name,
                     "main_name": selected_main,
-                    "suro_score": suro_score,
-                    "flag_score": flag_score,
-                    "mission_point": mission_point,
+                    "suro_score": 0,
+                    "flag_score": 0,
+                    "mission_point": 0,
                     "created_by": nickname
                 }
                 if insert_submember(data):
