@@ -1064,16 +1064,30 @@ elif menu == "악마길드 길컨관리":
                         st.warning(f"❗ ID 매핑 실패: {idx}")
                         continue
 
-                    updated = {eng: row[kor] for kor, eng in column_map.items()}
+                    # ✅ None/NaN 방지: NaN이면 0으로, 아니면 int로 변환
+                    updated = {}
+                    for kor, eng in column_map.items():
+                        if kor in row:
+                            val = row[kor]
+                            updated[eng] = int(val) if pd.notnull(val) else 0
+
+                    # ✅ event_sum 다시 계산하여 저장
+                    updated["event_sum"] = (
+                        (updated["suro_score"] // 5000) +
+                        (updated["flag_score"] // 1000) +
+                        (updated["mission_point"] // 10)
+                    )
+
+                    # ✅ 기존값과 다를 때만 저장
                     original = df_main[df_main["id"] == row_id][original_cols].iloc[0]
-                    if not original.equals(pd.Series(updated)):
+                    if not original.equals(pd.Series({k: updated[k] for k in original_cols})):
                         success = update_mainmember(row_id, updated)
                         if success:
                             st.success(f"✅ `{row['닉네임']}` 수정 완료")
                         else:
-                            st.error(f"❌ `{row['닉네임']}` 수정 실패: {updated}")
-                            st.code(f"패치 URL: {SUPABASE_URL}/rest/v1/MainMembers?id=eq.{row_id}")
+                            st.error(f"❌ `{row['닉네임']}` 수정 실패")
                 st.rerun()
+
             st.markdown('</div>', unsafe_allow_html=True)
 
         for i in [1, 2]:
