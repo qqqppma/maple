@@ -773,7 +773,7 @@ if st.session_state.get("is_admin"):
     menu_options.extend(["악마 길드원 정보 등록", "악마길드 길컨관리", "부캐릭터 관리","마니또 관리","이벤트 이미지 등록"])
 
 # 모든 사용자에게 보이는 메뉴
-menu_options.extend(["부캐릭터 등록", "보조대여 신청", "드메템 대여 신청","마니또 기록","이벤트 목록"])
+menu_options.extend(["부캐릭터 등록", "보조대여 신청", "드메템 대여 신청","마니또 기록","이벤트 페이지"])
 
 menu = st.sidebar.radio("메뉴", menu_options)
 
@@ -1382,12 +1382,12 @@ elif menu == "부캐릭터 관리":
 elif menu == "이벤트 이미지 등록":
     st.subheader("🎯 이벤트 배너 등록 및 수정")
 
-    # ✅ 공통 이미지 폴더 설정
     image_folder = "이벤트이미지폴더"
     available_images = ["이미지 없음"] + [
         f for f in os.listdir(image_folder)
         if f.lower().endswith((".png", ".jpg", ".jpeg"))
     ]
+    status_options = ["예정", "진행중", "완료"]
 
     # --------------------------
     # 📌 신규 이벤트 등록 섹션
@@ -1397,8 +1397,8 @@ elif menu == "이벤트 이미지 등록":
     new_title = st.text_input("이벤트 제목을 입력하세요", key="reg_title")
     new_desc = st.text_area("이벤트 설명을 입력하세요", key="reg_desc")
     new_image = st.selectbox("이벤트 이미지 선택", available_images, key="reg_image")
-    st.info('''
-            🔹 등록하기 누르면 안된거 같아도 올라간거에요''')
+    new_status = st.selectbox("이벤트 상태 선택", status_options, index=0, key="reg_status")
+    st.info("🔹 등록하기 누르면 안된거 같아도 올라간거에요")
 
     if st.button("📤 등록하기", key="reg_submit"):
         if not new_title:
@@ -1407,11 +1407,12 @@ elif menu == "이벤트 이미지 등록":
             data = {
                 "title": new_title,
                 "description": new_desc,
-                "image_file_name": None if new_image == "이미지 없음" else new_image
+                "image_file_name": None if new_image == "이미지 없음" else new_image,
+                "status": new_status
             }
             res = supabase.table("EventBanners").insert(data).execute()
             if res.data:
-                st.session_state["event_created"] = True  # ✅ 등록 완료 플래그
+                st.session_state["event_created"] = True
                 st.rerun()
             else:
                 st.error("❌ 등록 실패. 다시 시도해주세요.")
@@ -1432,7 +1433,6 @@ elif menu == "이벤트 이미지 등록":
         selected_name = st.selectbox("수정할 이벤트 선택", display_names, key="edit_selector")
         selected_event = next((ev for ev in event_list if f"{ev['title']} ({ev['id']})" == selected_name), None)
 
-        # ✅ 이 부분은 그대로 유지
         if selected_event:
             edited_title = st.text_input("제목 수정", value=selected_event["title"], key="edit_title")
             edited_desc = st.text_area("내용 수정", value=selected_event.get("description", ""), key="edit_desc")
@@ -1440,8 +1440,10 @@ elif menu == "이벤트 이미지 등록":
                                         index=available_images.index(selected_event.get("image_file_name", "이미지 없음"))
                                         if selected_event.get("image_file_name") in available_images else 0,
                                         key="edit_image")
+            edited_status = st.selectbox("이벤트 상태 수정", status_options,
+                                         index=status_options.index(selected_event.get("status", "예정")),
+                                         key="edit_status")
 
-            # ✅ 여기서부터 통째로 바꿔줘
             col1, col2 = st.columns(2)
 
             with col1:
@@ -1449,7 +1451,8 @@ elif menu == "이벤트 이미지 등록":
                     update_data = {
                         "title": edited_title,
                         "description": edited_desc,
-                        "image_file_name": None if edited_image == "이미지 없음" else edited_image
+                        "image_file_name": None if edited_image == "이미지 없음" else edited_image,
+                        "status": edited_status
                     }
                     update_res = supabase.table("EventBanners").update(update_data).eq("id", selected_event["id"]).execute()
                     if update_res:
@@ -1466,7 +1469,6 @@ elif menu == "이벤트 이미지 등록":
                         st.rerun()
                     else:
                         st.error("❌ 삭제 실패. 다시 시도해주세요.")
-
 
 
 elif menu == "부캐릭터 등록":
@@ -2399,54 +2401,69 @@ elif menu == "마니또 기록":
                         st.success("🧹 삭제 완료")
                         st.rerun()
 
-elif menu == "이벤트 목록":
-    st.subheader("📅 진행 중인 길드 이벤트")
+elif menu == "이벤트 페이지":
+    st.subheader("🎪 이벤트 페이지")
 
-    try:
-        res = supabase.table("EventBanners").select("*").order("id", desc=True).execute()
-        event_list = res.data if res.data else []
-    except Exception as e:
-        st.error("❌ 이벤트 목록 불러오기 실패")
-        event_list = []
+    tabs = st.tabs(["🕒 진행 예정", "✅ 진행 중", "⏹ 완료"])
 
-    selected_event = st.session_state.get("selected_event")
-    if selected_event:
-        selected = next((ev for ev in event_list if ev["id"] == selected_event), None)
-        if selected:
-            st.markdown(f"## {selected['title']}")
-            st.markdown(selected.get("description", ""))
+    def render_event_list(events, state_key):
+        selected_event = st.session_state.get(state_key)
+        if selected_event:
+            selected = next((ev for ev in events if ev["id"] == selected_event), None)
+            if selected:
+                st.markdown(f"## {selected['title']}")
+                st.markdown(selected.get("description", ""))
 
-            image_name = selected.get("image_file_name")
-            if image_name and image_name.lower() != "이미지 없음":
-                image_path = os.path.join("이벤트이미지폴더", image_name)
-                if os.path.exists(image_path):
-                    st.image(image_path, width=500)
-                else:
-                    st.warning("❗ 이미지 파일이 존재하지 않습니다.")
+                image_name = selected.get("image_file_name")
+                if image_name and image_name.lower() != "이미지 없음":
+                    image_path = os.path.join("이벤트이미지폴더", image_name)
+                    if os.path.exists(image_path):
+                        st.image(image_path, width=500)
+                    else:
+                        st.warning("❗ 이미지 파일이 존재하지 않습니다.")
 
-            if st.button("← 목록으로 돌아가기"):
-                del st.session_state["selected_event"]
-                st.rerun()
+                if st.button("← 목록으로 돌아가기", key=f"back_{state_key}"):
+                    del st.session_state[state_key]
+                    st.rerun()
+            else:
+                st.warning("선택한 이벤트를 찾을 수 없습니다.")
         else:
-            st.warning("선택한 이벤트를 찾을 수 없습니다.")
-    else:
-        for i in range(0, len(event_list), 3):
-            cols = st.columns(3)
-            for j, col in enumerate(cols):
-                if i + j < len(event_list):
-                    ev = event_list[i + j]
-                    with col:
-                        image_name = ev.get("image_file_name")
-                        if image_name and image_name.lower() != "이미지 없음":
-                            image_path = os.path.join("이벤트이미지폴더", image_name)
-                            if os.path.exists(image_path):
-                                st.image(image_path, width=300)
-                            else:
-                                st.warning("❗ 이미지 없음")
-                        st.markdown(f"**{ev['title']}**")
-                        if st.button("자세히 보기", key=f"event_detail_{ev['id']}"):
-                            st.session_state["selected_event"] = ev["id"]
-                            st.rerun()
+            for i in range(0, len(events), 3):
+                cols = st.columns(3)
+                for j, col in enumerate(cols):
+                    if i + j < len(events):
+                        ev = events[i + j]
+                        with col:
+                            image_name = ev.get("image_file_name")
+                            if image_name and image_name.lower() != "이미지 없음":
+                                image_path = os.path.join("이벤트이미지폴더", image_name)
+                                if os.path.exists(image_path):
+                                    st.image(image_path, width=300)
+                                else:
+                                    st.warning("❗ 이미지 없음")
+                            st.markdown(f"**{ev['title']}**")
+                            if st.button("자세히 보기", key=f"{state_key}_detail_{ev['id']}"):
+                                st.session_state[state_key] = ev["id"]
+                                st.rerun()
+
+    # 🔽 탭별 Supabase 상태 필터링 및 출력
+    tab_infos = [
+        ("예정", tabs[0], "selected_event_future"),
+        ("진행중", tabs[1], "selected_event_ing"),
+        ("완료", tabs[2], "selected_event_done")
+    ]
+
+    for status_value, tab, session_key in tab_infos:
+        with tab:
+            st.markdown(f"### 📌 {status_value} 이벤트")
+            try:
+                res = supabase.table("EventBanners").select("*").eq("status", status_value).order("id", desc=True).execute()
+                event_list = res.data if res.data else []
+            except Exception:
+                st.error("❌ 이벤트 목록 불러오기 실패")
+                event_list = []
+
+            render_event_list(event_list, session_key)
 
 
 
