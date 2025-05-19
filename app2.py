@@ -1440,9 +1440,9 @@ elif menu == "이벤트 이미지 등록":
     if not event_list:
         st.info("등록된 이벤트가 없습니다.")
     else:
-        display_names = [f"{ev['title']} ({ev['id']})" for ev in event_list]
+        display_names = [f"{ev['title']})" for ev in event_list]
         selected_name = st.selectbox("수정할 이벤트 선택", display_names, key="edit_selector")
-        selected_event = next((ev for ev in event_list if f"{ev['title']} ({ev['id']})" == selected_name), None)
+        selected_event = next((ev for ev in event_list if f"{ev['title']}" == selected_name), None)
 
         if selected_event:
             edited_title = st.text_input("제목 수정", value=selected_event["title"], key="edit_title")
