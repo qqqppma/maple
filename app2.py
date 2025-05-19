@@ -963,7 +963,7 @@ elif menu == "악마길드 길컨관리":
         sub_sums = df_sub.groupby("main_nickname")[["suro_score", "flag_score", "mission_point"]].sum().reset_index()
 
         # ✅ 부캐 점수 병합
-        df_main = df_main.merge(sub_sums, how="left", left_on="nickname", right_on="main_nickname")
+        df_main = df_main.merge(sub_sums, how="left", left_on="nickname", right_on="main_nickname",suffixes=('', '_sub'))
 
         # ✅ 본캐 점수 처리 (안전하게)
         for col in ["suro_score", "flag_score", "mission_point"]:
@@ -1058,24 +1058,14 @@ elif menu == "악마길드 길컨관리":
         with button_cols[0]:
             st.markdown('<div class="uniform-btn">', unsafe_allow_html=True)
             if st.button("💾 저장", key="save_main_edit"):
-                def safe_int(v):
-                    try:
-                        return int(v)
-                    except (ValueError, TypeError):
-                        return 0
                 for idx, row in edited_df.iterrows():
                     row_id = id_map.get(idx)
                     if not row_id:
                         st.warning(f"❗ ID 매핑 실패: {idx}")
                         continue
 
-                    # ✅ None/NaN 방지: NaN이면 0으로, 아니면 int로 변환
-                    updated = {}
-                    for kor, eng in column_map.items():
-                        if kor in row:
-                            val = row[kor]
-                            updated[eng] = int(val) if pd.notnull(val) else 0
-
+                    updated = {eng: row[kor] for kor, eng in column_map.items() if kor in row}
+                    
                     # ✅ event_sum 다시 계산하여 저장
                     updated["event_sum"] = (
                         (updated["suro_score"] // 5000) +
@@ -1083,7 +1073,6 @@ elif menu == "악마길드 길컨관리":
                         (updated["mission_point"] // 10)
                     )
 
-                    # ✅ 기존값과 다를 때만 저장
                     original = df_main[df_main["id"] == row_id][original_cols].iloc[0]
                     if not original.equals(pd.Series({k: updated[k] for k in original_cols})):
                         success = update_mainmember(row_id, updated)
@@ -1092,7 +1081,6 @@ elif menu == "악마길드 길컨관리":
                         else:
                             st.error(f"❌ `{row['닉네임']}` 수정 실패")
                 st.rerun()
-
             st.markdown('</div>', unsafe_allow_html=True)
 
         for i in [1, 2]:
