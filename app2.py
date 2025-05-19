@@ -1447,9 +1447,9 @@ elif menu == "이벤트 이미지 등록":
         if selected_event:
             edited_title = st.text_input("제목 수정", value=selected_event["title"], key="edit_title")
             edited_desc = st.text_area("내용 수정", value=selected_event.get("description", ""), key="edit_desc")
-            edited_image = st.selectbox("이미지 수정", available_images,
-                                        index=available_images.index(selected_event.get("image_file_name", "이미지 없음"))
-                                        if selected_event.get("image_file_name") in available_images else 0,
+            edited_image = st.selectbox("이미지 수정", saved_filename,
+                                        index=saved_filename.index(selected_event.get("image_file_name", "이미지 없음"))
+                                        if selected_event.get("image_file_name") in saved_filename else 0,
                                         key="edit_image")
             edited_status = st.selectbox("이벤트 상태 수정", status_options,
                                          index=status_options.index(selected_event.get("status", "예정")),
