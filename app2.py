@@ -1405,17 +1405,18 @@ elif menu == "이벤트 이미지 등록":
         else:
             saved_filename = None
             if uploaded_file:
-                # 무조건 안전하게: uuid로 저장하고, 확장자만 유지
-                ext = os.path.splitext(uploaded_file.name)[1]  # .png, .jpg
-                saved_filename = f"{uuid.uuid4().hex}{ext}"
+                ext = os.path.splitext(uploaded_file.name)[1]  # .png, .jpg 등 확장자 유지
+                saved_filename = f"{uuid.uuid4().hex}{ext}"  # 영어로만 구성된 안전한 이름
 
-                save_path = os.path.join("이벤트이미지폴더", saved_filename)
+                image_folder = "이벤트이미지폴더"
+                os.makedirs(image_folder, exist_ok=True)
+                save_path = os.path.join(image_folder, saved_filename)
+
                 with open(save_path, "wb") as f:
                     f.write(uploaded_file.read())
 
-            # Supabase insert
             data = {
-                "title": new_title,
+                "title": new_title,  # 사용자가 입력한 한글 제목
                 "description": new_desc,
                 "image_file_name": saved_filename or "이미지 없음",
                 "status": new_status
