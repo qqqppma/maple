@@ -971,7 +971,7 @@ elif menu == "악마길드 길컨관리":
                 df_main[col] = 0
             df_main[col] = df_main[col].fillna(0).astype(int)
 
-            sub_col = col + "_y"
+            sub_col = col + "_sub"
             if sub_col in df_main.columns:
                 df_main[f"{col}_sub"] = df_main[sub_col].fillna(0).astype(int)
                 df_main[col] = df_main[col] + df_main[f"{col}_sub"]
