@@ -1058,6 +1058,11 @@ elif menu == "악마길드 길컨관리":
         with button_cols[0]:
             st.markdown('<div class="uniform-btn">', unsafe_allow_html=True)
             if st.button("💾 저장", key="save_main_edit"):
+                def safe_int(v):
+                    try:
+                        return int(v)
+                    except (ValueError, TypeError):
+                        return 0
                 for idx, row in edited_df.iterrows():
                     row_id = id_map.get(idx)
                     if not row_id:
