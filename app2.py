@@ -110,13 +110,9 @@ def get_mainmembers():
     if res.status_code == 200:
         return res.json()
     return []
-def update_member(member_id, data):
-    url = f"{SUPABASE_URL}/rest/v1/Members?id=eq.{member_id}"
-    res = requests.patch(url, headers=HEADERS, json=data)
 
-    if res.status_code != 204:
-        st.error(f"❌ PATCH 실패: {res.status_code}")
-        st.code(res.text)
+def update_mainmember(member_id, data):
+    res = requests.patch(f"{SUPABASE_URL}/rest/v1/MainMembers?id=eq.{member_id}", headers=HEADERS, json=data)
     return res.status_code == 204
 
 def delete_mainmember(member_id):
@@ -835,17 +831,14 @@ if menu == "악마 길드원 정보 등록":
             with st.form("edit_form"):
                 nickname_edit = st.text_input("닉네임", selected_row["nickname"])
                 position_edit = st.text_input("직위", selected_row["position"])
-                note_edit = st.text_area("메모", selected_row.get("note", ""))
 
                 update_btn = st.form_submit_button("✏️ 수정")
                 delete_btn = st.form_submit_button("🗑 삭제")
-                ###
 
                 if update_btn:
                     updated_data = {
                         "nickname": nickname_edit.strip(),
                         "position": position_edit.strip(),
-                        "note": note_edit.strip()
                     }
                     if update_member(selected_row["id"], updated_data):
                         old_nickname = selected_row["nickname"]
