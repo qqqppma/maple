@@ -1420,7 +1420,8 @@ elif menu == "이벤트 이미지 등록":
                 if height > 800:
                     new_height = 800
                     new_width = int(width * (800 / height))
-                    image = image.resize((new_width, new_height), Image.ANTIALIAS)
+                    image = image.resize((new_width, new_height), Image.LANCZOS)
+
 
                 # ✅ 저장
                 image.save(save_path)
