@@ -1702,7 +1702,7 @@ elif menu == "보조대여 신청":
                 else:
                     # 아무 문제 없는 슬롯 (선택 가능)
                     selection[slot_time] = row_cols[j + 1].checkbox("", value=default_checked, key=slot_key)
-
+##
 
         selected_time_slots = [k for k, v in selection.items() if v]
         selected_dates = sorted({datetime.strptime(k.split()[0], "%Y-%m-%d").date() for k in selected_time_slots})
