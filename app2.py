@@ -1109,9 +1109,6 @@ elif menu == "악마길드 길컨관리":
                 st.rerun()
             st.markdown('</div>', unsafe_allow_html=True)
 
-        st.info("초기화 버튼을 누른 후 꼭 저장 버튼을 눌러주세요!!")
-
-
 
 
     # with st.form("main_member_add_form"):
