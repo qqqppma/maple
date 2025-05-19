@@ -830,8 +830,8 @@ if menu == "악마 길드원 정보 등록":
 
             with st.form("edit_form"):
                 nickname_edit = st.text_input("닉네임", selected_row["nickname"])
-                position_edit = st.text_input("직위", selected_row["position"])
-
+                position_options = ["길드마스터", "부마스터", "운영지원", "길드원", "휴메"]
+                position_edit = st.selectbox("직위", position_options, index=position_options.index(selected_row["position"]))
                 update_btn = st.form_submit_button("✏️ 수정")
                 delete_btn = st.form_submit_button("🗑 삭제")
 
