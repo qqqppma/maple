@@ -1997,7 +1997,7 @@ elif menu == "드메템 대여 신청":
                                     st.error("❌ 반납 실패! 다시 시도해주세요.")
             else:
                 pass
-##333
+
 elif menu == "마니또 관리":
     st.subheader("🎯 마니또 관리 페이지")
 
@@ -2097,13 +2097,15 @@ elif menu == "마니또 관리":
 
         # ✅ 매칭 등록 버튼 누르면 ManiddoRequests + ManiddoLogs 동시 등록
         if selected_tutor and selected_tutee and st.button("📌 매칭 등록"):
-            now = datetime.now().isoformat()
+            now = datetime.now()
+            start_str = now.strftime("%Y-%m-%d")
 
             # 1. ManiddoRequests에 등록
             supabase.table("ManiddoRequests").insert({
                 "tutor_name": selected_tutor,
                 "tutee_name": selected_tutee,
-                "timestamp": now
+                "timestamp": now.isoformat(),
+                "start_date": start_str
             }).execute()
 
             # 2. ManiddoLogs에도 초기 로그 생성
@@ -2112,8 +2114,8 @@ elif menu == "마니또 관리":
                 "tutee_name": selected_tutee,
                 "memo": "",  # 초기 메모 없음
                 "image_urls": [],
-                "created_at": now,
-                "updated_at": now
+                "created_at": now.isoformat(),
+                "updated_at": now.isoformat()
             }).execute()
 
             st.success(f"매칭 완료: 튜터 {selected_tutor} - 튜티 {selected_tutee}")
@@ -2137,14 +2139,31 @@ elif menu == "마니또 관리":
             st.success(f"{delete_target_type} '{selected_delete}' 삭제 완료")
             st.rerun()
 
-    # 4. 매칭된 목록 출력 및 수정
+    
+    # ✅ 31일 경과된 매칭 자동 종료 (들여쓰기 맞춰서 UI 밖으로)
+    expired_pairs = []
+    for _, row in matched_df.iterrows():
+        start_str = row.get("start_date")
+        if start_str:
+            try:
+                start_date = datetime.fromisoformat(start_str)
+                if datetime.now() >= start_date + timedelta(days=31):
+                    expired_pairs.append((row["tutor_name"], row["tutee_name"]))
+            except Exception as e:
+                st.warning(f"날짜 파싱 오류: {e}")
+
+    for tutor, tutee in expired_pairs:
+        supabase.table("ManiddoLogs").delete().eq("tutor_name", tutor).eq("tutee_name", tutee).execute()
+        supabase.table("ManiddoRequests").delete().eq("tutor_name", tutor).eq("tutee_name", tutee).execute()
+
+    # 4. 매칭된 목록 출력
     st.subheader("📋 매칭된 마니또 목록")
     if not matched_df.empty:
         view_df = matched_df.copy().reset_index(drop=True)
         view_df["튜터"] = view_df["tutor_name"]
         view_df["튜티"] = view_df["tutee_name"]
-        view_df["기록"] = view_df.get("memo", "")
-        display_df = view_df[["튜터", "튜티"]]
+        view_df["시작일"] = pd.to_datetime(view_df["start_date"], errors="coerce").dt.strftime("%y년 %m월 %d일")
+        display_df = view_df[["튜터", "튜티", "시작일"]]
         st.dataframe(display_df, use_container_width=True)
 
         # 관리자 또는 튜터만 수정 가능
