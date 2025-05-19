@@ -924,97 +924,56 @@ if menu == "악마 길드원 정보 등록":
 
 
                     
-elif menu == "악마길드 길컨관리":
-    st.subheader("👥 악마길드 길드컨트롤 관리")
+elif menu == "악마길드 길어쿠롤 관리":
+    st.subheader("👥 악마길드 길드쿠롤 관리")
 
     mainmembers = get_mainmembers()
     members = get_members()
-
     member_dict = {m['nickname']: m['position'] for m in members if m.get('nickname')}
     member_nicknames = sorted(member_dict.keys())
 
     if mainmembers:
         df_main = pd.DataFrame(mainmembers)
-        df_main["id"] = [m["id"] for m in mainmembers]  # ✅ id 컬럼 명시적으로 설정
-
-        # 🔽 부캐 점수를 본캐에 합산
-        members = get_members()
-        df_member = pd.DataFrame(members)
-
-        df_main = pd.DataFrame(mainmembers)
         df_main["id"] = [m["id"] for m in mainmembers]
+        df_main["nickname"] = df_main["nickname"].astype(str).str.strip()
         df_main["ID"] = df_main.index + 1
+
         id_map = df_main.set_index("ID")["id"].to_dict()
 
-        # ✅ MainMembers 닉네임 목록 확보
-        main_nicknames = df_main["nickname"].astype(str).str.strip().unique().tolist()
+        # 해당 부캐가 Members 테이블에 있고 main_nickname이 존재할 때만 event_sum을 가져와 본캐에 더함
+        df_member = pd.DataFrame(members)
+        df_member["nickname"] = df_member["nickname"].astype(str).str.strip()
+        df_member["main_nickname"] = df_member["main_nickname"].astype(str).str.strip()
 
-        # ✅ Members 테이블에서: 본인이 MainMembers에 등록된 부캐만 필터링
-        if "main_nickname" in df_member.columns:
-            df_member["nickname"] = df_member["nickname"].astype(str).str.strip()
-            df_member["main_nickname"] = df_member["main_nickname"].astype(str).str.strip()
+        df_sub = df_member[
+            df_member["nickname"].isin(df_main["nickname"]) &
+            df_member["main_nickname"].notnull()
+        ].copy()
 
-            # 👉 부캐 조건: nickname이 MainMembers에 등록되어 있고, main_nickname이 존재하는 경우만
-            df_sub = df_member[
-                df_member["nickname"].isin(main_nicknames) & 
-                df_member["main_nickname"].notnull()
-            ].copy()
-        else:
-            df_sub = pd.DataFrame()
+        sub_to_main = df_sub.set_index("nickname")["main_nickname"].to_dict()
 
-        # ✅ 점수 컬럼 누락 방지 및 정수화
-        for col in ["suro_score", "flag_score", "mission_point"]:
-            if col not in df_sub.columns:
-                df_sub[col] = 0
-            df_sub[col] = df_sub[col].fillna(0).astype(int)
+        df_all_main = df_main.copy()
+        sub_event = df_all_main[df_all_main["nickname"].isin(sub_to_main.keys())][["nickname", "event_sum"]].copy()
+        sub_event["main_nickname"] = sub_event["nickname"].map(sub_to_main)
+        merged_sum = sub_event.groupby("main_nickname")["event_sum"].sum().reset_index()
 
-        # ✅ 부캐 점수 합산
-        sub_sums = df_sub.groupby("main_nickname")[["suro_score", "flag_score", "mission_point"]].sum().reset_index()
-
-        # ✅ 병합 전 문자열 공백 제거
-        df_main["nickname"] = df_main["nickname"].astype(str).str.strip()
-        sub_sums["main_nickname"] = sub_sums["main_nickname"].astype(str).str.strip()
-
-        # ✅ 부캐 점수 병합
         df_main = df_main.merge(
-            sub_sums,
+            merged_sum,
             how="left",
             left_on="nickname",
             right_on="main_nickname",
             suffixes=('', '_sub')
         )
+        df_main["event_sum_sub"] = df_main["event_sum_sub"].fillna(0).astype(int)
+        df_main["event_sum"] = df_main["event_sum"] + df_main["event_sum_sub"]
+        df_main.drop(columns=["event_sum_sub", "main_nickname"], inplace=True, errors="ignore")
 
-        # ✅ 본캐 점수와 부캐 점수 합산
-        for col in ["suro_score", "flag_score", "mission_point"]:
-            if col not in df_main.columns:
-                df_main[col] = 0
-            df_main[col] = df_main[col].fillna(0).astype(int)
-
-            sub_col = col + "_sub"
-            if sub_col in df_main.columns:
-                df_main[sub_col] = df_main[sub_col].fillna(0).astype(int)
-                df_main[col] = df_main[col] + df_main[sub_col]
-
-        # ✅ 불필요한 컬럼 정리
-        df_main.drop(columns=[c for c in df_main.columns if "_sub" in c or c == "main_nickname"], inplace=True)
-
-
-        # ✅ 합계 점수 계산
-        df_main["event_sum"] = (
-            (df_main["suro_score"] // 5000) +
-            (df_main["flag_score"] // 1000) +
-            (df_main["mission_point"] // 10)
-        )
-
-        # ✅ 정렬
         df_main = df_main.sort_values(
             by=["position", "nickname"],
             key=lambda x: x.map(get_position_priority) if x.name == "position" else x.map(korean_first_sort)
         ).reset_index(drop=True)
 
         df_main["ID"] = df_main.index + 1
-
-
         id_map = df_main.set_index("ID")["id"].to_dict()
 
         df_display = df_main[["ID", "nickname", "position", "suro_score", "flag_score", "mission_point", "event_sum"]].copy()
@@ -1032,7 +991,6 @@ elif menu == "악마길드 길컨관리":
             st.session_state["show_all_mainmembers"] = False
 
         show_all = st.session_state["show_all_mainmembers"]
-
         btn_label = "🔽 전체 보기" if not show_all else "🔼 일부만 보기"
         if st.button(btn_label, key="toggle_mainmember_display"):
             st.session_state["show_all_mainmembers"] = not show_all
@@ -1040,7 +998,7 @@ elif menu == "악마길드 길컨관리":
 
         height_value = None if show_all else 210
 
-        st.markdown("### 📋 악마 길드 길드컨트롤 등록현황")
+        st.markdown("### 📋 악마 길드 길드쿠롤 등록현황")
         edited_df = st.data_editor(
             df_display,
             use_container_width=True,
@@ -1081,12 +1039,12 @@ elif menu == "악마길드 길컨관리":
                 for idx, row in edited_df.iterrows():
                     row_id = id_map.get(idx)
                     if not row_id:
-                        st.warning(f"❗ ID 매핑 실패: {idx}")
+                        st.warning(f"❗ ID 매형 실패: {idx}")
                         continue
 
                     updated = {eng: row[kor] for kor, eng in column_map.items() if kor in row}
-                    
-                    # ✅ event_sum 다시 계산하여 저장
+
+                    # ✅ 저장 시에는 부캐 합산 제외한 본캐 점수만 저장
                     updated["event_sum"] = (
                         (updated["suro_score"] // 5000) +
                         (updated["flag_score"] // 1000) +
@@ -1102,6 +1060,7 @@ elif menu == "악마길드 길컨관리":
                             st.error(f"❌ `{row['닉네임']}` 수정 실패")
                 st.rerun()
             st.markdown('</div>', unsafe_allow_html=True)
+
 
         for i in [1, 2]:
             with button_cols[i]:
