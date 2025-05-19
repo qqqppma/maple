@@ -962,6 +962,10 @@ elif menu == "악마길드 길컨관리":
         # ✅ 본캐 기준 부캐 점수 합산
         sub_sums = df_sub.groupby("main_nickname")[["suro_score", "flag_score", "mission_point"]].sum().reset_index()
 
+        # ✅ 병합 전 공백 제거
+        df_main["nickname"] = df_main["nickname"].astype(str).str.strip()
+        sub_sums["main_nickname"] = sub_sums["main_nickname"].astype(str).str.strip()
+
         # ✅ 부캐 점수 병합
         df_main = df_main.merge(sub_sums, how="left", left_on="nickname", right_on="main_nickname",suffixes=('', '_sub'))
 
