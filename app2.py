@@ -1007,7 +1007,7 @@ elif menu == "악마길드 길컨관리":
 
         height_value = None if show_all else 210
 
-        st.markdown("### 📋 악마 길드 길드쿠롤 등록현황")
+        st.markdown("### 📋 악마 길드 길컨 등록현황")
         edited_df = st.data_editor(
             df_display,
             use_container_width=True,
@@ -1108,6 +1108,8 @@ elif menu == "악마길드 길컨관리":
                 st.success("✅ 합계 점수 초기화")
                 st.rerun()
             st.markdown('</div>', unsafe_allow_html=True)
+
+        st.info("초기화 버튼을 누른 후 꼭 저장 버튼을 눌러주세요!!")
 
 
 
