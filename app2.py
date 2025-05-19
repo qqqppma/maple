@@ -1399,16 +1399,19 @@ elif menu == "이벤트 이미지 등록":
     # ✅ 이미지 업로더 추가
     uploaded_file = st.file_uploader("이벤트 이미지 업로드", type=["png", "jpg", "jpeg"], key="reg_uploader")
 
-    st.info("🔹 등록하기 누르면 안된거 같아도 올라간거에요")
-
     if st.button("📤 등록하기", key="reg_submit"):
         if not new_title:
             st.warning("제목을 입력해주세요.")
         else:
             saved_filename = None
             if uploaded_file:
-                saved_filename = uploaded_file.name
-                save_path = os.path.join(image_folder, saved_filename)
+                ext = os.path.splitext(uploaded_file.name)[1]  # 예: .png
+                original_name = os.path.splitext(uploaded_file.name)[0]  # 예: 악피스
+                encoded_name = urllib.parse.quote(original_name, safe="")  # 예: %EC%95%85%ED%94%BC%EC%8A%A4
+                saved_filename = f"{encoded_name}_{uuid.uuid4().hex}{ext}"  # 안전 + 유일 이름
+
+                save_path = os.path.join("이벤트이미지폴더", saved_filename)
+
                 with open(save_path, "wb") as f:
                     f.write(uploaded_file.read())
 
@@ -1418,14 +1421,13 @@ elif menu == "이벤트 이미지 등록":
                 "image_file_name": saved_filename or "이미지 없음",
                 "status": new_status
             }
+
             res = supabase.table("EventBanners").insert(data).execute()
             if res.data:
-                st.session_state["event_created"] = True
                 st.success("✅ 이벤트 등록 완료!")
                 st.rerun()
             else:
                 st.error("❌ 등록 실패. 다시 시도해주세요.")
-
     # --------------------------
     # ✏️ 기존 이벤트 수정 섹션
     # --------------------------
