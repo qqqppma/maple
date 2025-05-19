@@ -1447,17 +1447,10 @@ elif menu == "이벤트 이미지 등록":
         if selected_event:
             edited_title = st.text_input("제목 수정", value=selected_event["title"], key="edit_title")
             edited_desc = st.text_area("내용 수정", value=selected_event.get("description", ""), key="edit_desc")
-            edited_uploaded_file = st.file_uploader("이미지 수정", type=["png", "jpg", "jpeg"], key="edit_image")
-
-            # ✅ 저장될 파일명: 업로드 시 새로 생성, 업로드 안 했으면 기존 파일 유지
-            edited_filename = selected_event.get("image_file_name", "이미지 없음")
-            if edited_uploaded_file:
-                ext = os.path.splitext(edited_uploaded_file.name)[1]
-                edited_filename = f"{uuid.uuid4().hex}{ext}"
-                image_folder = "이벤트이미지폴더"
-                os.makedirs(image_folder, exist_ok=True)
-                with open(os.path.join(image_folder, edited_filename), "wb") as f:
-                    f.write(edited_uploaded_file.read())
+            edited_image = st.selectbox("이미지 수정", available_images,
+                                        index=available_images.index(selected_event.get("image_file_name", "이미지 없음"))
+                                        if selected_event.get("image_file_name") in available_images else 0,
+                                        key="edit_image")
             edited_status = st.selectbox("이벤트 상태 수정", status_options,
                                          index=status_options.index(selected_event.get("status", "예정")),
                                          key="edit_status")
