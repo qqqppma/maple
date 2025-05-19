@@ -31,8 +31,8 @@ MANITTO_CHANNEL_ID = int(os.getenv("MANITTO_CHANNEL_ID"))
 
 
 # ✅ 멘션할 유저 ID 리스트
-MENTION_USERS_WEAPON = [380952595293929473, 339743306802135041]  # 보조무기 담당자
-MENTION_USERS_DROP = [339743306802135041]    # 드메템 담당자
+MENTION_USERS_WEAPON = [339743306802135041,1287241315549184003,827897588748386364,1373030626223198319]  # 보조무기 담당자
+MENTION_USERS_DROP = [339743306802135041,1287241315549184003,827897588748386364,1373030626223198319]    # 드메템 담당자
 
 # ✅ 멘션 메시지 생성 함수
 def get_mentions(user_ids):
@@ -173,49 +173,36 @@ async def polling_loop():
                 last_dropitem_ids = current_drop_ids
                 last_dropitem_data = current_drop_data
 
-            # # ✅ 마니또 신청 감시
-            # manitto_res = supabase.table("ManiddoRequests")\
-            #     .select("*")\
-            #     .eq("notified", False)\
-            #     .gte("timestamp", start_time.isoformat())\
-            #     .execute()
-            # new_rows = manitto_res.data
+            # ✅ 마니또 매칭 종료 감지
+            current_manitto_res = supabase.table("ManiddoRequests")\
+                .select("*")\
+                .execute()
+            current_manitto_pairs = {
+                (r["tutor_name"], r["tutee_name"])
+                for r in current_manitto_res.data
+                if r.get("tutor_name") and r.get("tutee_name")
+            }
 
-            # for row in new_rows:
-            #     tutee = row.get("tutee_name")
-            #     tutor = row.get("tutor_name") or row.get("desired_tutor")
+            if not hasattr(polling_loop, "last_manitto_pairs"):
+                polling_loop.last_manitto_pairs = current_manitto_pairs
+            else:
+                removed_pairs = polling_loop.last_manitto_pairs - current_manitto_pairs
+                for tutor, tutee in removed_pairs:
+                    # ✅ 멘션 대상 구성
+                    guild = discord.utils.get(client.guilds)
+                    tutor_id = find_member_id_by_name(guild, tutor)
+                    tutee_id = find_member_id_by_name(guild, tutee)
+                    mention_tutor = f"<@{tutor_id}>" if tutor_id else f"`{tutor}`"
+                    mention_tutee = f"<@{tutee_id}>" if tutee_id else f"`{tutee}`"
+                    mention_admins = get_mentions(MENTION_USERS_DROP)  # 운영진 대표
 
-            #     # ❗ None 방지
-            #     if not tutee or not tutor:
-            #         print(f"❗ tutor 또는 tutee가 None이라 무시됨: tutor={tutor}, tutee={tutee}")
-            #         continue
+                    message = f"📅 {mention_admins} / {mention_tutor} - {mention_tutee}님의 마니또가 종료되었습니다!"
+                    if manitto_channel:
+                        await manitto_channel.send(message)
+                        print(f"[Manitto 종료] {message}")
 
-            #     guild = discord.utils.get(client.guilds)
-            #     tutee_id = find_member_id_by_name(guild, tutee)
-            #     tutor_id = find_member_id_by_name(guild, tutor)
+                polling_loop.last_manitto_pairs = current_manitto_pairs
 
-            #     mention_tutee = f"<@{tutee_id}>" if tutee_id else f"`{tutee}`"
-            #     mention_tutor = f"<@{tutor_id}>" if tutor_id else f"`{tutor}`"
-
-            #     message = f"🎯 {mention_tutee}님이 {mention_tutor}님께 마니또 신청을 하였습니다!"
-            #     if manitto_channel:
-            #         await manitto_channel.send(message)
-            #         print(f"[Manitto 신청] {message}")
-
-            
-
-                # #✅ DM 전송 (가능할 경우)
-                # for member in guild.members:
-                #     if member.id == tutee_id:
-                #         try:
-                #             await member.send(f"📩 당신은 `{tutor}`님에게 마니또를 신청하였습니다!")
-                #         except:
-                #             print(f"❗ {tutee}에게 DM 전송 실패")
-                #     if member.id == tutor_id:
-                #         try:
-                #             await member.send(f"📩 `{tutee}`님이 당신에게 마니또를 신청하였습니다!")
-                #         except:
-                #             print(f"❗ {tutor}에게 DM 전송 실패")
 
                 supabase.table("ManiddoRequests").update({"notified": True}).eq("id", row["id"]).execute()
 
