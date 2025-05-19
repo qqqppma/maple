@@ -940,7 +940,14 @@ elif menu == "악마길드 길컨관리":
 
         id_map = df_main.set_index("ID")["id"].to_dict()
 
-        # 해당 부캐가 Members 테이블에 있고 main_nickname이 존재할 때만 event_sum을 가져와 본캐에 더함
+        # 🔹 기본 점수 기반 event_sum 먼저 계산
+        df_main["event_sum"] = (
+            (df_main["suro_score"] // 5000) +
+            (df_main["flag_score"] // 1000) +
+            (df_main["mission_point"] // 10)
+        )
+
+        # 🔹 Members 테이블에서 부캐 조회
         df_member = pd.DataFrame(members)
         df_member["nickname"] = df_member["nickname"].astype(str).str.strip()
         df_member["main_nickname"] = df_member["main_nickname"].astype(str).str.strip()
@@ -950,13 +957,14 @@ elif menu == "악마길드 길컨관리":
             df_member["main_nickname"].notnull()
         ].copy()
 
+        # 🔹 부캐→본캐 매핑 후 부캐 event_sum 집계
         sub_to_main = df_sub.set_index("nickname")["main_nickname"].to_dict()
-
         df_all_main = df_main.copy()
         sub_event = df_all_main[df_all_main["nickname"].isin(sub_to_main.keys())][["nickname", "event_sum"]].copy()
         sub_event["main_nickname"] = sub_event["nickname"].map(sub_to_main)
         merged_sum = sub_event.groupby("main_nickname")["event_sum"].sum().reset_index()
 
+        # 🔹 본캐와 병합 및 최종 event_sum 갱신
         df_main = df_main.merge(
             merged_sum,
             how="left",
@@ -968,6 +976,7 @@ elif menu == "악마길드 길컨관리":
         df_main["event_sum"] = df_main["event_sum"] + df_main["event_sum_sub"]
         df_main.drop(columns=["event_sum_sub", "main_nickname"], inplace=True, errors="ignore")
 
+        # 🔹 정렬 및 UI 출력 준비
         df_main = df_main.sort_values(
             by=["position", "nickname"],
             key=lambda x: x.map(get_position_priority) if x.name == "position" else x.map(korean_first_sort)
@@ -1044,7 +1053,6 @@ elif menu == "악마길드 길컨관리":
 
                     updated = {eng: row[kor] for kor, eng in column_map.items() if kor in row}
 
-                    # ✅ 저장 시에는 부캐 합산 제외한 본캐 점수만 저장
                     updated["event_sum"] = (
                         (updated["suro_score"] // 5000) +
                         (updated["flag_score"] // 1000) +
@@ -1060,7 +1068,6 @@ elif menu == "악마길드 길컨관리":
                             st.error(f"❌ `{row['닉네임']}` 수정 실패")
                 st.rerun()
             st.markdown('</div>', unsafe_allow_html=True)
-
 
         for i in [1, 2]:
             with button_cols[i]:
@@ -1101,6 +1108,7 @@ elif menu == "악마길드 길컨관리":
                 st.success("✅ 합계 점수 초기화")
                 st.rerun()
             st.markdown('</div>', unsafe_allow_html=True)
+
 
 
 
