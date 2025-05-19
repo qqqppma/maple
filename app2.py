@@ -785,12 +785,23 @@ if menu == "악마 길드원 정보 등록":
 
     if not df.empty:
         df["position"] = df["position"].fillna("")
-        df = df.sort_values(by=["position", "nickname"],
-                            key=lambda x: x.map(get_position_priority) if x.name == "position" else x.map(korean_first_sort))
-        df = df.reset_index(drop=True)
+
+        # ✅ 직위 정렬 우선순위 추가
+        position_order = {
+            "길드마스터": 0,
+            "부마스터": 1,
+            "운영지원": 2,
+            "길드원": 3,
+            "휴메": 4
+        }
+
+        df["직위순서"] = df["position"].map(position_order).fillna(999)
+        df = df.sort_values(by=["직위순서", "nickname"],
+                            key=lambda x: x if x.name == "직위순서" else x.map(korean_first_sort)).reset_index(drop=True)
+        df.drop(columns=["직위순서"], inplace=True)  # 필요 없으면 제거
+
         df["ID"] = df.index + 1
 
-        # ✅ 컬럼명을 한글로 바꾸기
         df_display = df.rename(columns={
             "nickname": "닉네임",
             "position": "직위",
@@ -817,6 +828,7 @@ if menu == "악마 길드원 정보 등록":
             disabled=["ID", "닉네임", "직위"],
             key="guild_view_editor"
         )
+        
 
         # ✅ 다운로드 버튼
         excel_data = convert_df_to_excel(df_display)
