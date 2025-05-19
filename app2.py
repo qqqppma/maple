@@ -1405,16 +1405,15 @@ elif menu == "이벤트 이미지 등록":
         else:
             saved_filename = None
             if uploaded_file:
-                ext = os.path.splitext(uploaded_file.name)[1]  # 예: .png
-                original_name = os.path.splitext(uploaded_file.name)[0]  # 예: 악피스
-                encoded_name = urllib.parse.quote(original_name, safe="")  # 예: %EC%95%85%ED%94%BC%EC%8A%A4
-                saved_filename = f"{encoded_name}_{uuid.uuid4().hex}{ext}"  # 안전 + 유일 이름
+                # 무조건 안전하게: uuid로 저장하고, 확장자만 유지
+                ext = os.path.splitext(uploaded_file.name)[1]  # .png, .jpg
+                saved_filename = f"{uuid.uuid4().hex}{ext}"
 
                 save_path = os.path.join("이벤트이미지폴더", saved_filename)
-
                 with open(save_path, "wb") as f:
                     f.write(uploaded_file.read())
 
+            # Supabase insert
             data = {
                 "title": new_title,
                 "description": new_desc,
@@ -1702,7 +1701,7 @@ elif menu == "보조대여 신청":
                 else:
                     # 아무 문제 없는 슬롯 (선택 가능)
                     selection[slot_time] = row_cols[j + 1].checkbox("", value=default_checked, key=slot_key)
-##
+
 
         selected_time_slots = [k for k, v in selection.items() if v]
         selected_dates = sorted({datetime.strptime(k.split()[0], "%Y-%m-%d").date() for k in selected_time_slots})
