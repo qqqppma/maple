@@ -1383,36 +1383,45 @@ elif menu == "이벤트 이미지 등록":
     st.subheader("🎯 이벤트 배너 등록 및 수정")
 
     image_folder = "이벤트이미지폴더"
-    available_images = ["이미지 없음"] + [
-        f for f in os.listdir(image_folder)
-        if f.lower().endswith((".png", ".jpg", ".jpeg"))
-    ]
+    os.makedirs(image_folder, exist_ok=True)
+
     status_options = ["예정", "진행중", "완료"]
 
     # --------------------------
-    # 📌 신규 이벤트 등록 섹션
+    # 📌 신규 이벤트 등록
     # --------------------------
     st.markdown("새 이벤트 등록")
 
     new_title = st.text_input("이벤트 제목을 입력하세요", key="reg_title")
     new_desc = st.text_area("이벤트 설명을 입력하세요", key="reg_desc")
-    new_image = st.selectbox("이벤트 이미지 선택", available_images, key="reg_image")
     new_status = st.selectbox("이벤트 상태 선택", status_options, index=0, key="reg_status")
+
+    # ✅ 이미지 업로더 추가
+    uploaded_file = st.file_uploader("이벤트 이미지 업로드", type=["png", "jpg", "jpeg"], key="reg_uploader")
+
     st.info("🔹 등록하기 누르면 안된거 같아도 올라간거에요")
 
     if st.button("📤 등록하기", key="reg_submit"):
         if not new_title:
             st.warning("제목을 입력해주세요.")
         else:
+            saved_filename = None
+            if uploaded_file:
+                saved_filename = uploaded_file.name
+                save_path = os.path.join(image_folder, saved_filename)
+                with open(save_path, "wb") as f:
+                    f.write(uploaded_file.read())
+
             data = {
                 "title": new_title,
                 "description": new_desc,
-                "image_file_name": None if new_image == "이미지 없음" else new_image,
+                "image_file_name": saved_filename or "이미지 없음",
                 "status": new_status
             }
             res = supabase.table("EventBanners").insert(data).execute()
             if res.data:
                 st.session_state["event_created"] = True
+                st.success("✅ 이벤트 등록 완료!")
                 st.rerun()
             else:
                 st.error("❌ 등록 실패. 다시 시도해주세요.")
