@@ -1405,26 +1405,12 @@ elif menu == "이벤트 이미지 등록":
         else:
             saved_filename = None
             if uploaded_file:
-                    ext = os.path.splitext(uploaded_file.name)[1].lower()
-                    filename = f"{uuid.uuid4().hex}{ext}"
-                    save_path = os.path.join("이벤트이미지폴더", filename)
+                ext = os.path.splitext(uploaded_file.name)[1]  # .png, .jpg 등 확장자 유지
+                saved_filename = f"{uuid.uuid4().hex}{ext}"  # 영어로만 구성된 안전한 이름
 
-                    image = Image.open(uploaded_file)
-                    width, height = image.size
-
-                    if height > 800:
-                        new_height = 800
-                        new_width = int(width * (800 / height))
-                        image = image.resize((new_width, new_height), Image.LANCZOS)
-
-                    # ✅ 포맷 명시해서 저장 (특히 PNG, JPEG)
-                    format_map = {".jpg": "JPEG", ".jpeg": "JPEG", ".png": "PNG"}
-                    image_format = format_map.get(ext, "PNG")
-
-                    image.save(save_path, format=image_format)
-
-                    # ✅ 미리보기 출력
-                    st.image(save_path, caption="업로드된 이미지", use_column_width=True)
+                image_folder = "이벤트이미지폴더"
+                os.makedirs(image_folder, exist_ok=True)
+                save_path = os.path.join(image_folder, saved_filename)
 
                 with open(save_path, "wb") as f:
                     f.write(uploaded_file.read())
