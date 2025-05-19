@@ -110,9 +110,13 @@ def get_mainmembers():
     if res.status_code == 200:
         return res.json()
     return []
+def update_member(member_id, data):
+    url = f"{SUPABASE_URL}/rest/v1/Members?id=eq.{member_id}"
+    res = requests.patch(url, headers=HEADERS, json=data)
 
-def update_mainmember(member_id, data):
-    res = requests.patch(f"{SUPABASE_URL}/rest/v1/MainMembers?id=eq.{member_id}", headers=HEADERS, json=data)
+    if res.status_code != 204:
+        st.error(f"❌ PATCH 실패: {res.status_code}")
+        st.code(res.text)
     return res.status_code == 204
 
 def delete_mainmember(member_id):
